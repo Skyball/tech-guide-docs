@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://username.github.io/tech-guide-docs/</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/ai/ai-agent-engineering-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/ai/llm-fundamentals-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/ai/llm-eval-cost-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/ai/pi-agent-reading-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/lang/python-engineering-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/lang/go-engineering-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/backend/database-advanced-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/backend/message-queue-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/backend/grpc-guide.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/plan/learning-week1.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/plan/learning-week2.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/plan/learning-week3.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/plan/learning-week4.html</loc></url>
-  <url><loc>https://username.github.io/tech-guide-docs/guides/plan/learning-week5.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/ai/ai-agent-engineering-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/ai/llm-fundamentals-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/ai/llm-eval-cost-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/ai/pi-agent-reading-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/lang/python-engineering-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/lang/go-engineering-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/backend/database-advanced-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/backend/message-queue-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/backend/grpc-guide.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/plan/learning-week1.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/plan/learning-week2.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/plan/learning-week3.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/plan/learning-week4.html</loc></url>
+  <url><loc>https://skyball.github.io/tech-guide-docs/guides/plan/learning-week5.html</loc></url>
 </urlset>

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /docs/
-Sitemap: https://username.github.io/tech-guide-docs/sitemap.xml
+Sitemap: https://skyball.github.io/tech-guide-docs/sitemap.xml
