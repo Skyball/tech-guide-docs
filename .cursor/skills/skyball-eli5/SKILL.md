@@ -78,15 +78,12 @@ slug：kebab-case，与 SITE.categories[].docs[].slug 一致
   <link rel="stylesheet" href="/tech-guide-docs/assets/css/shared.css">
   <style>
     /* 页面特有样式 — 从同分类现有 guide 的 <style> 块复制并调整 */
-    .hero { background: linear-gradient(135deg, #1a1a2e 0%, #主色 100%); color:#fff; text-align:center; padding:56px 20px; }
-    .hero h1 { font-size:2.4rem; font-weight:800; margin-bottom:8px; }
+    html,body { overflow-x:hidden; }
+    .hero { background: linear-gradient(135deg, #1a1a2e 0%, #主色 100%); color:#fff; text-align:center; padding:56px 20px; overflow:hidden; }
+    .hero h1 { font-size:clamp(1.6rem,5vw,2.4rem); font-weight:800; margin-bottom:8px; }
     .hero p { opacity:.85; font-size:1.1rem; max-width:600px; margin:0 auto; }
     .container { max-width:860px; margin:0 auto; padding:0 20px; }
-    .nav { position:sticky; top:3px; z-index:100; background:rgba(250,250,250,.95); backdrop-filter:blur(8px); border-bottom:1px solid var(--border); padding:10px 0; overflow-x:auto; }
-    [data-theme="dark"] .nav { background:rgba(15,23,42,.95); }
-    .nav-inner { max-width:860px; margin:0 auto; padding:0 20px; display:flex; gap:6px; flex-wrap:nowrap; }
-    .nav a { white-space:nowrap; padding:5px 12px; border-radius:16px; font-size:.8rem; text-decoration:none; color:var(--muted); border:1px solid var(--border); transition:all .2s; }
-    .nav a:hover,.nav a.active { color:var(--accent); border-color:var(--accent); background:var(--accent-light); }
+    /* .nav 样式已在 shared.css 中统一定义，无需重复 */
   </style>
 </head>
 <body>
@@ -177,14 +174,27 @@ slug：kebab-case，与 SITE.categories[].docs[].slug 一致
    { slug: 'xxx-guide', title: '文档标题', priority: 'P0', keywords: ['关键词'] }
    ```
 
-2. **更新 `sitemap.xml`** — 添加一行：
+2. **更新 `sitemap.xml`** — 添加一行（用户名参考已有条目保持一致）：
    ```xml
-   <url><loc>https://username.github.io/tech-guide-docs/guides/{category}/{slug}.html</loc></url>
+   <url><loc>https://skyball.github.io/tech-guide-docs/guides/{category}/{slug}.html</loc></url>
    ```
 
-3. **验证清单**：
+3. **本地预览**（可选，用于浏览器验证）：
+
+   页面中所有资源路径带 `/tech-guide-docs` 前缀（为 GitHub Pages 设计），本地预览需做路径映射：
+   ```bash
+   cd /path/to/tech-guide-docs
+   ln -sf . tech-guide-docs          # 创建自指符号链接
+   python3 -m http.server 8765       # 启动本地服务器
+   # 打开 http://localhost:8765/tech-guide-docs/guides/{category}/{slug}.html
+   # 验证完毕后删除符号链接
+   rm tech-guide-docs
+   ```
+   > **注意**：不创建符号链接时，shared.css/js 无法加载，sidebar / breadcrumb / page-nav 不会渲染。这不是生成错误，是路径前缀不匹配的预期行为。
+
+4. **验证清单**：
    - [ ] slug 与文件名一致
    - [ ] `getDocUrl(category, slug)` 路径与实际文件位置匹配
-   - [ ] 本地打开页面，sidebar 显示且高亮正确
-   - [ ] 面包屑导航正确
-   - [ ] 上一篇/下一篇导航正确
+   - [ ] 文件体积在质量标准范围内（tech guide: 40–170 KB）
+   - [ ] 本地预览：页面可正常打开，Hero / 导航栏 / 章节内容渲染正确
+   - [ ] 本地预览（需符号链接）：sidebar 显示且文档条目存在、面包屑正确、上/下一篇导航正确
