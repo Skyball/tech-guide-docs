@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="页面未找到 — AI Engineer 知识库">
+  <title>404 — AI Engineer 知识库</title>
+  <link rel="stylesheet" href="/tech-guide-docs/assets/css/shared.css">
+  <style>
+    .error-page {
+      padding: 80px 20px;
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .error-code {
+      font-size: 5rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .error-page h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      border: none;
+      display: block;
+      padding: 0;
+    }
+    .error-page p {
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .error-btn {
+      display: inline-block;
+      padding: 10px 24px;
+      background: var(--accent);
+      color: #1a1a2e;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .error-btn:hover {
+      opacity: 0.85;
+    }
+    .p0-section {
+      margin-top: 48px;
+      text-align: left;
+    }
+    .p0-section h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .p0-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .p0-links a {
+      display: block;
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text);
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .p0-links a:hover {
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">🤖 AI Engineer 知识库</div>
+    </aside>
+    <main class="main-content">
+      <div class="error-page">
+        <div class="error-code">404</div>
+        <h2>页面未找到</h2>
+        <p>你访问的页面不存在或已被移动</p>
+        <a class="error-btn" href="/tech-guide-docs/index.html">返回首页</a>
+        <div class="p0-section">
+          <h3>P0 推荐文档</h3>
+          <div class="p0-links" id="p0Links"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="打开导航">☰</button>
+  <script src="/tech-guide-docs/assets/js/shared.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var el = document.getElementById('p0Links');
+      if (!el) return;
+      var html = '';
+      SITE.categories.forEach(function (cat) {
+        cat.docs.forEach(function (doc) {
+          if (doc.priority === 'P0') {
+            html += '<a href="' + getDocUrl(cat.id, doc.slug) + '">' + doc.title + '</a>';
+          }
+        });
+      });
+      el.innerHTML = html;
+    });
+  </script>
+</body>
+</html>
