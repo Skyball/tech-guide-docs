@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Redis 实战指南 — 数据结构、持久化、高可用、缓存模式与 Go/Python 实战">
+<link rel="stylesheet" href="/tech-guide-docs/assets/css/shared.css">
+<title>Redis 实战指南</title>
+<style>
+.container {max-width:860px;margin:0 auto;padding:0 20px}
+.hero {background:linear-gradient(135deg,#1a1a2e 0%,#c62828 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1 {font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p {opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav {position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav {background:rgba(15,23,42,.95)}
+.nav-inner {max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a {white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active {color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+.vs {display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider {display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+.timeline {border-left:3px solid var(--accent);padding-left:20px;margin:16px 0}
+.timeline-item {margin-bottom:16px;position:relative}
+.timeline-item::before {content:'';width:10px;height:10px;background:var(--accent);border-radius:50%;position:absolute;left:-26px;top:6px}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+</style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">🤖 AI Engineer 知识库</div>
+    </aside>
+    <main class="main-content">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Redis 实战指南</h1>
+  <p>从内存数据结构到高可用集群<br>缓存设计模式 + Go/Python 工程实战 + 面试高频题</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#intro">Redis 是什么</a>
+    <a href="#data-structures">数据结构</a>
+    <a href="#persistence">持久化</a>
+    <a href="#memory">内存管理</a>
+    <a href="#ha">高可用</a>
+    <a href="#lock-tx">锁与事务</a>
+    <a href="#cache-patterns">缓存模式</a>
+    <a href="#go-redis">Go 实战</a>
+    <a href="#python-redis">Python 实战</a>
+    <a href="#performance">性能调试</a>
+    <a href="#practice">面试实战</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== Ch1: Redis 是什么 ==================== -->
+<section id="intro">
+<h2>Redis 是什么</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：Redis 就是一个超快的内存字典——数据放在内存里，读写只需微秒，还能持久化到磁盘。</div>
+</div>
+
+<h3>直觉理解：书桌 vs 书架</h3>
+<div class="card card-accent">
+<p>想象你在写论文：</p>
+<ul style="padding-left:20px;line-height:2;margin-top:8px">
+<li><strong>书桌（内存 / Redis）</strong>：手边常用资料，拿取只需 1 秒，但桌面空间有限</li>
+<li><strong>书架（磁盘 / MySQL）</strong>：能存海量书籍，找一本可能要走上好几步</li>
+</ul>
+<p class="mt-2">Redis 的核心思路：<strong>把热点数据放在「书桌」上</strong>，需要时再同步到「书架」。99% 的读请求走内存，延迟从毫秒级降到微秒级。</p>
+</div>
+
+<h3>Redis vs Memcached</h3>
+<div class="card">
+<table>
+<tr><th>维度</th><th>Redis</th><th>Memcached</th></tr>
+<tr><td>数据结构</td><td>String/Hash/List/Set/ZSet/Stream 等 8+ 种</td><td>仅 String（KV）</td></tr>
+<tr><td>持久化</td><td>RDB + AOF + 混合持久化</td><td>不支持（纯内存）</td></tr>
+<tr><td>高可用</td><td>主从 + Sentinel + Cluster</td><td>客户端分片，无原生 HA</td></tr>
+<tr><td>原子操作</td><td>单线程 + Lua 脚本</td><td>CAS（compare-and-swap）</td></tr>
+<tr><td>内存管理</td><td>8 种淘汰策略 + LFU/LRU</td><td>LRU + Slab 分配</td></tr>
+<tr><td>单线程模型</td><td>是（6.0+ 多 IO 线程可选）</td><td>是</td></tr>
+<tr><td>典型场景</td><td>缓存 + 排行榜 + 分布式锁 + 消息队列</td><td>纯缓存加速</td></tr>
+<tr><td>性能</td><td>10 万+ QPS（单机）</td><td>10 万+ QPS（单机）</td></tr>
+</table>
+</div>
+
+<h3>版本演进时间线</h3>
+<div class="timeline">
+<div class="timeline-item">
+<strong>Redis 6.0</strong> <span class="tag tag-blue">2020</span>
+<p class="text-sm">多 IO 线程（网络读写并行）、ACL 权限控制、RESP3 协议、Client Side Caching</p>
+</div>
+<div class="timeline-item">
+<strong>Redis 6.2</strong> <span class="tag tag-green">2021</span>
+<p class="text-sm">Stream 消费组增强、GEORADIUS 优化、Copy-on-Write 内存优化</p>
+</div>
+<div class="timeline-item">
+<strong>Redis 7.0</strong> <span class="tag tag-purple">2022</span>
+<p class="text-sm">Redis Functions（替代 Lua 持久化）、Sharded Pub/Sub、ACL v2、多 AOF 文件</p>
+</div>
+<div class="timeline-item">
+<strong>Redis 7.2+</strong> <span class="tag tag-orange">2023</span>
+<p class="text-sm">listpack 全面替代 ziplist、哈希字段 TTL、性能持续优化</p>
+</div>
+</div>
+
+<h3>典型使用场景</h3>
+<div class="grid-3">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>缓存 <span class="tag tag-blue">最常用</span></h3>
+<p class="text-sm">热点数据缓存，减轻 DB 压力。TTL 自动过期，配合 Cache-Aside 模式。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>Session 存储</h3>
+<p class="text-sm">Agent 会话上下文、用户登录态。Hash 结构字段级读写，EXPIRE 滑动续期。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3>分布式锁</h3>
+<p class="text-sm">SET NX EX 原子加锁，Lua 脚本安全释放。秒杀、定时任务互斥。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3>限流计数</h3>
+<p class="text-sm">INCR + EXPIRE 固定窗口，或 ZSet 滑动窗口。API 网关、Agent 调用频率控制。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--red)">
+<h3>排行榜</h3>
+<p class="text-sm">Sorted Set 天然有序，ZREVRANGE 取 Top N。游戏积分、Agent 耗时排名。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>消息队列</h3>
+<p class="text-sm">List（LPUSH/BRPOP）或 Stream（消费组）。轻量任务队列，详见 <a href="/tech-guide-docs/guides/backend/message-queue-guide.html#redis-streams">消息队列指南</a>。</p>
+</div>
+</div>
+
+<div class="tip">⚠️ Redis 是<strong>内存数据库</strong>，不是关系型 DB 替代品。数据量超过内存容量时必须规划淘汰策略或 Cluster 分片。</div>
+
+<details class="card">
+<summary>面试题：Redis 适合做什么，不适合做什么？</summary>
+<div class="mt-2">
+<p><strong>适合</strong>：热点缓存、Session、计数器、排行榜、分布式锁、轻量消息队列、限流、UV 统计、地理位置（GEO）。</p>
+<p class="mt-2"><strong>不适合</strong>：复杂关系查询（JOIN）、大数据量持久存储（&gt;内存）、强一致事务（无 ACID）、大 value 存储（视频/文件应存 OSS）、精确计数要求零误差（HyperLogLog 有误差）。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch2: 数据结构全景 ==================== -->
+<section id="data-structures">
+<h2>数据结构全景</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：Redis 不是简单的 KV，而是 8 种专用容器——选对结构，一个命令搞定复杂逻辑。</div>
+</div>
+
+<h3>5 种基础结构</h3>
+
+<div class="card card-accent">
+<h3>String <span class="tag tag-blue">最基础</span></h3>
+<p><strong>底层</strong>：SDS（Simple Dynamic String），O(1) 获取长度，二进制安全，预分配减少 realloc。</p>
+<div class="grid-2">
+<div>
+<p class="text-sm"><strong>常用命令</strong></p>
+<pre><code>SET key value [EX seconds] [NX]
+GET key
+INCR / DECR / INCRBY
+MSET k1 v1 k2 v2
+SETEX key 3600 value
+APPEND key suffix</code></pre>
+</div>
+<div>
+<p class="text-sm"><strong>适用场景</strong></p>
+<ul style="padding-left:18px;line-height:1.8;font-size:.9rem">
+<li>简单 KV 缓存</li>
+<li>计数器（INCR 原子递增）</li>
+<li>分布式 ID（INCR order:id）</li>
+<li>限流（INCR + EXPIRE）</li>
+</ul>
+</div>
+</div>
+<pre><code><span class="cm"># Python 示例</span>
+<span class="kw">import</span> redis
+r = redis.Redis(host=<span class="st">'localhost'</span>, port=<span class="nu">6379</span>, decode_responses=<span class="kw">True</span>)
+r.set(<span class="st">'user:1001:name'</span>, <span class="st">'Alice'</span>, ex=<span class="nu">3600</span>)
+r.incr(<span class="st">'page:views'</span>)
+print(r.get(<span class="st">'user:1001:name'</span>))  <span class="cm"># Alice</span></code></pre>
+</div>
+
+<div class="card card-green">
+<h3>Hash <span class="tag tag-green">字段级</span></h3>
+<p><strong>底层</strong>：小数据用 listpack（&lt;128 字段且 value &lt;64B），大数据用 hashtable。</p>
+<div class="grid-2">
+<div>
+<pre><code>HSET user:1001 name Alice age 25
+HGET user:1001 name
+HMGET user:1001 name age
+HGETALL user:1001
+HINCRBY user:1001 age 1
+HDEL user:1001 age
+HLEN user:1001</code></pre>
+</div>
+<div>
+<p class="text-sm"><strong>适用场景</strong></p>
+<ul style="padding-left:18px;line-height:1.8;font-size:.9rem">
+<li>对象缓存（用户信息、商品详情）</li>
+<li>Session 存储（多字段上下文）</li>
+<li>字段级更新，避免整对象序列化</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="card card-purple">
+<h3>List <span class="tag tag-purple">双端队列</span></h3>
+<p><strong>底层</strong>：quicklist（双向链表 + listpack 节点），支持 O(1) 头尾插入。</p>
+<pre><code>LPUSH queue task1 task2
+RPUSH queue task3
+LPOP queue          # task2（后进先出栈）
+BRPOP queue 30      # 阻塞消费，超时 30 秒
+LLEN queue
+LRANGE queue 0 -1   # 查看全部
+RPOPLPUSH src dst   # 可靠队列：移到 processing</code></pre>
+<p class="text-sm mt-2"><strong>场景</strong>：简单消息队列、最新 N 条记录（LPUSH + LTRIM 0 99）、Timeline 时间线。</p>
+</div>
+
+<div class="card card-orange">
+<h3>Set <span class="tag tag-orange">无序去重</span></h3>
+<p><strong>底层</strong>：整数集合 intset 或 hashtable。</p>
+<pre><code>SADD tags python redis go
+SISMEMBER tags python    # 1
+SMEMBERS tags
+SINTER set1 set2         # 交集
+SUNION set1 set2         # 并集
+SDIFF set1 set2          # 差集
+SCARD tags               # 集合大小</code></pre>
+<p class="text-sm mt-2"><strong>场景</strong>：标签系统、共同好友、已处理 ID 去重、抽奖（SRANDMEMBER）。</p>
+</div>
+
+<div class="card card-red">
+<h3>Sorted Set (ZSet) <span class="tag tag-red">有序 + 去重</span></h3>
+<p><strong>底层</strong>：listpack + skiplist（跳表，O(log N) 查找），score 相同按 member 字典序。</p>
+<pre><code>ZADD leaderboard 9850 "player1" 8720 "player2"
+ZREVRANGE leaderboard 0 9 WITHSCORES  # Top 10
+ZRANK leaderboard "player1"             # 排名（升序）
+ZINCRBY leaderboard 100 "player1"       # 加分
+ZRANGEBYSCORE delay:queue 0 1694510400  # 延迟队列取到期任务
+ZREMRANGEBYRANK leaderboard 0 -11       # 只保留 Top 10</code></pre>
+<p class="text-sm mt-2"><strong>场景</strong>：排行榜、延迟队列、范围查询、权重调度。</p>
+</div>
+
+<h3>3 种扩展结构</h3>
+<div class="grid-3">
+<div class="card">
+<h3>Stream <span class="tag tag-blue">日志流</span></h3>
+<p class="text-sm"><strong>底层</strong>：radix tree + listpack。支持消费组和 ACK，类似轻量 Kafka。</p>
+<pre><code>XADD events * user_id 1001 action login
+XREAD COUNT 10 STREAMS events 0
+XGROUP CREATE events mygroup $ MKSTREAM
+XREADGROUP GROUP mygroup c1 COUNT 1 STREAMS events ></code></pre>
+</div>
+<div class="card">
+<h3>Bitmap <span class="tag tag-green">位图</span></h3>
+<p class="text-sm"><strong>底层</strong>：String 的 bit 操作。极省内存的用户签到、在线状态。</p>
+<pre><code>SETBIT sign:202609 11 1    # 第 11 天签到
+GETBIT sign:202609 11      # 1
+BITCOUNT sign:202609       # 本月签到天数
+BITOP AND dest a b         # 位运算</code></pre>
+</div>
+<div class="card">
+<h3>HyperLogLog <span class="tag tag-purple">基数统计</span></h3>
+<p class="text-sm"><strong>底层</strong>：稀疏编码，12KB 固定内存估算唯一元素数，误差 ~0.81%。</p>
+<pre><code>PFADD uv:20260912 user1 user2 user3
+PFCOUNT uv:20260912        # 3（UV 估算）
+PFMERGE uv:week uv:day1 uv:day2</code></pre>
+</div>
+</div>
+
+<h3>数据结构选型决策树</h3>
+<div class="card">
+<pre><code>需要存什么？
+├── 简单 KV / 计数器 / 分布式 ID
+│   └── String（SET / INCR）
+├── 对象 / Session（多字段）
+│   └── Hash（HSET / HGET）
+├── 队列 / 栈 / Timeline
+│   └── List（LPUSH / BRPOP）
+├── 去重 / 标签 / 集合运算
+│   └── Set（SADD / SINTER）
+├── 排行榜 / 延迟队列 / 范围查询
+│   └── Sorted Set（ZADD / ZREVRANGE）
+├── 消息流 / 消费组
+│   └── Stream（XADD / XREADGROUP）
+├── 签到 / 在线状态（布尔数组）
+│   └── Bitmap（SETBIT / BITCOUNT）
+└── UV 统计（允许误差）
+    └── HyperLogLog（PFADD / PFCOUNT）</code></pre>
+</div>
+
+<h3>Go 数据结构操作示例</h3>
+<div class="card">
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="st">"context"</span>
+    <span class="st">"fmt"</span>
+    <span class="st">"github.com/redis/go-redis/v9"</span>
+)
+
+<span class="kw">var</span> ctx = context.Background()
+
+<span class="kw">func</span> main() {
+    rdb := redis.NewClient(&amp;redis.Options{Addr: <span class="st">"localhost:6379"</span>})
+
+    <span class="cm">// String</span>
+    rdb.Set(ctx, <span class="st">"counter"</span>, <span class="nu">0</span>, <span class="nu">0</span>)
+    rdb.Incr(ctx, <span class="st">"counter"</span>)
+
+    <span class="cm">// Hash</span>
+    rdb.HSet(ctx, <span class="st">"user:1001"</span>, <span class="st">"name"</span>, <span class="st">"Alice"</span>, <span class="st">"age"</span>, <span class="nu">25</span>)
+    name, _ := rdb.HGet(ctx, <span class="st">"user:1001"</span>, <span class="st">"name"</span>).Result()
+
+    <span class="cm">// List</span>
+    rdb.LPush(ctx, <span class="st">"queue"</span>, <span class="st">"task1"</span>, <span class="st">"task2"</span>)
+    task, _ := rdb.BRPop(ctx, <span class="nu">0</span>, <span class="st">"queue"</span>).Result()
+
+    <span class="cm">// Set</span>
+    rdb.SAdd(ctx, <span class="st">"tags"</span>, <span class="st">"go"</span>, <span class="st">"redis"</span>)
+    isMember, _ := rdb.SIsMember(ctx, <span class="st">"tags"</span>, <span class="st">"go"</span>).Result()
+
+    <span class="cm">// ZSet</span>
+    rdb.ZAdd(ctx, <span class="st">"rank"</span>, redis.Z{Score: <span class="nu">100</span>, Member: <span class="st">"p1"</span>})
+    top, _ := rdb.ZRevRangeWithScores(ctx, <span class="st">"rank"</span>, <span class="nu">0</span>, <span class="nu">9</span>).Result()
+
+    <span class="cm">// Stream</span>
+    rdb.XAdd(ctx, &amp;redis.XAddArgs{
+        Stream: <span class="st">"events"</span>,
+        Values: <span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">interface</span>{<span class="st">"action"</span>: <span class="st">"login"</span>},
+    })
+
+    fmt.Println(name, task, isMember, top)
+}</code></pre>
+</div>
+
+<details class="card">
+<summary>面试题：Redis 为什么这么快？</summary>
+<div class="mt-2">
+<ol style="padding-left:20px;line-height:2">
+<li><strong>纯内存操作</strong>：数据在 RAM，无磁盘 IO 瓶颈（持久化异步）</li>
+<li><strong>单线程模型</strong>：无锁竞争、无上下文切换，命令原子执行</li>
+<li><strong>IO 多路复用</strong>：epoll/kqueue 单线程处理海量连接</li>
+<li><strong>高效数据结构</strong>：SDS、跳表、listpack 针对场景优化</li>
+<li><strong>6.0+ 多 IO 线程</strong>：网络读写并行，命令执行仍单线程</li>
+</ol>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch3: 持久化机制 ==================== -->
+<section id="persistence">
+<h2>持久化机制</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：持久化就是给「书桌」拍快照或记流水账——断电后还能把数据找回来。</div>
+</div>
+
+<h3>fork + COW 原理图</h3>
+<div class="card">
+<pre><code>BGSAVE 触发
+    │
+    ▼
+fork() ──► 子进程（写 RDB）     父进程（继续服务客户端）
+    │              │                      │
+    │         共享内存页               新写入触发 COW
+    │         （只读共享）             复制被修改的页
+    │              │                      │
+    │         逐页写入 .rdb           内存占用可能翻倍
+    │              │
+    ▼              ▼
+  完成写入      父进程不受影响（微秒级 fork）
+
+⚠️ 大实例（&gt;10GB）fork 可能耗时数百 ms，期间延迟抖动。
+   建议：控制 maxmemory、避免 bigkey、升级内核（THP 关闭）。</code></pre>
+</div>
+
+<h3>RDB 快照</h3>
+<div class="card card-accent">
+<p><strong>原理</strong>：fork 子进程，利用 Copy-on-Write（COW）将内存数据写入 .rdb 文件。父进程继续服务，子进程写磁盘。</p>
+<pre><code><span class="cm"># redis.conf RDB 配置</span>
+save 900 1      <span class="cm"># 900 秒内至少 1 次写 → 触发快照</span>
+save 300 10     <span class="cm"># 300 秒内至少 10 次写</span>
+save 60 10000   <span class="cm"># 60 秒内至少 10000 次写</span>
+dbfilename dump.rdb
+rdbcompression yes
+stop-writes-on-bgsave-error yes
+
+<span class="cm"># 手动触发</span>
+BGSAVE          <span class="cm"># 后台快照（推荐）</span>
+SAVE            <span class="cm"># 阻塞快照（生产慎用）</span></code></pre>
+<div class="grid-2 mt-2">
+<div>
+<h4>优点</h4>
+<ul style="padding-left:18px;line-height:1.8;font-size:.9rem">
+<li>文件紧凑，适合备份和灾难恢复</li>
+<li>恢复速度快（直接加载二进制）</li>
+<li>对性能影响小（子进程 COW）</li>
+</ul>
+</div>
+<div>
+<h4>缺点</h4>
+<ul style="padding-left:18px;line-height:1.8;font-size:.9rem">
+<li>两次快照间数据可能丢失</li>
+<li>fork 时内存翻倍风险（大实例）</li>
+<li>数据变化频繁时 BGSAVE 开销大</li>
+</ul>
+</div>
+</div>
+</div>
+
+<h3>AOF 日志</h3>
+<div class="card card-green">
+<p><strong>原理</strong>：每条写命令追加到 appendonly.aof 文件。重启时重放命令恢复数据。</p>
+<pre><code><span class="cm"># redis.conf AOF 配置</span>
+appendonly yes
+appendfilename "appendonly.aof"
+appendfsync everysec    <span class="cm"># 同步策略</span>
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+aof-use-rdb-preamble yes  <span class="cm"># 混合持久化（4.0+）</span></code></pre>
+<table class="mt-2">
+<tr><th>appendfsync</th><th>行为</th><th>数据安全</th><th>性能</th></tr>
+<tr><td><code>always</code></td><td>每条命令 fsync</td><td>最安全，不丢</td><td>最慢</td></tr>
+<tr><td><code>everysec</code></td><td>每秒 fsync 一次</td><td>最多丢 1 秒</td><td>推荐</td></tr>
+<tr><td><code>no</code></td><td>OS 决定何时刷盘</td><td>可能丢较多</td><td>最快</td></tr>
+</table>
+<p class="mt-2"><strong>AOF Rewrite</strong>：AOF 文件膨胀时，fork 子进程根据当前内存状态生成最小命令集，替换旧文件。BGREWRITEAOF 手动触发。</p>
+</div>
+
+<h3>混合持久化（Redis 4.0+）</h3>
+<div class="card">
+<p>AOF rewrite 时，前半段用 <strong>RDB 二进制格式</strong>写入（快速加载），后半段追加 rewrite 期间的增量 AOF 命令。兼顾恢复速度和数据完整性。</p>
+<pre><code>aof-use-rdb-preamble yes   <span class="cm"># 默认开启</span>
+
+<span class="cm"># 文件结构示意</span>
+<span class="cm"># [RDB 格式全量数据] + [增量 AOF 命令]</span></code></pre>
+</div>
+
+<h3>数据恢复流程</h3>
+<div class="card">
+<pre><code>Redis 启动
+    │
+    ▼
+存在 AOF 文件？
+    ├── 是 → AOF 文件开头是 RDB 魔数？
+    │         ├── 是（混合模式）→ 先加载 RDB 部分 → 再重放 AOF 增量
+    │         └── 否（纯 AOF）→ 重放全部 AOF 命令
+    └── 否 → 存在 RDB 文件？
+              ├── 是 → 加载 RDB 快照
+              └── 否 → 空实例启动</code></pre>
+</div>
+
+<div class="vs">
+<div class="card">
+<h3>选 RDB</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>纯缓存，可重建</li>
+<li>需要快速冷启动</li>
+<li>定期备份到 OSS</li>
+<li>主从复制全量同步源</li>
+</ul>
+</div>
+<div class="vs-divider">vs</div>
+<div class="card">
+<h3>选 AOF</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>Session / 队列不可丢</li>
+<li>everysec 最多丢 1 秒可接受</li>
+<li>需要命令级审计</li>
+<li>金融级数据（配合 always）</li>
+</ul>
+</div>
+</div>
+
+<div class="tip">生产推荐：<strong>RDB + AOF 混合持久化</strong>，everysec 策略。缓存场景可只开 RDB 或关闭持久化（纯内存）。</div>
+
+<details class="card">
+<summary>面试题：RDB 和 AOF 的区别？什么时候用哪个？</summary>
+<div class="mt-2">
+<table>
+<tr><th>维度</th><th>RDB</th><th>AOF</th></tr>
+<tr><td>原理</td><td>定时内存快照</td><td>写命令日志追加</td></tr>
+<tr><td>文件大小</td><td>紧凑</td><td>较大（rewrite 压缩）</td></tr>
+<tr><td>恢复速度</td><td>快</td><td>慢（重放命令）</td></tr>
+<tr><td>数据丢失</td><td>可能丢最后一次快照后数据</td><td>everysec 最多丢 1 秒</td></tr>
+<tr><td>性能影响</td><td>fork 时内存压力</td><td>always 模式 IO 压力大</td></tr>
+</table>
+<p class="mt-2"><strong>选择</strong>：可重建的缓存 → RDB 或不开持久化；不可丢数据 → AOF everysec + 混合持久化；两者都开时 AOF 优先加载。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch4: 内存管理与淘汰策略 ==================== -->
+<section id="memory">
+<h2>内存管理与淘汰策略</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：书桌满了就得扔东西——Redis 用 8 种策略决定扔哪些 key。</div>
+</div>
+
+<h3>Redis 内存组成</h3>
+<div class="card">
+<pre><code>used_memory（INFO memory 总占用）
+├── 数据内存（key + value + 数据结构开销）
+│   ├── 每个 key ~50-100B 元数据（dictEntry、redisObject）
+│   └── value 实际存储（SDS、listpack、skiplist 等）
+├── 缓冲内存（client 输出缓冲、AOF rewrite 缓冲、主从复制 backlog）
+└── 碎片（mem_fragmentation_ratio = used_memory_rss / used_memory）</code></pre>
+<p class="text-sm mt-2">碎片率 &gt; 1.5 时考虑重启或 <code>MEMORY PURGE</code>（jemalloc 支持）。</p>
+</div>
+
+<h3>8 种 maxmemory-policy</h3>
+<div class="card">
+<pre><code>maxmemory 2gb
+maxmemory-policy allkeys-lru</code></pre>
+<table class="mt-2">
+<tr><th>策略</th><th>行为</th><th>适用场景</th></tr>
+<tr><td><code>noeviction</code></td><td>内存满时写命令报错，读正常</td><td>不可丢数据，必须监控告警</td></tr>
+<tr><td><code>allkeys-lru</code></td><td>所有 key 中淘汰最近最少使用</td><td>纯缓存（推荐）</td></tr>
+<tr><td><code>volatile-lru</code></td><td>仅淘汰设置了 TTL 的 key 中 LRU</td><td>混合：部分持久 key + 缓存</td></tr>
+<tr><td><code>allkeys-lfu</code></td><td>所有 key 中淘汰访问频率最低</td><td>热点明确、访问模式稳定</td></tr>
+<tr><td><code>volatile-lfu</code></td><td>仅 TTL key 中 LFU 淘汰</td><td>带 TTL 的热点缓存</td></tr>
+<tr><td><code>allkeys-random</code></td><td>随机淘汰任意 key</td><td>访问均匀、无热点</td></tr>
+<tr><td><code>volatile-random</code></td><td>随机淘汰 TTL key</td><td>较少使用</td></tr>
+<tr><td><code>volatile-ttl</code></td><td>优先淘汰 TTL 最短的 key</td><td>希望尽快释放即将过期 key</td></tr>
+</table>
+</div>
+
+<h3>LRU vs LFU 原理</h3>
+<div class="vs">
+<div class="card card-accent">
+<h3>LRU（Least Recently Used）</h3>
+<p class="text-sm">淘汰<strong>最久没被访问</strong>的 key。Redis 用 24bit 存储，高 16bit 是过期时间，低 8bit 是 LRU 时钟（精度有限，近似 LRU）。</p>
+<pre><code>访问 key → 更新 LRU 时钟
+内存满 → 采样 5 个 key → 淘汰时钟最小的</code></pre>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card card-green">
+<h3>LFU（Least Frequently Used）</h3>
+<p class="text-sm">淘汰<strong>访问次数最少</strong>的 key。Redis 4.0+ 引入，16bit：高 8bit 衰减计数 + 低 8bit 对数计数。</p>
+<pre><code>访问 key → 计数 +1（对数增长）
+定期衰减 → 旧热点自然降权
+内存满 → 采样淘汰计数最低的</code></pre>
+</div>
+</div>
+<p class="text-sm">LFU 适合<strong>热点长期稳定</strong>的场景（如商品详情）；LRU 适合<strong>访问模式变化快</strong>的通用缓存。</p>
+
+<h3>内存优化技巧</h3>
+<div class="grid-2">
+<div class="card">
+<h3>编码优化</h3>
+<ul style="padding-left:18px;line-height:1.8;font-size:.9rem">
+<li><strong>listpack 阈值</strong>：小 Hash/List/ZSet 自动紧凑编码</li>
+<li><strong>Hash 存对象</strong>：比多个 String key 省内存</li>
+<li><strong>控制 key 长度</strong>：短 key 减少元数据开销</li>
+<li><strong>Shared Integer</strong>：0-9999 整数共享对象</li>
+</ul>
+<pre><code>hash-max-listpack-entries 128
+hash-max-listpack-value 64
+list-max-listpack-size -2</code></pre>
+</div>
+<div class="card">
+<h3>过期策略</h3>
+<ul style="padding-left:18px;line-height:1.8;font-size:.9rem">
+<li><strong>惰性删除</strong>：访问时发现过期才删除</li>
+<li><strong>定期删除</strong>：每秒采样 20 个 key 检查过期</li>
+<li><strong>TTL 随机偏移</strong>：避免大量 key 同时过期雪崩</li>
+</ul>
+<pre><code><span class="cm"># 过期时间加随机偏移</span>
+EXPIRE key 3600
+<span class="cm"># 应用层：3600 + random(0, 300)</span></code></pre>
+</div>
+</div>
+
+<details class="card">
+<summary>面试题：Redis 内存满了会怎样？如何选择淘汰策略？</summary>
+<div class="mt-2">
+<p>达到 <code>maxmemory</code> 后：</p>
+<ul style="padding-left:20px;line-height:2">
+<li><code>noeviction</code>：写命令返回 OOM 错误，读/删正常</li>
+<li>其他策略：触发淘汰，写命令正常</li>
+</ul>
+<p class="mt-2"><strong>选择建议</strong>：纯缓存 → <code>allkeys-lru</code> 或 <code>allkeys-lfu</code>；混合存储 → <code>volatile-lru</code> + 重要 key 不设 TTL；数据不可丢 → <code>noeviction</code> + 监控 + Cluster 扩容。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch5: 高可用架构 ==================== -->
+<section id="ha">
+<h2>高可用架构</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：一台 Redis 挂了整个系统就瘫——主从复制保数据，Sentinel 自动换主，Cluster 水平扩展。</div>
+</div>
+
+<h3>主从复制</h3>
+<div class="card">
+<pre><code>                    ┌─────────────┐
+                    │   Master    │
+                    │  (读写)      │
+                    └──────┬──────┘
+                           │ 异步复制
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+        ┌──────────┐ ┌──────────┐ ┌──────────┐
+        │ Replica1 │ │ Replica2 │ │ Replica3 │
+        │  (只读)   │ │  (只读)   │ │  (只读)   │
+        └──────────┘ └──────────┘ └──────────┘
+
+全量同步流程：
+Master ──PSYNC?──► Replica
+Master ──+FULLRESYNC runid offset──► Replica
+Master ──BGSAVE RDB 文件──► Replica （阻塞期间命令进 replication buffer）
+Master ──增量命令 stream──► Replica
+Replica ──ACK offset──► Master</code></pre>
+</div>
+<div class="card card-accent">
+<p><strong>全量同步</strong>：从节点首次连接或 offset 差距过大 → Master BGSAVE 生成 RDB → 发送 RDB + 缓冲区增量命令。</p>
+<p><strong>增量同步（PSYNC 2.0）</strong>：断线重连后，若 replication backlog 仍包含缺失数据 → 只传增量，无需全量。</p>
+<pre><code><span class="cm"># 从节点配置</span>
+replicaof 192.168.1.100 6379
+replica-read-only yes
+
+<span class="cm"># 复制流程</span>
+<span class="cm"># 1. 从节点发送 PSYNC runid offset</span>
+<span class="cm"># 2. Master 判断：全量 or 增量</span>
+<span class="cm"># 3. 全量：RDB 文件 + 缓冲命令</span>
+<span class="cm"># 4. 增量：backlog 中 offset 之后的命令</span></code></pre>
+<div class="tip">主从复制是<strong>异步</strong>的，Master 宕机可能丢最后几秒写入。Sentinel/Cluster 做自动 failover。</div>
+</div>
+
+<h3>Sentinel 故障转移流程</h3>
+<div class="card">
+<pre><code>  Sentinel1 ──monitor──► Master
+  Sentinel2 ──monitor──► Master     Master 宕机
+  Sentinel3 ──monitor──► Master         │
+                                        ▼
+                              SDOWN（单个 Sentinel 判定）
+                                        │
+                                        ▼
+                              ODOWN（quorum 个 Sentinel 确认）
+                                        │
+                                        ▼
+                              Raft 选举 Leader Sentinel
+                                        │
+                                        ▼
+                              选最优 Replica → SLAVEOF NO ONE
+                                        │
+                                        ▼
+                              其他 Replica → SLAVEOF 新 Master
+                                        │
+                                        ▼
+                              通知客户端新 Master 地址</code></pre>
+</div>
+
+<h3>Sentinel 哨兵</h3>
+<div class="card card-green">
+<p>Sentinel 是独立进程，监控 Master 和 Slave，自动故障转移。至少 3 个 Sentinel 节点（奇数，防脑裂）。</p>
+<pre><code><span class="cm"># sentinel.conf</span>
+sentinel monitor mymaster 192.168.1.100 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1</code></pre>
+<ol style="padding-left:20px;line-height:2;margin-top:8px">
+<li><strong>主观下线（SDOWN）</strong>：单个 Sentinel 认为 Master 无响应（超时 down-after-milliseconds）</li>
+<li><strong>客观下线（ODOWN）</strong>：quorum 个 Sentinel 都认为下线</li>
+<li><strong>领导者选举</strong>：Raft 算法选出一个 Sentinel 执行 failover</li>
+<li><strong>故障转移</strong>：选最优 Slave 提升为新 Master → 其他 Slave 指向新 Master → 旧 Master 恢复后变为 Slave</li>
+</ol>
+</div>
+
+<h3>Cluster 槽位分配示意</h3>
+<div class="card">
+<pre><code>  16384 slots 总槽位
+  ┌──────────────────────────────────────────────────────┐
+  │ slot 0-5460    │ slot 5461-10922 │ slot 10923-16383  │
+  │   Master 1     │    Master 2     │    Master 3       │
+  │   + Replica    │    + Replica    │    + Replica      │
+  └──────────────────────────────────────────────────────┘
+
+  key "user:1001"  → CRC16("user:1001") % 16384 = slot 5798 → Master 2
+  key "user:{1001}:profile" → CRC16("1001") % 16384 → 同 slot（hash tag）</code></pre>
+</div>
+
+<h3>Cluster 集群</h3>
+<div class="card">
+<p><strong>16384 槽位</strong>：所有 key 映射到 slot，<code>CRC16(key) % 16384</code>。每个 Master 负责一段 slot。</p>
+<pre><code><span class="cm"># 创建集群（3 主 3 从）</span>
+redis-cli --cluster create \
+  node1:6379 node2:6379 node3:6379 \
+  node4:6379 node5:6379 node6:6379 \
+  --cluster-replicas 1
+
+<span class="cm"># Hash Tag：{} 内部分参与 hash，强制同 slot</span>
+SET user:{1001}:profile "..."
+SET user:{1001}:session "..."
+<span class="cm"># 两个 key 在同一 slot，可 MULTI 事务</span>
+
+<span class="cm"># 客户端收到 MOVED/ASK 重定向</span>
+<span class="cm"># MOVED：slot 已永久迁移到新节点</span>
+<span class="cm"># ASK：slot 正在迁移中，临时重定向</span></code></pre>
+<p class="text-sm mt-2"><strong>扩缩容</strong>：<code>redis-cli --cluster reshard</code> 在线迁移 slot，ASK 重定向保证迁移期间可用。</p>
+</div>
+
+<h3>三种模式对比</h3>
+<div class="card">
+<table>
+<tr><th>维度</th><th>主从复制</th><th>Sentinel</th><th>Cluster</th></tr>
+<tr><td>高可用</td><td>手动切换</td><td>自动 failover</td><td>自动 failover</td></tr>
+<tr><td>扩展性</td><td>读扩展（Slave）</td><td>读扩展</td><td>读写水平扩展</td></tr>
+<tr><td>数据分片</td><td>不支持</td><td>不支持</td><td>16384 slot 分片</td></tr>
+<tr><td>最小节点</td><td>1 主 1 从</td><td>1 主 1 从 + 3 Sentinel</td><td>3 主 3 从</td></tr>
+<tr><td>跨 slot 操作</td><td>无限制</td><td>无限制</td><td>MGET/MULTI 受限</td></tr>
+<tr><td>适用规模</td><td>&lt; 内存单机上限</td><td>&lt; 内存单机上限</td><td>TB 级内存</td></tr>
+</table>
+</div>
+
+<details class="card">
+<summary>面试题：Redis Cluster 如何保证高可用？MOVED 和 ASK 的区别？</summary>
+<div class="mt-2">
+<p><strong>高可用</strong>：每个 Master 至少 1 个 Replica；Master 宕机时 Cluster 自动将 Replica 提升为新 Master；Gossip 协议传播节点状态；fail 检测类似 Sentinel 的 Gossip + PFAIL/FAIL。</p>
+<p class="mt-2"><strong>MOVED vs ASK</strong>：</p>
+<ul style="padding-left:20px;line-height:2">
+<li><code>MOVED slot ip:port</code>：slot 已永久归属目标节点，客户端应更新 slot 映射缓存</li>
+<li><code>ASK slot ip:port</code>：slot 正在迁移，临时访问目标节点，不更新映射</li>
+</ul>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch6: 分布式锁与事务 ==================== -->
+<section id="lock-tx">
+<h2>分布式锁与事务</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：分布式锁像厕所门锁——一个人进去锁门，出来才开门；Lua 脚本保证「检查 + 操作」原子性。</div>
+</div>
+
+<h3>SETNX + EX 基本分布式锁</h3>
+<div class="card card-accent">
+<pre><code><span class="cm"># 加锁：SET key value NX EX 30</span>
+<span class="cm"># NX = 不存在才设置，EX = 30 秒自动过期</span>
+SET lock:order:1001 uuid-abc123 NX EX 30
+
+<span class="cm"># 释放锁：必须验证 value 是自己的（防误删别人的锁）</span>
+<span class="cm"># 用 Lua 脚本保证 GET + DEL 原子性</span></code></pre>
+<pre><code><span class="cm">// Go 示例 — go-redis/v9</span>
+<span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="st">"context"</span>
+    <span class="st">"fmt"</span>
+    <span class="st">"time"</span>
+
+    <span class="st">"github.com/google/uuid"</span>
+    <span class="st">"github.com/redis/go-redis/v9"</span>
+)
+
+<span class="kw">var</span> ctx = context.Background()
+
+<span class="kw">func</span> acquireLock(rdb *redis.Client, key <span class="kw">string</span>, ttl time.Duration) (<span class="kw">string</span>, <span class="kw">bool</span>) {
+    token := uuid.NewString()
+    ok, err := rdb.SetNX(ctx, key, token, ttl).Result()
+    <span class="kw">if</span> err != <span class="kw">nil</span> || !ok {
+        <span class="kw">return</span> <span class="st">""</span>, <span class="kw">false</span>
+    }
+    <span class="kw">return</span> token, <span class="kw">true</span>
+}
+
+<span class="kw">var</span> releaseScript = redis.NewScript(<span class="st">`
+    if redis.call("GET", KEYS[1]) == ARGV[1] then
+        return redis.call("DEL", KEYS[1])
+    else
+        return 0
+    end
+`</span>)
+
+<span class="kw">func</span> releaseLock(rdb *redis.Client, key, token <span class="kw">string</span>) <span class="kw">error</span> {
+    _, err := releaseScript.Run(ctx, rdb, []<span class="kw">string</span>{key}, token).Result()
+    <span class="kw">return</span> err
+}
+
+<span class="kw">func</span> main() {
+    rdb := redis.NewClient(&amp;redis.Options{Addr: <span class="st">"localhost:6379"</span>})
+    key := <span class="st">"lock:order:1001"</span>
+
+    token, ok := acquireLock(rdb, key, <span class="nu">30</span>*time.Second)
+    <span class="kw">if</span> !ok {
+        fmt.Println(<span class="st">"failed to acquire lock"</span>)
+        <span class="kw">return</span>
+    }
+    <span class="kw">defer</span> releaseLock(rdb, key, token)
+
+    fmt.Println(<span class="st">"critical section..."</span>)
+}</code></pre>
+</div>
+
+<h3>Redlock 算法</h3>
+<div class="card">
+<p>在 <strong>N 个独立 Redis 节点</strong>（通常 5 个）上同时加锁，超过 N/2+1 成功才算获得锁。解决单节点 Sentinel failover 时锁丢失问题。</p>
+<pre><code><span class="cm"># 步骤</span>
+1. 获取当前时间 T1
+2. 依次向 N 个节点 SET key value NX PX ttl
+3. 获取当前时间 T2
+4. 成功数 >= N/2+1 且 (T2-T1) < 锁有效时间 → 加锁成功
+5. 实际锁 TTL = 初始 TTL - (T2-T1)
+6. 释放：向所有节点发送 Lua DEL</code></pre>
+<div class="tip">Redlock 有争议（Martin Kleppmann vs Antirez 论战）。生产环境多数场景<strong>单节点 SET NX EX + 合理 TTL + 看门狗续期</strong>已足够。</div>
+</div>
+
+<h3>Lua 脚本与 MULTI/EXEC</h3>
+<div class="vs">
+<div class="card">
+<h3>Lua 脚本</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>原子执行，中间无其他命令插入</li>
+<li>可含条件逻辑（if/else）</li>
+<li>减少网络往返</li>
+<li>脚本缓存（EVALSHA）</li>
+</ul>
+<pre><code>EVAL "return redis.call('GET',KEYS[1])" 1 mykey</code></pre>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card">
+<h3>MULTI/EXEC 事务</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>命令排队，EXEC 时批量执行</li>
+<li>无回滚：某命令失败不影响其他</li>
+<li>不支持条件逻辑</li>
+<li>配合 WATCH 实现乐观锁</li>
+</ul>
+<pre><code>WATCH balance
+MULTI
+DECRBY balance 100
+INCRBY other 100
+EXEC  # 期间 balance 被改则 EXEC 失败</code></pre>
+</div>
+</div>
+
+<h3>Python 分布式锁示例</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> uuid
+<span class="kw">import</span> redis
+
+r = redis.Redis(host=<span class="st">'localhost'</span>, port=<span class="nu">6379</span>, decode_responses=<span class="kw">True</span>)
+
+RELEASE_LUA = <span class="st">"""
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+    return redis.call('DEL', KEYS[1])
+else
+    return 0
+end
+"""</span>
+release_script = r.register_script(RELEASE_LUA)
+
+<span class="kw">def</span> acquire_lock(key: <span class="kw">str</span>, ttl: <span class="kw">int</span> = <span class="nu">30</span>) -> <span class="kw">str</span> | <span class="kw">None</span>:
+    token = uuid.uuid4().hex
+    <span class="kw">if</span> r.set(key, token, nx=<span class="kw">True</span>, ex=ttl):
+        <span class="kw">return</span> token
+    <span class="kw">return</span> <span class="kw">None</span>
+
+<span class="kw">def</span> release_lock(key: <span class="kw">str</span>, token: <span class="kw">str</span>) -> <span class="kw">bool</span>:
+    <span class="kw">return</span> release_script(keys=[key], args=[token]) == <span class="nu">1</span>
+
+<span class="cm"># 使用</span>
+lock_key = <span class="st">"lock:seckill:sku1001"</span>
+token = acquire_lock(lock_key)
+<span class="kw">if</span> token:
+    <span class="kw">try</span>:
+        print(<span class="st">"processing order..."</span>)
+    <span class="kw">finally</span>:
+        release_lock(lock_key, token)</code></pre>
+</div>
+
+<details class="card">
+<summary>面试题：Redis 分布式锁有哪些坑？如何解决？</summary>
+<div class="mt-2">
+<ol style="padding-left:20px;line-height:2">
+<li><strong>锁过期业务未完成</strong>：看门狗线程定期 EXPIRE 续期（Redisson 已实现）</li>
+<li><strong>误删他人锁</strong>：value 存 UUID，Lua 脚本验证后删除</li><li><strong>Master 宕机锁丢失</strong>：Sentinel failover 时考虑 Redlock 或 fencing token</li>
+<li><strong>不可重入</strong>：Hash 结构记录线程 ID + 重入计数</li>
+<li><strong>主从异步复制</strong>：锁写入 Master 未同步到 Slave 时 Master 宕机 → Redlock 或多节点</li>
+</ol>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch7: 缓存设计模式 ==================== -->
+<section id="cache-patterns">
+<h2>缓存设计模式</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：缓存是 DB 的替身演员——演得好加速系统，演砸了就会穿透、击穿、雪崩三连击。</div>
+</div>
+
+<h3>布隆过滤器防穿透</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> redis
+<span class="kw">from</span> redisbloom.client <span class="kw">import</span> Client
+
+rb = Client(host=<span class="st">'localhost'</span>, port=<span class="nu">6379</span>)
+<span class="cm"># 创建布隆过滤器：预期 100 万元素，误判率 0.1%</span>
+<span class="kw">try</span>:
+    rb.bfCreate(<span class="st">'users:bloom'</span>, <span class="nu">0.001</span>, <span class="nu">1000000</span>)
+<span class="kw">except</span> redis.ResponseError:
+    <span class="kw">pass</span>  <span class="cm"># 已存在</span>
+
+<span class="kw">def</span> get_user_safe(user_id: <span class="kw">int</span>):
+    <span class="kw">if not</span> rb.bfExists(<span class="st">'users:bloom'</span>, <span class="kw">str</span>(user_id)):
+        <span class="kw">return</span> <span class="kw">None</span>  <span class="cm"># 一定不存在，直接返回</span>
+    <span class="kw">return</span> get_user(user_id)
+
+<span class="cm"># 新用户注册时写入布隆过滤器</span>
+<span class="kw">def</span> register_user(user_id: <span class="kw">int</span>, data: dict):
+    db.insert(user_id, data)
+    rb.bfAdd(<span class="st">'users:bloom'</span>, <span class="kw">str</span>(user_id))</code></pre>
+<p class="text-sm mt-2">无 RedisBloom 模块时，可用 Python <code>pybloom_live</code> 或 Go <code>bits-and-blooms/bloom</code> 在应用层实现。</p>
+</div>
+
+<h3>互斥锁防击穿</h3>
+<div class="card card-green">
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">import</span> json
+
+<span class="kw">async def</span> get_hot_product(r, product_id: <span class="kw">int</span>):
+    key = <span class="st">f"product:{product_id}"</span>
+    lock_key = <span class="st">f"lock:product:{product_id}"</span>
+
+    cached = <span class="kw">await</span> r.get(key)
+    <span class="kw">if</span> cached:
+        <span class="kw">return</span> json.loads(cached)
+
+    token = <span class="kw">await</span> r.set(lock_key, <span class="st">"1"</span>, nx=<span class="kw">True</span>, ex=<span class="nu">10</span>)
+    <span class="kw">if</span> token:
+        <span class="kw">try</span>:
+            product = <span class="kw">await</span> db.get_product(product_id)
+            <span class="kw">await</span> r.setex(key, <span class="nu">3600</span>, json.dumps(product))
+            <span class="kw">return</span> product
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> r.delete(lock_key)
+    <span class="kw">else</span>:
+        <span class="kw">await</span> asyncio.sleep(<span class="nu">0.05</span>)
+        cached = <span class="kw">await</span> r.get(key)
+        <span class="kw">return</span> json.loads(cached) <span class="kw">if</span> cached <span class="kw">else</span> <span class="kw">None</span></code></pre>
+</div>
+
+<h3>三大经典问题</h3>
+<div class="grid-3">
+<div class="card card-accent">
+<h3>缓存穿透 <span class="tag tag-red">查不存在</span></h3>
+<p class="text-sm">查询不存在的数据，缓存和 DB 都 miss，恶意请求打穿到 DB。</p>
+<p class="text-sm"><strong>解法</strong>：</p>
+<ul style="padding-left:16px;line-height:1.6;font-size:.85rem">
+<li>布隆过滤器（Bloom Filter）前置拦截</li>
+<li>空值缓存（cache null，短 TTL）</li>
+<li>参数校验（非法 ID 直接拒绝）</li>
+</ul>
+</div>
+<div class="card card-orange">
+<h3>缓存击穿 <span class="tag tag-orange">热点过期</span></h3>
+<p class="text-sm">热点 key 过期瞬间，大量并发同时查 DB。</p>
+<p class="text-sm"><strong>解法</strong>：</p>
+<ul style="padding-left:16px;line-height:1.6;font-size:.85rem">
+<li>互斥锁（只有一个线程查 DB 并回填）</li>
+<li>逻辑过期（不设 TTL，异步更新）</li>
+<li>热点 key 永不过期 + 后台刷新</li>
+</ul>
+</div>
+<div class="card card-red">
+<h3>缓存雪崩 <span class="tag tag-red">大面积过期</span></h3>
+<p class="text-sm">大量 key 同时过期或 Redis 宕机，DB 压力激增。</p>
+<p class="text-sm"><strong>解法</strong>：</p>
+<ul style="padding-left:16px;line-height:1.6;font-size:.85rem">
+<li>TTL 加随机偏移</li>
+<li>多级缓存（本地 Caffeine + Redis）</li>
+<li>熔断降级（Sentinel/Hystrix）</li>
+<li>Redis 高可用（Sentinel/Cluster）</li>
+</ul>
+</div>
+</div>
+
+<h3>读写策略</h3>
+<div class="card">
+<table>
+<tr><th>模式</th><th>读</th><th>写</th><th>一致性</th><th>场景</th></tr>
+<tr><td><strong>Cache-Aside</strong></td><td>先读缓存，miss 读 DB 并回填</td><td>先更新 DB，再删缓存</td><td>最终一致</td><td>最常用，通用场景</td></tr>
+<tr><td><strong>Read-Through</strong></td><td>缓存层代理读，miss 自动加载</td><td>—</td><td>最终一致</td><td>缓存中间件封装</td></tr>
+<tr><td><strong>Write-Through</strong></td><td>—</td><td>同时写缓存和 DB</td><td>强一致</td><td>写少读多</td></tr>
+<tr><td><strong>Write-Behind</strong></td><td>—</td><td>先写缓存，异步批量写 DB</td><td>弱一致</td><td>写密集（计数、日志）</td></tr>
+</table>
+</div>
+
+<h3>Cache-Aside 代码模板</h3>
+<div class="card">
+<pre><code><span class="kw">def</span> get_user(user_id: <span class="kw">int</span>) -> dict | <span class="kw">None</span>:
+    cache_key = <span class="st">f"user:{user_id}"</span>
+    cached = r.get(cache_key)
+    <span class="kw">if</span> cached:
+        <span class="kw">return</span> json.loads(cached)
+    <span class="kw">if</span> cached == <span class="st">"NULL"</span>:  <span class="cm"># 空值缓存</span>
+        <span class="kw">return</span> <span class="kw">None</span>
+
+    user = db.query(<span class="st">"SELECT * FROM users WHERE id = %s"</span>, user_id)
+    <span class="kw">if</span> user <span class="kw">is</span> <span class="kw">None</span>:
+        r.setex(cache_key, <span class="nu">60</span>, <span class="st">"NULL"</span>)  <span class="cm"># 短 TTL 防穿透</span>
+        <span class="kw">return</span> <span class="kw">None</span>
+
+    ttl = <span class="nu">3600</span> + random.randint(<span class="nu">0</span>, <span class="nu">300</span>)  <span class="cm"># 随机偏移防雪崩</span>
+    r.setex(cache_key, ttl, json.dumps(user))
+    <span class="kw">return</span> user
+
+<span class="kw">def</span> update_user(user_id: <span class="kw">int</span>, data: dict):
+    db.update(<span class="st">"users"</span>, data, where={<span class="st">"id"</span>: user_id})
+    r.delete(<span class="st">f"user:{user_id}"</span>)  <span class="cm"># 先更 DB 再删缓存</span></code></pre>
+</div>
+
+<h3>缓存一致性</h3>
+<div class="grid-2">
+<div class="card card-green">
+<h3>延迟双删</h3>
+<pre><code>1. 删除缓存
+2. 更新数据库
+3. sleep(500ms)  # 等待读请求回填旧值
+4. 再次删除缓存</code></pre>
+<p class="text-sm">简单但 sleep 时间难估，高并发仍可能不一致。</p>
+</div>
+<div class="card card-accent">
+<h3>Canal + Binlog 订阅</h3>
+<pre><code>MySQL Binlog → Canal → MQ → 消费者删缓存</code></pre>
+<p class="text-sm">基于 DB 变更事件驱动，一致性好，架构复杂。大厂主流方案。</p>
+</div>
+</div>
+
+<details class="card">
+<summary>面试题：先更新 DB 再删缓存，还是先删缓存再更新 DB？</summary>
+<div class="mt-2">
+<p><strong>推荐：先更新 DB，再删缓存</strong>（Cache-Aside 写策略）。</p>
+<ul style="padding-left:20px;line-height:2">
+<li>先删缓存再更新 DB：删缓存后、更新 DB 前，读请求可能回填旧值到缓存</li>
+<li>先更新 DB 再删缓存：删缓存前读请求可能回填旧值，但窗口极短（删缓存通常很快）</li>
+<li>极端情况（删缓存失败）：延迟双删 或 Canal 订阅 binlog 补偿</li>
+</ul>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch8: Go + Redis 实战 ==================== -->
+<section id="go-redis">
+<h2>Go + Redis 实战</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：go-redis/v9 是 Go 生态事实标准——类型安全、Pipeline 批量、Hook 可观测。</div>
+</div>
+
+<h3>安装与配置</h3>
+<div class="card">
+<pre><code>go get github.com/redis/go-redis/v9</code></pre>
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="st">"context"</span>
+    <span class="st">"fmt"</span>
+    <span class="st">"time"</span>
+
+    <span class="st">"github.com/redis/go-redis/v9"</span>
+)
+
+<span class="kw">func</span> main() {
+    rdb := redis.NewClient(&amp;redis.Options{
+        Addr:         <span class="st">"localhost:6379"</span>,
+        Password:     <span class="st">""</span>,
+        DB:           <span class="nu">0</span>,
+        PoolSize:     <span class="nu">100</span>,              <span class="cm">// 连接池大小</span>
+        MinIdleConns: <span class="nu">10</span>,               <span class="cm">// 最小空闲连接</span>
+        PoolTimeout:  <span class="nu">4</span> * time.Second,   <span class="cm">// 获取连接超时</span>
+        DialTimeout:  <span class="nu">5</span> * time.Second,
+        ReadTimeout:  <span class="nu">3</span> * time.Second,
+        WriteTimeout: <span class="nu">3</span> * time.Second,
+    })
+
+    ctx := context.Background()
+    pong, err := rdb.Ping(ctx).Result()
+    fmt.Println(pong, err)  <span class="cm">// PONG &lt;nil&gt;</span>
+}</code></pre>
+</div>
+
+<h3>连接池调优</h3>
+<div class="card">
+<table>
+<tr><th>参数</th><th>建议</th><th>说明</th></tr>
+<tr><td><code>PoolSize</code></td><td>CPU 核数 × 10 ~ 20</td><td>过大浪费，过小排队</td></tr>
+<tr><td><code>MinIdleConns</code></td><td>PoolSize 的 10-20%</td><td>保持热连接，减少 Dial 开销</td></tr>
+<tr><td><code>PoolTimeout</code></td><td>3-5 秒</td><td>获取连接超时，触发告警</td></tr>
+<tr><td><code>MaxRetries</code></td><td>2-3</td><td>网络抖动自动重试</td></tr>
+</table>
+<p class="text-sm mt-2">监控 <code>INFO clients</code> 的 <code>connected_clients</code> 和 <code>blocked_clients</code>，配合 Prometheus exporter。</p>
+</div>
+
+<h3>Pipeline 批量操作</h3>
+<div class="card card-green">
+<pre><code>ctx := context.Background()
+pipe := rdb.Pipeline()
+
+pipe.Set(ctx, <span class="st">"key1"</span>, <span class="st">"val1"</span>, <span class="nu">0</span>)
+pipe.Set(ctx, <span class="st">"key2"</span>, <span class="st">"val2"</span>, <span class="nu">0</span>)
+pipe.Incr(ctx, <span class="st">"counter"</span>)
+
+cmds, err := pipe.Exec(ctx)
+<span class="kw">if</span> err != <span class="kw">nil</span> {
+    log.Fatal(err)
+}
+<span class="kw">for</span> _, cmd := <span class="kw">range</span> cmds {
+    fmt.Println(cmd.(*redis.StatusCmd).Val())
+}</code></pre>
+<p class="text-sm">Pipeline 将多条命令一次发送，减少 RTT。注意：Pipeline 不是事务，如需原子性用 TxPipeline 或 Lua。</p>
+</div>
+
+<h3>限流器（滑动窗口）</h3>
+<div class="card">
+<pre><code><span class="kw">func</span> allowRequest(rdb *redis.Client, userID <span class="kw">string</span>, limit <span class="kw">int</span>, window time.Duration) (<span class="kw">bool</span>, <span class="kw">error</span>) {
+    ctx := context.Background()
+    key := fmt.Sprintf(<span class="st">"rate:%s"</span>, userID)
+    now := time.Now().UnixMilli()
+    windowStart := now - window.Milliseconds()
+
+    pipe := rdb.Pipeline()
+    pipe.ZRemRangeByScore(ctx, key, <span class="st">"0"</span>, fmt.Sprintf(<span class="st">"%d"</span>, windowStart))
+    pipe.ZAdd(ctx, key, redis.Z{Score: <span class="kw">float64</span>(now), Member: now})
+    pipe.ZCard(ctx, key)
+    pipe.Expire(ctx, key, window)
+
+    cmds, err := pipe.Exec(ctx)
+    <span class="kw">if</span> err != <span class="kw">nil</span> {
+        <span class="kw">return</span> <span class="kw">false</span>, err
+    }
+    count := cmds[<span class="nu">2</span>].(*redis.IntCmd).Val()
+    <span class="kw">return</span> count <= <span class="kw">int64</span>(limit), <span class="kw">nil</span>
+}</code></pre>
+</div>
+
+<h3>Cluster 客户端</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> (
+    <span class="st">"context"</span>
+    <span class="st">"github.com/redis/go-redis/v9"</span>
+)
+
+<span class="kw">func</span> main() {
+    rdb := redis.NewClusterClient(&amp;redis.ClusterOptions{
+        Addrs: []<span class="kw">string</span>{
+            <span class="st">"node1:6379"</span>, <span class="st">"node2:6379"</span>, <span class="st">"node3:6379"</span>,
+        },
+        PoolSize:     <span class="nu">50</span>,
+        MinIdleConns: <span class="nu">5</span>,
+        ReadOnly:     <span class="kw">true</span>,  <span class="cm">// 允许从 Replica 读</span>
+        RouteByLatency: <span class="kw">true</span>, <span class="cm">// 路由到延迟最低节点</span>
+    })
+
+    ctx := context.Background()
+    <span class="cm">// 跨 slot 的批量操作需保证 key 在同一 slot（hash tag）</span>
+    rdb.MSet(ctx,
+        <span class="st">"user:{1001}:name"</span>, <span class="st">"Alice"</span>,
+        <span class="st">"user:{1001}:age"</span>, <span class="st">"25"</span>,
+    )
+}</code></pre>
+</div>
+
+<h3>分布式锁（完整封装）</h3>
+<div class="card card-accent">
+<pre><code><span class="kw">type</span> RedisLock <span class="kw">struct</span> {
+    rdb   *redis.Client
+    key   <span class="kw">string</span>
+    token <span class="kw">string</span>
+    ttl   time.Duration
+}
+
+<span class="kw">func</span> NewRedisLock(rdb *redis.Client, key <span class="kw">string</span>, ttl time.Duration) *RedisLock {
+    <span class="kw">return</span> &amp;RedisLock{rdb: rdb, key: key, token: uuid.NewString(), ttl: ttl}
+}
+
+<span class="kw">func</span> (l *RedisLock) Lock(ctx context.Context) (<span class="kw">bool</span>, <span class="kw">error</span>) {
+    <span class="kw">return</span> l.rdb.SetNX(ctx, l.key, l.token, l.ttl).Result()
+}
+
+<span class="kw">func</span> (l *RedisLock) Unlock(ctx context.Context) <span class="kw">error</span> {
+    _, err := releaseScript.Run(ctx, l.rdb, []<span class="kw">string</span>{l.key}, l.token).Result()
+    <span class="kw">return</span> err
+}
+
+<span class="cm">// 看门狗续期</span>
+<span class="kw">func</span> (l *RedisLock) Watchdog(ctx context.Context) {
+    ticker := time.NewTicker(l.ttl / <span class="nu">3</span>)
+    <span class="kw">defer</span> ticker.Stop()
+    renewScript := redis.NewScript(<span class="st">`
+        if redis.call("GET", KEYS[1]) == ARGV[1] then
+            return redis.call("EXPIRE", KEYS[1], ARGV[2])
+        end
+        return 0
+    `</span>)
+    <span class="kw">for</span> {
+        <span class="kw">select</span> {
+        <span class="kw">case</span> &lt;-ctx.Done():
+            <span class="kw">return</span>
+        <span class="kw">case</span> &lt;-ticker.C:
+            renewScript.Run(ctx, l.rdb, []<span class="kw">string</span>{l.key}, l.token, <span class="kw">int</span>(l.ttl.Seconds()))
+        }
+    }
+}</code></pre>
+</div>
+
+<h3>排行榜</h3>
+<div class="card">
+<pre><code><span class="kw">func</span> updateScore(rdb *redis.Client, board, player <span class="kw">string</span>, score <span class="kw">float64</span>) <span class="kw">error</span> {
+    <span class="kw">return</span> rdb.ZAdd(ctx, board, redis.Z{Score: score, Member: player}).Err()
+}
+
+<span class="kw">func</span> topN(rdb *redis.Client, board <span class="kw">string</span>, n <span class="kw">int64</span>) ([]redis.Z, <span class="kw">error</span>) {
+    <span class="kw">return</span> rdb.ZRevRangeWithScores(ctx, board, <span class="nu">0</span>, n-<span class="nu">1</span>).Result()
+}</code></pre>
+</div>
+
+<details class="card">
+<summary>面试题：go-redis 连接池满了会怎样？如何排查？</summary>
+<div class="mt-2">
+<p>PoolSize 耗尽时，新请求阻塞等待空闲连接，超过 PoolTimeout 返回 <code>redis: connection pool timeout</code> 错误。</p>
+<p class="mt-2"><strong>排查</strong>：检查慢查询导致连接长期占用；Pipeline/事务未及时释放；PoolSize 过小；Redis 服务端 blocked_clients 过多。解决：增大 PoolSize、优化慢命令、使用 context 超时、连接池监控告警。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch9: Python + Redis 实战 ==================== -->
+<section id="python-redis">
+<h2>Python + Redis 实战</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：redis-py 同步简单，redis.asyncio 适配 FastAPI/Agent 异步架构——AI 应用的会话和向量缓存靠它。</div>
+</div>
+
+<h3>redis-py 基本使用</h3>
+<div class="card">
+<pre><code>pip install redis</code></pre>
+<pre><code><span class="kw">import</span> redis
+<span class="kw">import</span> json
+
+<span class="cm"># 连接池（推荐）</span>
+pool = redis.ConnectionPool(
+    host=<span class="st">'localhost'</span>, port=<span class="nu">6379</span>, db=<span class="nu">0</span>,
+    max_connections=<span class="nu">50</span>, decode_responses=<span class="kw">True</span>
+)
+r = redis.Redis(connection_pool=pool)
+
+<span class="cm"># 基本操作</span>
+r.set(<span class="st">'agent:session:abc'</span>, json.dumps({<span class="st">'user'</span>: <span class="st">'u001'</span>, <span class="st">'turns'</span>: <span class="nu">3</span>}), ex=<span class="nu">3600</span>)
+session = json.loads(r.get(<span class="st">'agent:session:abc'</span>))
+
+<span class="cm"># Hash 操作</span>
+r.hset(<span class="st">'user:1001'</span>, mapping={<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'role'</span>: <span class="st">'admin'</span>})
+r.hgetall(<span class="st">'user:1001'</span>)</code></pre>
+</div>
+
+<h3>异步 redis（redis.asyncio）</h3>
+<div class="card card-green">
+<pre><code>pip install redis</code></pre>
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">import</span> json
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+
+<span class="kw">async def</span> main():
+    r = aioredis.from_url(<span class="st">'redis://localhost:6379'</span>, decode_responses=<span class="kw">True</span>)
+    <span class="kw">await</span> r.set(<span class="st">'async:key'</span>, <span class="st">'hello'</span>, ex=<span class="nu">60</span>)
+    val = <span class="kw">await</span> r.get(<span class="st">'async:key'</span>)
+    print(val)
+    <span class="kw">await</span> r.aclose()
+
+asyncio.run(main())</code></pre>
+<p class="text-sm">FastAPI 中通过依赖注入共享连接池，lifespan 中创建/关闭。</p>
+</div>
+
+<h3>与 AI Agent 集成</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>会话缓存</h3>
+<pre><code><span class="kw">class</span> SessionStore:
+    <span class="kw">def</span> __init__(self, r, ttl=<span class="nu">3600</span>):
+        self.r = r
+        self.ttl = ttl
+
+    <span class="kw">async def</span> get(self, sid: <span class="kw">str</span>) -> list:
+        data = <span class="kw">await</span> self.r.get(<span class="st">f"session:{sid}"</span>)
+        <span class="kw">return</span> json.loads(data) <span class="kw">if</span> data <span class="kw">else</span> []
+
+    <span class="kw">async def</span> append(self, sid: <span class="kw">str</span>, msg: dict):
+        key = <span class="st">f"session:{sid}"</span>
+        history = <span class="kw">await</span> self.get(sid)
+        history.append(msg)
+        <span class="kw">await</span> self.r.setex(key, self.ttl, json.dumps(history))</code></pre>
+</div>
+<div class="card card-purple">
+<h3>RAG 向量缓存</h3>
+<pre><code><span class="kw">import</span> hashlib
+
+<span class="kw">def</span> query_cache_key(query: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    h = hashlib.sha256(query.encode()).hexdigest()[:<span class="nu">16</span>]
+    <span class="kw">return</span> <span class="st">f"rag:cache:{h}"</span>
+
+<span class="kw">async def</span> cached_rag_query(r, query, embed_fn, search_fn):
+    key = query_cache_key(query)
+    cached = <span class="kw">await</span> r.get(key)
+    <span class="kw">if</span> cached:
+        <span class="kw">return</span> json.loads(cached)
+
+    vector = <span class="kw">await</span> embed_fn(query)
+    results = <span class="kw">await</span> search_fn(vector)
+    <span class="kw">await</span> r.setex(key, <span class="nu">1800</span>, json.dumps(results))
+    <span class="kw">return</span> results</code></pre>
+</div>
+</div>
+
+<h3>FastAPI 依赖注入</h3>
+<div class="card card-accent">
+<pre><code><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Depends
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+
+redis_pool: aioredis.Redis | <span class="kw">None</span> = <span class="kw">None</span>
+
+<span class="cm">@asynccontextmanager</span>
+<span class="kw">async def</span> lifespan(app: FastAPI):
+    <span class="kw">global</span> redis_pool
+    redis_pool = aioredis.from_url(
+        <span class="st">"redis://localhost:6379"</span>,
+        max_connections=<span class="nu">50</span>,
+        decode_responses=<span class="kw">True</span>,
+    )
+    <span class="kw">yield</span>
+    <span class="kw">await</span> redis_pool.aclose()
+
+app = FastAPI(lifespan=lifespan)
+
+<span class="kw">async def</span> get_redis() -> aioredis.Redis:
+    <span class="kw">return</span> redis_pool
+
+<span class="cm">@app.get("/cache/{key}")</span>
+<span class="kw">async def</span> read_cache(key: <span class="kw">str</span>, r: aioredis.Redis = Depends(get_redis)):
+    val = <span class="kw">await</span> r.get(key)
+    <span class="kw">return</span> {<span class="st">"key"</span>: key, <span class="st">"value"</span>: val}</code></pre>
+</div>
+
+<h3>Pipeline 使用</h3>
+<div class="card">
+<pre><code><span class="kw">async def</span> batch_get(r, keys: list[<span class="kw">str</span>]) -> dict:
+    pipe = r.pipeline()
+    <span class="kw">for</span> k <span class="kw">in</span> keys:
+        pipe.get(k)
+    values = <span class="kw">await</span> pipe.execute()
+    <span class="kw">return</span> dict(zip(keys, values))</code></pre>
+</div>
+
+<details class="card">
+<summary>面试题：redis-py 和 aioredis 是什么关系？</summary>
+<div class="mt-2">
+<p>Redis 4.2+ 将 aioredis 合并进 redis-py，统一为 <code>redis.asyncio</code> 模块。旧代码 <code>import aioredis</code> 仍可用但推荐迁移到 <code>import redis.asyncio as aioredis</code>。API 基本一致，异步方法需 <code>await</code>。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch10: 性能优化与调试 ==================== -->
+<section id="performance">
+<h2>性能优化与调试</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：Redis 慢通常不是 Redis 的锅——bigkey、热 key、O(N) 命令才是元凶。</div>
+</div>
+
+<h3>慢查询日志</h3>
+<div class="card card-accent">
+<pre><code><span class="cm"># redis.conf</span>
+slowlog-log-slower-than 10000   <span class="cm"># 微秒，10000 = 10ms</span>
+slowlog-max-len 128
+
+<span class="cm"># 查看慢查询</span>
+SLOWLOG GET 10
+SLOWLOG LEN
+SLOWLOG RESET</code></pre>
+<p class="text-sm">常见慢命令：<code>KEYS *</code>（O(N) 扫描）、<code>SMEMBERS</code> 大 Set、<code>HGETALL</code> 大 Hash、<code>FLUSHALL</code>。</p>
+</div>
+
+<h3>bigkey 检测与处理</h3>
+<div class="card">
+<pre><code><span class="cm"># 扫描 bigkey（生产安全，增量迭代）</span>
+redis-cli --bigkeys
+
+<span class="cm"># 或使用 SCAN + DEBUG OBJECT / MEMORY USAGE</span>
+SCAN 0 COUNT 100
+MEMORY USAGE mykey
+
+<span class="cm"># 处理策略</span>
+<span class="cm"># 1. 大 Hash → 拆分为多个小 Hash</span>
+<span class="cm"># 2. 大 List → 分片到多个 List</span>
+<span class="cm"># 3. 大 String → 压缩或存对象存储，Redis 存引用</span>
+<span class="cm"># 4. 删除大 key 用 UNLINK（异步释放内存）</span>
+UNLINK bigkey</code></pre>
+<div class="tip">删除 bigkey 绝不用 DEL（阻塞单线程），用 UNLINK 异步释放。</div>
+</div>
+
+<h3>热点 key 问题</h3>
+<div class="card card-orange">
+<p>单个 key QPS 过高导致单节点 CPU 100%。</p>
+<ul style="padding-left:20px;line-height:2">
+<li><strong>本地缓存</strong>：热点 key 加一层进程内 cache（Caffeine/sync.Map），TTL 1-5 秒</li>
+<li><strong>key 拆分</strong>：读时 random 选一个副本 <code>hotkey:{1..N}</code>，写时全部更新</li>
+<li><strong>读写分离</strong>：热点读走 Replica</li>
+<li><strong>Redis 7.0+</strong>：Client Side Caching 减少网络往返</li>
+</ul>
+</div>
+
+<h3>redis-cli 常用调试命令</h3>
+<div class="card">
+<table>
+<tr><th>命令</th><th>用途</th><th>注意</th></tr>
+<tr><td><code>INFO [section]</code></td><td>服务器状态、内存、复制、集群</td><td>生产常用 INFO memory/replication/stats</td></tr>
+<tr><td><code>MONITOR</code></td><td>实时打印所有命令</td><td>性能杀手，仅调试短暂使用</td></tr>
+<tr><td><code>CLIENT LIST</code></td><td>查看所有连接</td><td>排查连接泄漏</td></tr>
+<tr><td><code>MEMORY DOCTOR</code></td><td>内存诊断建议</td><td>7.0+ 可用</td></tr>
+<tr><td><code>LATENCY DOCTOR</code></td><td>延迟诊断</td><td>分析延迟 spike 原因</td></tr>
+<tr><td><code>SCAN</code></td><td>增量迭代 key</td><td>替代 KEYS *</td></tr>
+<tr><td><code>DBSIZE</code></td><td>key 总数</td><td>快速概览</td></tr>
+</table>
+</div>
+
+<h3>生产环境配置建议</h3>
+<div class="card">
+<pre><code><span class="cm"># redis.conf 生产基线</span>
+maxmemory 4gb
+maxmemory-policy allkeys-lru
+tcp-keepalive 300
+timeout 0                    <span class="cm"># 不断开空闲连接（由客户端池管理）</span>
+tcp-backlog 511
+repl-backlog-size 256mb      <span class="cm"># 主从增量同步缓冲</span>
+
+<span class="cm"># 持久化</span>
+save 900 1
+save 300 10
+appendonly yes
+appendfsync everysec
+aof-use-rdb-preamble yes
+
+<span class="cm"># 安全</span>
+requirepass your-strong-password
+rename-command FLUSHALL ""
+rename-command FLUSHDB ""
+rename-command CONFIG "CONFIG_abc123"
+
+<span class="cm"># 慢查询</span>
+slowlog-log-slower-than 10000
+slowlog-max-len 256
+
+<span class="cm"># 客户端</span>
+maxclients 10000</code></pre>
+</div>
+
+<h3>INFO 命令关键 section</h3>
+<div class="grid-2">
+<div class="card">
+<h3>INFO memory</h3>
+<pre><code>used_memory:2147483648
+used_memory_rss:2415919104
+mem_fragmentation_ratio:1.12
+maxmemory:2147483648
+maxmemory_policy:allkeys-lru</code></pre>
+</div>
+<div class="card">
+<h3>INFO stats</h3>
+<pre><code>total_connections_received:50000
+instantaneous_ops_per_sec:85000
+keyspace_hits:9000000
+keyspace_misses:1000000
+<span class="cm"># 命中率 = hits / (hits + misses) = 90%</span></code></pre>
+</div>
+</div>
+
+<h3>INFO replication &amp; cluster</h3>
+<div class="grid-2">
+<div class="card">
+<h3>INFO replication</h3>
+<pre><code>role:master
+connected_slaves:2
+slave0:ip=10.0.0.2,port=6379,state=online,offset=123456
+master_repl_offset:123456
+repl_backlog_size:268435456</code></pre>
+<p class="text-sm">关注 <code>master_repl_offset</code> 与 slave 的 <code>offset</code> 差距，过大意味着复制延迟。</p>
+</div>
+<div class="card">
+<h3>INFO cluster</h3>
+<pre><code>cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_known_nodes:6
+cluster_size:3</code></pre>
+<p class="text-sm"><code>cluster_state</code> 不为 ok 时需排查 slot 未分配或节点下线。</p>
+</div>
+</div>
+
+<h3>Docker 快速启动</h3>
+<div class="card card-green">
+<pre><code><span class="cm"># 单机开发</span>
+docker run -d --name redis -p 6379:6379 redis:7-alpine
+
+<span class="cm"># 带持久化</span>
+docker run -d --name redis \
+  -p 6379:6379 \
+  -v redis-data:/data \
+  redis:7-alpine redis-server --appendonly yes
+
+<span class="cm"># 验证</span>
+docker exec -it redis redis-cli ping
+<span class="cm"># PONG</span></code></pre>
+</div>
+
+<details class="card">
+<summary>面试题：生产环境能不能用 KEYS * 和 MONITOR？</summary>
+<div class="mt-2">
+<p><strong>KEYS *</strong>：绝对不行。O(N) 遍历所有 key，阻塞单线程，key 多时导致服务停顿数秒甚至分钟。用 SCAN 替代。</p>
+<p class="mt-2"><strong>MONITOR</strong>：仅调试时短暂使用。每条命令都输出，CPU 和网络开销巨大，QPS 高时可能导致 Redis 不可用。生产排查用 SLOWLOG + 客户端日志。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== Ch11: 面试题汇总 + 实战练习 ==================== -->
+<section id="practice">
+<h2>面试题汇总 + 实战练习</h2>
+
+<div class="card card-accent">
+  <p>以下 10 道综合面试题覆盖本指南全部核心知识点。点击展开查看详细答案。</p>
+</div>
+
+<details class="card">
+<summary>1. Redis 单线程为什么还能支撑 10 万 QPS？</summary>
+<div class="mt-2">
+<p>纯内存操作 + IO 多路复用（epoll）+ 单线程无锁无上下文切换 + 高效数据结构。6.0+ 多 IO 线程并行处理网络读写，命令执行仍单线程保证原子性。瓶颈通常在网络带宽或命令复杂度，而非 CPU。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>2. Redis 和 Memcached 的区别？选型依据？</summary>
+<div class="mt-2">
+<p>Redis 支持丰富数据结构、持久化、主从/Cluster、Lua 原子操作；Memcached 仅 String KV、纯内存。需要持久化、复杂数据结构、分布式锁、排行榜 → Redis；纯缓存加速、多核利用（Memcached 可 multi-thread）→ Memcached。现代项目几乎默认 Redis。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>3. 如何保证 Redis 和 DB 的数据一致性？</summary>
+<div class="mt-2">
+<p>Cache-Aside 模式：读 miss 回填，写时先更新 DB 再删缓存。强一致场景：延迟双删、Canal 订阅 binlog 异步删缓存、Write-Through。接受最终一致：TTL 兜底 + 短过期。核心原则：DB 是 source of truth，缓存可重建。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>4. Redis 持久化方案如何选择？</summary>
+<div class="mt-2">
+<p>纯缓存可不开持久化或仅 RDB；不可丢数据用 AOF everysec + 混合持久化（RDB preamble）。RDB 适合备份和快速恢复；AOF 适合数据安全。两者都开时重启优先加载 AOF。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>5. 主从复制原理？全量和增量如何切换？</summary>
+<div class="mt-2">
+<p>从节点发送 PSYNC runid offset。runid 匹配且 offset 在 replication backlog 内 → 增量同步（只传缺失命令）；否则全量同步（BGSAVE RDB + 缓冲命令）。backlog 大小默认 1MB，高写入场景需调大。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>6. Redis Cluster 的 hash slot 是什么？为什么 16384 个？</summary>
+<div class="mt-2">
+<p>16384 个 slot 映射到不同 Master 节点，key 路由 CRC16(key) % 16384。选 16384 因为：心跳包中携带 slot bitmap 约 2KB（16384/8），节点间通信开销合理；支持最多 1000 个 Master 节点，每节点 16-24 个 slot 足够。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>7. 分布式锁的看门狗机制是什么？</summary>
+<div class="mt-2">
+<p>加锁成功后启动后台线程，定期（TTL/3）检查锁是否仍持有，是则 EXPIRE 续期。防止业务执行时间超过锁 TTL 导致锁自动释放、被其他客户端获取。Redisson 的 Watchdog 默认 30 秒 TTL，每 10 秒续期。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>8. 缓存穿透、击穿、雪崩的区别和解决方案？</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li><strong>穿透</strong>：查不存在的数据 → 布隆过滤器 + 空值缓存</li>
+<li><strong>击穿</strong>：热点 key 过期 → 互斥锁 + 逻辑过期</li>
+<li><strong>雪崩</strong>：大量 key 同时过期 / Redis 宕机 → 随机 TTL + 多级缓存 + 熔断 + HA</li>
+</ul>
+</div>
+</details>
+
+<details class="card">
+<summary>9. Redis 内存淘汰策略有哪些？生产怎么选？</summary>
+<div class="mt-2">
+<p>8 种：noeviction、allkeys-lru/lfu/random、volatile-lru/lfu/random/ttl。纯缓存 → allkeys-lru 或 allkeys-lfu；混合存储 → volatile-lru；数据不可丢 → noeviction + 监控 + 扩容。LFU 适合热点稳定，LRU 适合访问模式变化。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>10. 如何发现和处理 Redis 慢查询/bigkey/热 key？</summary>
+<div class="mt-2">
+<p><strong>慢查询</strong>：SLOWLOG GET + 避免 KEYS/HGETALL 大 key。<strong>bigkey</strong>：redis-cli --bigkeys + UNLINK 异步删除 + 拆分。<strong>热 key</strong>：MONITOR 采样（短暂）、客户端统计、Redis 4.0+ HOTKEYS 命令；解决：本地缓存、key 分片、读写分离。</p>
+</div>
+</details>
+
+<div class="card card-green">
+<h3>架构设计实战：秒杀系统的 Redis 缓存层</h3>
+<p><strong>题目</strong>：设计一个秒杀系统的 Redis 缓存层，要求：</p>
+<ol style="padding-left:20px;margin:10px 0;line-height:2">
+<li>10 万 QPS 读库存，DB 不能被打穿</li>
+<li>防止超卖（库存扣减原子性）</li>
+<li>防止同一用户重复下单</li>
+<li>活动结束后的数据清理</li>
+</ol>
+<details>
+<summary>参考答案</summary>
+<div class="mt-2">
+<pre><code><span class="cm"># ===== 数据结构设计 =====</span>
+
+<span class="cm"># 1. 库存（String + DECR 原子扣减）</span>
+SET seckill:stock:sku1001 1000
+
+<span class="cm"># 2. 商品详情缓存（String JSON，逻辑过期）</span>
+SET seckill:detail:sku1001 "{...}" 
+<span class="cm"># 不设 TTL，后台异步刷新</span>
+
+<span class="cm"># 3. 用户去重（Set 或 String SETNX）</span>
+SET seckill:ordered:sku1001:user123 1 EX 86400 NX
+
+<span class="cm"># 4. 限流（ZSet 滑动窗口）</span>
+ZADD rate:user123 {timestamp} {timestamp}
+
+<span class="cm"># ===== 秒杀流程（Lua 脚本保证原子性）=====</span></code></pre>
+<pre><code><span class="cm">-- seckill.lua：检查去重 + 扣库存 + 标记下单</span>
+<span class="kw">local</span> stock_key = KEYS[1]       <span class="cm">-- seckill:stock:sku1001</span>
+<span class="kw">local</span> order_key = KEYS[2]       <span class="cm">-- seckill:ordered:sku1001:user123</span>
+<span class="kw">local</span> user_id = ARGV[1]
+
+<span class="cm">-- 1. 检查是否已下单</span>
+<span class="kw">if</span> redis.call(<span class="st">'EXISTS'</span>, order_key) == 1 <span class="kw">then</span>
+    <span class="kw">return</span> -1  <span class="cm">-- 重复下单</span>
+<span class="kw">end</span>
+
+<span class="cm">-- 2. 扣库存</span>
+<span class="kw">local</span> stock = redis.call(<span class="st">'DECR'</span>, stock_key)
+<span class="kw">if</span> stock &lt; 0 <span class="kw">then</span>
+    redis.call(<span class="st">'INCR'</span>, stock_key)  <span class="cm">-- 回滚</span>
+    <span class="kw">return</span> 0  <span class="cm">-- 库存不足</span>
+<span class="kw">end</span>
+
+<span class="cm">-- 3. 标记已下单</span>
+redis.call(<span class="st">'SET'</span>, order_key, <span class="st">'1'</span>, <span class="st">'EX'</span>, 86400)
+<span class="kw">return</span> 1  <span class="cm">-- 成功</span></code></pre>
+<pre><code><span class="cm"># ===== 架构要点 =====</span>
+<span class="cm"># 1. 前置：CDN 静态页 + Nginx 限流 + 布隆过滤器拦截无效 SKU</span>
+<span class="cm"># 2. 缓存：商品详情预热到 Redis，逻辑过期 + 后台刷新</span>
+<span class="cm"># 3. 库存：Redis DECR 原子扣减，Lua 脚本合并去重+扣减</span>
+<span class="cm"># 4. 异步：Lua 返回成功后发 MQ，异步创建订单写 DB</span>
+<span class="cm"># 5. 兜底：MQ 消费失败重试 + 定时对账（Redis 库存 vs DB）</span>
+<span class="cm"># 6. 清理：活动结束后 DEL seckill:* 或设置 TTL</span>
+<span class="cm"># 7. 热 key：库存 key 分片 seckill:stock:sku1001:{0..9} 或本地缓存</span></code></pre>
+</div>
+</details>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>学习路径建议</strong>：String/Hash 基础操作 → 持久化与高可用 → 缓存三大问题 → 分布式锁 → Go/Python 客户端实战 → 性能调优。每步用 redis-cli 或 Docker <code>redis:7-alpine</code> 动手验证。关联阅读：<a href="/tech-guide-docs/guides/backend/database-advanced-guide.html#redis">数据库进阶 · Redis 章节</a>、<a href="/tech-guide-docs/guides/backend/message-queue-guide.html#redis-streams">消息队列 · Redis Streams</a>。</div>
+</div>
+</section>
+
+</div>
+
+      <div class="page-nav" id="page-nav"></div>
+    </main>
+  </div>
+  <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="打开导航">☰</button>
+  <script src="/tech-guide-docs/assets/js/shared.js" defer></script>
+
+<script>
+(function(){
+  window.addEventListener('scroll',function(){
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['intro','data-structures','persistence','memory','ha','lock-tx','cache-patterns','go-redis','python-redis','performance','practice'];
+    var current='';
+    sections.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&el.getBoundingClientRect().top<=120)current=id;
+    });
+    navLinks.forEach(function(a){
+      a.classList.toggle('active',a.getAttribute('href')==='#'+current);
+    });
+  });
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+})();
+</script>
+</body>
+</html>
