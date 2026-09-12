@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4 — LLM 原理 + Go 语言 + Pi Agent</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:800px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:#fff;text-align:center;padding:48px 20px}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem}
+.hero .tag{display:inline-block;margin-top:12px;padding:6px 16px;border-radius:20px;background:rgba(255,255,255,.2);font-size:.9rem}
+.nav-back{display:inline-flex;align-items:center;gap:6px;padding:12px 0;color:var(--accent);text-decoration:none;font-size:.9rem;font-weight:600}
+.nav-back:hover{text-decoration:underline}
+.day{margin-top:40px}
+.day-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.day-num{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:#fff;flex-shrink:0}
+.day-info h2{font-size:1.3rem;font-weight:700}
+.day-info p{font-size:.85rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:12px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.task{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.task:last-child{border-bottom:none}
+.task-check{flex-shrink:0;width:22px;height:22px;margin-top:2px}
+.task-check input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.task-body{flex:1}
+.task-title{font-weight:600;font-size:.95rem}
+.task-desc{font-size:.85rem;color:var(--muted);margin-top:2px}
+.task-time{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent);font-weight:600;margin-top:4px}
+.task.done .task-title{text-decoration:line-through;color:var(--muted)}
+.resource{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--accent-light);margin:6px 0;font-size:.85rem;transition:background .3s}
+.resource a{color:var(--accent);text-decoration:none;font-weight:600;word-break:break-all}
+.resource a:hover{text-decoration:underline}
+.checkpoint{padding:14px 18px;border-radius:10px;background:var(--green-light);border-left:4px solid var(--green);margin:16px 0;font-size:.9rem;transition:background .3s}
+.checkpoint strong{color:var(--green)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.5;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.85rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.grid-2{grid-template-columns:1fr}}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.summary-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:16px;z-index:100;transition:background .3s}
+.summary-bar .bar{flex:1;max-width:400px;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.summary-bar .fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.summary-bar .text{font-size:.85rem;font-weight:600;color:var(--muted);min-width:100px;text-align:right}
+.theme-toggle{position:fixed;bottom:64px;right:20px;z-index:1000;width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+</style>
+</head>
+<body>
+
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Week 4：LLM 原理 + Go 语言 + Pi Agent</h1>
+  <p>理解底层原理，掌握第二门语言，阅读优秀开源代码</p>
+  <div class="tag">7 天 · 23 个任务 · 目标：懂原理、会 Go、能读 Agent 源码</div>
+</div>
+
+<div class="container">
+<a href="ai-agent-engineering-guide.html" class="nav-back">← 返回总指南</a>
+
+<!-- ============ Day 1-2 ============ -->
+<div class="day" id="day1">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--accent)">D1<br>D2</div>
+    <div class="day-info">
+      <h2>LLM 原理</h2>
+      <p>预计 8 小时 · 理解 Transformer、Tokenization 与解码策略</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Transformer 架构</h3>
+    <div class="task" data-id="1-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-1')"></div>
+      <div class="task-body">
+        <div class="task-title">学习 Transformer 架构：Encoder-Decoder、Self-Attention、Multi-Head Attention</div>
+        <div class="task-desc">理解各组件职责：Embedding → Attention → FFN → LayerNorm</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="1-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-2')"></div>
+      <div class="task-body">
+        <div class="task-title">理解 Q/K/V（Query/Key/Value）机制和注意力分数计算</div>
+        <div class="task-desc">掌握 Attention(Q,K,V) = softmax(QK<sup>T</sup>/√d<sub>k</sub>)V 的含义</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <div class="resource">📖 <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer（可视化讲解）</a></div>
+  </div>
+
+  <div class="card">
+    <h3>Tokenization 与解码</h3>
+    <div class="task" data-id="1-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-3')"></div>
+      <div class="task-body">
+        <div class="task-title">学习 Tokenization：BPE 算法步骤、tiktoken 库使用</div>
+        <div class="task-desc">理解 subword 分词、词表大小与 token 计数的工程影响</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre>import tiktoken
+enc = tiktoken.encoding_for_model("gpt-4o")
+tokens = enc.encode("Hello, 告警分析 Agent!")
+print(len(tokens), tokens)</pre>
+
+    <div class="task" data-id="1-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-4')"></div>
+      <div class="task-body">
+        <div class="task-title">掌握解码策略：Temperature、Top-K、Top-P 采样</div>
+        <div class="task-desc">理解 greedy / sampling 如何影响输出多样性与稳定性</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>架构对比与成本</h3>
+    <div class="task" data-id="1-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-5')"></div>
+      <div class="task-body">
+        <div class="task-title">理解上下文窗口限制和 O(n²) 计算成本</div>
+        <div class="task-desc">知道为什么长上下文贵、KV Cache 如何优化推理</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="1-6">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-6')"></div>
+      <div class="task-body">
+        <div class="task-title">对比 GPT(decoder-only) vs BERT(encoder-only) 架构差异</div>
+        <div class="task-desc">生成式 vs 理解式：因果掩码、双向注意力、典型应用场景</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <div class="tip">面试常问：GPT 用 causal mask 保证只能看到左侧 token；BERT 用双向注意力做理解任务。</div>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 1-2 检查点：</strong>能用自己的话解释"Temperature=0.7 和 Temperature=0 的区别"以及"为什么 Transformer 能并行计算"。
+  </div>
+</div>
+
+<!-- ============ Day 3-4 ============ -->
+<div class="day" id="day3">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--purple)">D3<br>D4</div>
+    <div class="day-info">
+      <h2>Go 语言基础</h2>
+      <p>预计 8 小时 · 掌握 Go 语法、并发与 HTTP API 开发</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>环境与语法</h3>
+    <div class="task" data-id="3-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-1')"></div>
+      <div class="task-body">
+        <div class="task-title">Go 环境搭建：安装 Go、创建第一个项目（go mod init）</div>
+        <div class="task-desc">安装 Go 1.21+，配置 GOPATH，跑通 hello world</div>
+        <div class="task-time">30 分钟</div>
+      </div>
+    </div>
+    <pre>go version
+mkdir alert-agent &amp;&amp; cd alert-agent
+go mod init github.com/you/alert-agent
+go run main.go</pre>
+
+    <div class="task" data-id="3-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-2')"></div>
+      <div class="task-body">
+        <div class="task-title">基础语法：变量声明（var/:=）、类型系统、零值概念</div>
+        <div class="task-desc">对比 Python 的动态类型，理解 Go 的静态类型与编译期检查</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="3-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-3')"></div>
+      <div class="task-body">
+        <div class="task-title">数据结构：slice（切片）、map、struct，与 Python 的 list/dict/class 对比</div>
+        <div class="task-desc">理解值类型 vs 引用类型、struct tag 的 JSON 序列化</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <div class="resource">📖 <a href="https://go.dev/tour/" target="_blank">A Tour of Go 官方教程</a></div>
+  </div>
+
+  <div class="card">
+    <h3>函数与并发</h3>
+    <div class="task" data-id="3-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-4')"></div>
+      <div class="task-body">
+        <div class="task-title">函数：多返回值、错误处理（if err != nil）、defer 关键字</div>
+        <div class="task-desc">Go 的错误处理哲学：显式错误、不用 exception</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="3-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-5')"></div>
+      <div class="task-body">
+        <div class="task-title">并发编程：goroutine、channel、select、WaitGroup</div>
+        <div class="task-desc">理解 CSP 模型："不要通过共享内存通信，而要通过通信共享内存"</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <pre>var wg sync.WaitGroup
+ch := make(chan string, 2)
+wg.Add(2)
+go func() { ch &lt;- "worker-1"; wg.Done() }()
+go func() { ch &lt;- "worker-2"; wg.Done() }()
+wg.Wait()
+close(ch)</pre>
+  </div>
+
+  <div class="card">
+    <h3>HTTP API 实战</h3>
+    <div class="task" data-id="3-6">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-6')"></div>
+      <div class="task-body">
+        <div class="task-title">实战：用 Go 写一个 HTTP server + JSON API（net/http + encoding/json）</div>
+        <div class="task-desc">实现 /alert 端点，接收 JSON 请求并返回 JSON 响应</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <pre>package main
+
+import (
+    "fmt"
+    "net/http"
+    "encoding/json"
+)
+
+type AlertRequest struct {
+    Message string `json:"message"`
+    Level   string `json:"level"`
+}
+
+type AlertResponse struct {
+    Status  string `json:"status"`
+    AgentID string `json:"agent_id"`
+}
+
+func handleAlert(w http.ResponseWriter, r *http.Request) {
+    var req AlertRequest
+    json.NewDecoder(r.Body).Decode(&amp;req)
+
+    resp := AlertResponse{Status: "received", AgentID: "agent-001"}
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(resp)
+}
+
+func main() {
+    http.HandleFunc("/alert", handleAlert)
+    fmt.Println("Server running on :8080")
+    http.ListenAndServe(":8080", nil)
+}</pre>
+    <pre># 测试
+curl -X POST http://localhost:8080/alert \
+  -H "Content-Type: application/json" \
+  -d '{"message":"CPU 使用率 95%","level":"critical"}'</pre>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 3-4 检查点：</strong>能用 Go 写一个接收 JSON 请求、返回 JSON 响应的 HTTP 服务。
+  </div>
+</div>
+
+<!-- ============ Day 5-6 ============ -->
+<div class="day" id="day5">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--green)">D5<br>D6</div>
+    <div class="day-info">
+      <h2>阅读 Pi Agent 源码</h2>
+      <p>预计 10 小时 · 学习优秀 Agent 框架的设计与实现</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>项目结构与 LLM 抽象</h3>
+    <div class="task" data-id="5-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('5-1')"></div>
+      <div class="task-body">
+        <div class="task-title">克隆 Pi Agent 仓库：git clone https://github.com/earendil-works/pi.git</div>
+        <div class="task-desc">本地拉取代码，浏览 README 和目录结构</div>
+        <div class="task-time">15 分钟</div>
+      </div>
+    </div>
+    <pre>git clone https://github.com/earendil-works/pi.git
+cd pi &amp;&amp; ls -la</pre>
+
+    <div class="task" data-id="5-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('5-2')"></div>
+      <div class="task-body">
+        <div class="task-title">阅读项目结构：理解 monorepo 分层（pi-ai → pi-agent-core → pi-coding-agent）</div>
+        <div class="task-desc">从底层 LLM 抽象到 Agent 核心再到应用层的依赖关系</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="5-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('5-3')"></div>
+      <div class="task-body">
+        <div class="task-title">深入 pi-ai 包：学习统一 LLM API 的 Provider 抽象模式</div>
+        <div class="task-desc">理解如何用一个接口适配 OpenAI、Anthropic 等多家模型</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <div class="resource">📖 <a href="https://github.com/earendil-works/pi" target="_blank">Pi Agent GitHub 仓库</a></div>
+  </div>
+
+  <div class="card">
+    <h3>Agent Loop 与工具系统</h3>
+    <div class="task" data-id="5-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('5-4')"></div>
+      <div class="task-body">
+        <div class="task-title">深入 pi-agent-core：理解 Agent Loop（LLM调用 → 工具执行 → 状态更新 → 循环）</div>
+        <div class="task-desc">追踪一次完整 turn 的代码路径，理解循环终止条件</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="5-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('5-5')"></div>
+      <div class="task-body">
+        <div class="task-title">学习工具系统：read/write/edit/bash 工具的接口设计</div>
+        <div class="task-desc">理解 Tool 的 schema 定义、参数校验与结果回传格式</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="5-6">
+      <div class="task-check"><input type="checkbox" onchange="toggle('5-6')"></div>
+      <div class="task-body">
+        <div class="task-title">理解事件系统：turn_start → llm_start → text_chunk → tool_start → tool_result → turn_end</div>
+        <div class="task-desc">画出事件流时序图，理解与流式输出的关系</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>扩展机制</h3>
+    <div class="task" data-id="5-7">
+      <div class="task-check"><input type="checkbox" onchange="toggle('5-7')"></div>
+      <div class="task-body">
+        <div class="task-title">学习扩展机制：Extensions、Skills、Prompt Templates</div>
+        <div class="task-desc">理解如何通过插件化方式扩展 Agent 能力而不改核心代码</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <div class="tip">阅读源码时建议：先跟一条 happy path（用户输入 → 调工具 → 返回结果），再回头看错误处理和边界情况。</div>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 5-6 检查点：</strong>能画出 Pi Agent 一次完整请求的调用链路图。
+  </div>
+</div>
+
+<!-- ============ Day 7 ============ -->
+<div class="day" id="day7">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--orange)">D7</div>
+    <div class="day-info">
+      <h2>复习 + 整合</h2>
+      <p>预计 5 小时 · 串联 LLM 原理、Go 实战与源码阅读成果</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>知识整合</h3>
+    <div class="task" data-id="7-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('7-1')"></div>
+      <div class="task-body">
+        <div class="task-title">整理 LLM 原理笔记：重点回顾 Attention、Tokenization、解码策略</div>
+        <div class="task-desc">用一页纸总结核心概念，每个概念配一个面试级回答</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="7-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('7-2')"></div>
+      <div class="task-body">
+        <div class="task-title">用 Go 实现一个简易 Agent 框架原型（接收请求 → 调 LLM API → 返回结果）</div>
+        <div class="task-desc">复用 Day 3 的 HTTP server，加上 LLM API 调用逻辑</div>
+        <div class="task-time">120 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="7-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('7-3')"></div>
+      <div class="task-body">
+        <div class="task-title">对比 Pi Agent 和 LangGraph 的架构设计差异（至少 3 点）</div>
+        <div class="task-desc">从状态管理、工具抽象、扩展机制、事件流等维度对比</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>维度</th><th>Pi Agent</th><th>LangGraph</th></tr>
+      <tr><td>状态模型</td><td>事件驱动 + turn 状态</td><td>显式 StateGraph + Reducer</td></tr>
+      <tr><td>编排方式</td><td>Agent Loop 循环</td><td>Node + Edge 图编排</td></tr>
+      <tr><td>扩展性</td><td>Extensions / Skills 插件</td><td>自定义 Node + Checkpoint</td></tr>
+    </table>
+
+    <div class="task" data-id="7-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('7-4')"></div>
+      <div class="task-body">
+        <div class="task-title">模拟面试：回答 5 个 LLM 原理 + Go 基础面试题</div>
+        <div class="task-desc">自测：Self-Attention 原理、Temperature 作用、goroutine vs thread、channel 用途、Agent Loop 流程</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Week 4 最终检查点：</strong><br>
+    ✅ 能解释 Transformer 核心机制与解码策略<br>
+    ✅ 能用 Go 写 JSON HTTP API 并理解并发模型<br>
+    ✅ 能画出 Pi Agent 完整调用链路<br>
+    ✅ 能对比 Pi Agent 与 LangGraph 的架构差异<br>
+    ✅ 完成 5 道 LLM + Go 模拟面试题
+  </div>
+</div>
+
+</div><!-- container -->
+
+<!-- Summary bar -->
+<div class="summary-bar">
+  <div class="text" id="summaryText">0 / 23</div>
+  <div class="bar"><div class="fill" id="summaryFill" style="width:0%"></div></div>
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var TOTAL = 23;
+  function getProgress(){try{return JSON.parse(localStorage.getItem('w4-progress')||'{}')}catch(e){return{}}}
+  function saveProgress(p){localStorage.setItem('w4-progress',JSON.stringify(p))}
+  function updateUI(){
+    var p=getProgress(),done=0;
+    document.querySelectorAll('.task').forEach(function(el){
+      var id=el.getAttribute('data-id');
+      if(!id)return;
+      var cb=el.querySelector('input[type="checkbox"]');
+      if(p[id]){cb.checked=true;el.classList.add('done');done++}
+      else{cb.checked=false;el.classList.remove('done')}
+    });
+    document.getElementById('summaryText').textContent=done+' / '+TOTAL;
+    document.getElementById('summaryFill').style.width=(done/TOTAL*100)+'%';
+  }
+  window.toggle=function(id){var p=getProgress();p[id]=!p[id];saveProgress(p);updateUI()};
+  updateUI();
+
+  // Theme
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  // Progress bar
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+  });
+
+  // Scroll animations
+  var els=document.querySelectorAll('.card,.checkpoint,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

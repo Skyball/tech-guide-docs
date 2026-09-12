@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 — 做深做精</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#059669;--accent-light:#d1fae5;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--blue:#2563eb;--blue-light:#dbeafe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#34d399;--accent-light:#064e3b;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--blue:#60a5fa;--blue-light:#1e3a5f;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:800px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#064e3b 0%,#059669 100%);color:#fff;text-align:center;padding:48px 20px}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem}
+.hero .tag{display:inline-block;margin-top:12px;padding:6px 16px;border-radius:20px;background:rgba(255,255,255,.2);font-size:.9rem}
+.nav-back{display:inline-flex;align-items:center;gap:6px;padding:12px 0;color:var(--accent);text-decoration:none;font-size:.9rem;font-weight:600}
+.nav-back:hover{text-decoration:underline}
+.day{margin-top:40px}
+.day-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.day-num{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:#fff;flex-shrink:0}
+.day-info h2{font-size:1.3rem;font-weight:700}
+.day-info p{font-size:.85rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:12px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.task{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.task:last-child{border-bottom:none}
+.task-check{flex-shrink:0;width:22px;height:22px;margin-top:2px}
+.task-check input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.task-body{flex:1}
+.task-title{font-weight:600;font-size:.95rem}
+.task-desc{font-size:.85rem;color:var(--muted);margin-top:2px}
+.task-time{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent);font-weight:600;margin-top:4px}
+.task.done .task-title{text-decoration:line-through;color:var(--muted)}
+.resource{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--blue-light);margin:6px 0;font-size:.85rem;transition:background .3s}
+.resource a{color:var(--blue);text-decoration:none;font-weight:600;word-break:break-all}
+.resource a:hover{text-decoration:underline}
+.checkpoint{padding:14px 18px;border-radius:10px;background:var(--green-light);border-left:4px solid var(--green);margin:16px 0;font-size:.9rem;transition:background .3s}
+.checkpoint strong{color:var(--green)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.5;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.grid-2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.85rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.summary-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:16px;z-index:100;transition:background .3s}
+.summary-bar .bar{flex:1;max-width:400px;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.summary-bar .fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.summary-bar .text{font-size:.85rem;font-weight:600;color:var(--muted);min-width:100px;text-align:right}
+.theme-toggle{position:fixed;bottom:64px;right:20px;z-index:1000;width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Week 2</h1>
+  <p>做深做精 — RAG 优化 + 向量数据库 + 模型调度 + 可观测性</p>
+  <div class="tag">7 天 · 24 个任务 · 目标：接近生产级的 Agent 系统</div>
+</div>
+
+<div class="container">
+<a href="ai-agent-engineering-guide.html" class="nav-back">← 返回总指南</a>
+
+<!-- Day 8 -->
+<div class="day" id="day8">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--green)">D8</div>
+    <div class="day-info">
+      <h2>RAG 优化 — Reranker + Query Rewrite</h2>
+      <p>预计 5 小时 · 让检索结果从"能用"变成"好用"</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>加 Reranker 精排</h3>
+    <div class="task" data-id="8-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('8-1')"></div>
+      <div class="task-body">
+        <div class="task-title">安装 Reranker</div>
+        <div class="task-time">10 分钟</div>
+      </div>
+    </div>
+    <pre>pip install cohere
+# 或用开源方案
+pip install FlagEmbedding  # BGE-Reranker</pre>
+
+    <div class="task" data-id="8-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('8-2')"></div>
+      <div class="task-body">
+        <div class="task-title">集成 Reranker 到检索流水线</div>
+        <div class="task-desc">初检 20 条 → Reranker 精排 → Top 5</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <pre>from langchain.retrievers import ContextualCompressionRetriever
+from langchain_cohere import CohereRerank
+
+reranker = CohereRerank(model="rerank-v3.5", top_n=5)
+retriever = ContextualCompressionRetriever(
+    base_compressor=reranker,
+    base_retriever=hybrid_retriever,  # Week 1 的混合检索
+)
+results = retriever.invoke("什么是 Agent？")
+for doc in results:
+    print(f"[score: {doc.metadata.get('relevance_score', 'N/A')}] {doc.page_content[:80]}")</pre>
+
+    <div class="task" data-id="8-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('8-3')"></div>
+      <div class="task-body">
+        <div class="task-title">对比有无 Reranker 的效果</div>
+        <div class="task-desc">用 Week 1 的测试问题，记录 Top-1 命中率的差异</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>实现 Query Rewrite</h3>
+    <div class="task" data-id="8-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('8-4')"></div>
+      <div class="task-body">
+        <div class="task-title">用 LLM 改写查询</div>
+        <div class="task-desc">消除指代、补充隐含条件、拆分复合问题</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre>rewrite_prompt = ChatPromptTemplate.from_messages([
+    ("system", """将用户问题改写为更适合检索的独立查询。
+要求：消除指代词，补充隐含条件。如果是复合问题，拆成多个查询。
+输出 JSON 数组格式。"""),
+    ("human", "对话历史：{history}\n当前问题：{question}"),
+])
+
+rewrite_chain = rewrite_prompt | llm | JsonOutputParser()
+queries = rewrite_chain.invoke({
+    "history": "用户之前问了 Agent 的概念",
+    "question": "它和 RAG 怎么配合？"
+})
+# 输出: ["AI Agent 和 RAG 系统如何协作", "Agent 中 RAG 工具的集成方式"]</pre>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 8 检查点：</strong>检索流水线 = 混合检索 + Reranker + Query Rewrite，有对比数据证明每一步的提升。
+  </div>
+</div>
+
+<!-- Day 9 -->
+<div class="day" id="day9">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--green)">D9</div>
+    <div class="day-info">
+      <h2>对话管理 + RAGAS 评估</h2>
+      <p>预计 5 小时 · 解决多轮对话的 token 问题，学会量化评估 RAG</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>对话历史压缩</h3>
+    <div class="task" data-id="9-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('9-1')"></div>
+      <div class="task-body">
+        <div class="task-title">实现滑动窗口 + 摘要压缩</div>
+        <div class="task-desc">保留最近 3 轮 + 旧对话压缩成摘要</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <pre>from langchain_core.messages import HumanMessage, SystemMessage
+
+async def compress_history(messages, max_tokens=3000):
+    """保留系统消息 + 最近 3 轮，中间部分压缩"""
+    if count_tokens(messages) <= max_tokens:
+        return messages
+    system = messages[0]
+    recent = messages[-6:]  # 最近 3 轮（每轮 human+ai）
+    middle = messages[1:-6]
+    if not middle:
+        return messages
+    summary = await llm.ainvoke([
+        SystemMessage(content="用 100 字概括这段对话的关键信息"),
+        HumanMessage(content=str(middle)),
+    ])
+    return [system, HumanMessage(content=f"[对话摘要] {summary.content}"), *recent]</pre>
+  </div>
+
+  <div class="card">
+    <h3>RAGAS 评估</h3>
+    <div class="task" data-id="9-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('9-2')"></div>
+      <div class="task-body">
+        <div class="task-title">安装 RAGAS</div>
+        <div class="task-time">10 分钟</div>
+      </div>
+    </div>
+    <pre>pip install ragas</pre>
+
+    <div class="task" data-id="9-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('9-3')"></div>
+      <div class="task-body">
+        <div class="task-title">准备评估数据集</div>
+        <div class="task-desc">20 个问题 + 标准答案 + 标准参考文档</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="9-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('9-4')"></div>
+      <div class="task-body">
+        <div class="task-title">跑 RAGAS 评估</div>
+        <div class="task-desc">得到 Faithfulness / Relevancy / Precision / Recall 四维分数</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <div class="resource">📖 <a href="https://docs.ragas.io/en/latest/getstarted/testset_generation/" target="_blank">RAGAS 官方文档</a></div>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 9 检查点：</strong>有 RAGAS 四维评分数据，能说清每个指标的含义和优化方向。
+  </div>
+</div>
+
+<!-- Day 10-11 -->
+<div class="day" id="day10">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--purple)">D10<br>D11</div>
+    <div class="day-info">
+      <h2>向量数据库深入</h2>
+      <p>预计 8 小时 · FAISS vs Milvus 对比 + 索引原理</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Day 10：FAISS 深入 + Milvus 搭建</h3>
+    <div class="task" data-id="10-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('10-1')"></div>
+      <div class="task-body">
+        <div class="task-title">FAISS 索引类型实验</div>
+        <div class="task-desc">对比 Flat（精确） vs IVF（近似） vs HNSW 的速度和精度</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="10-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('10-2')"></div>
+      <div class="task-body">
+        <div class="task-title">Docker 部署 Milvus</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre>pip install pymilvus
+# Docker 单机版
+wget https://raw.githubusercontent.com/milvus-io/milvus/master/scripts/standalone_embed.sh
+bash standalone_embed.sh start</pre>
+
+    <div class="task" data-id="10-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('10-3')"></div>
+      <div class="task-body">
+        <div class="task-title">把 Week 1 的 RAG 从 FAISS 迁移到 Milvus</div>
+        <div class="task-desc">用 LangChain 的 Milvus 集成</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Day 11：索引原理 + 性能对比</h3>
+    <div class="task" data-id="11-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('11-1')"></div>
+      <div class="task-body">
+        <div class="task-title">理解 HNSW 索引原理</div>
+        <div class="task-desc">面试高频：HNSW 是分层的小世界图，层数越高连接越稀疏，搜索从顶层开始逐层精确</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <div class="tip">面试回答要点：HNSW 构建 O(N log N)，查询 O(log N)。IVF 先聚类再搜，适合大数据量。HNSW 精度高但内存大，IVF 内存小但精度低。</div>
+
+    <div class="task" data-id="11-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('11-2')"></div>
+      <div class="task-body">
+        <div class="task-title">FAISS vs Milvus 性能对比</div>
+        <div class="task-desc">1 万条数据下对比检索延迟、内存占用</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="11-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('11-3')"></div>
+      <div class="task-body">
+        <div class="task-title">整理选型对比表</div>
+        <div class="task-desc">FAISS / Milvus / Chroma / Pinecone 的适用场景</div>
+        <div class="task-time">30 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 10-11 检查点：</strong>能解释 HNSW 原理，有 FAISS vs Milvus 的性能对比数据，知道什么场景选什么。
+  </div>
+</div>
+
+<!-- Day 12 -->
+<div class="day" id="day12">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--orange)">D12</div>
+    <div class="day-info">
+      <h2>模型调度 + 流式输出 + Prompt 设计</h2>
+      <p>预计 5 小时 · 多模型路由、Fallback、SSE 流式推送</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>模型路由</h3>
+    <div class="task" data-id="12-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('12-1')"></div>
+      <div class="task-body">
+        <div class="task-title">实现简单模型路由器</div>
+        <div class="task-desc">简单问题 → mini 模型，复杂问题 → 大模型</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre>class ModelRouter:
+    def __init__(self):
+        self.simple = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        self.complex = ChatOpenAI(model="gpt-4o", temperature=0)
+
+    async def route(self, query: str):
+        classifier = await self.simple.ainvoke(
+            f"判断这个问题的复杂度。只输出 simple 或 complex：\n{query}"
+        )
+        if "simple" in classifier.content.lower():
+            return self.simple
+        return self.complex</pre>
+
+    <div class="task" data-id="12-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('12-2')"></div>
+      <div class="task-body">
+        <div class="task-title">实现 Fallback 机制</div>
+        <div class="task-desc">主模型超时/报错时自动切备用模型</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <pre>from langchain_core.runnables import RunnableWithFallbacks
+
+primary = ChatOpenAI(model="gpt-4o", request_timeout=10)
+fallback = ChatOpenAI(model="gpt-4o-mini", request_timeout=30)
+llm_with_fallback = primary.with_fallbacks([fallback])</pre>
+  </div>
+
+  <div class="card">
+    <h3>Prompt 实战</h3>
+    <div class="task" data-id="12-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('12-3')"></div>
+      <div class="task-body">
+        <div class="task-title">为 Week 1 的 Supervisor 写结构化 Prompt</div>
+        <div class="task-desc">角色 → 可用资源 → 决策规则 → 输出格式</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="12-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('12-4')"></div>
+      <div class="task-body">
+        <div class="task-title">加 Few-shot 示例</div>
+        <div class="task-desc">3 个示例覆盖正常 + 边界情况</div>
+        <div class="task-time">30 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="12-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('12-5')"></div>
+      <div class="task-body">
+        <div class="task-title">测试 Prompt 效果</div>
+        <div class="task-desc">10 个路由测试用例，记录准确率</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 12 检查点：</strong>模型路由 + Fallback 可用，Supervisor Prompt 路由准确率 > 80%。
+  </div>
+</div>
+
+<!-- Day 13-14 -->
+<div class="day" id="day13">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--blue)">D13<br>D14</div>
+    <div class="day-info">
+      <h2>可观测性 — 链路追踪 + 指标监控</h2>
+      <p>预计 8 小时 · 给 Agent 系统加上"仪表盘"</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Day 13：LangSmith 追踪（快速上手）</h3>
+    <div class="task" data-id="13-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('13-1')"></div>
+      <div class="task-body">
+        <div class="task-title">注册 LangSmith 并开启追踪</div>
+        <div class="task-desc">一行环境变量开启，自动追踪所有 chain/agent/tool 调用</div>
+        <div class="task-time">30 分钟</div>
+      </div>
+    </div>
+    <pre># .env
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=lsv2_xxxxx
+LANGCHAIN_PROJECT=my-agent-demo</pre>
+
+    <div class="task" data-id="13-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('13-2')"></div>
+      <div class="task-body">
+        <div class="task-title">跑几个测试请求，在 LangSmith UI 上看 trace</div>
+        <div class="task-desc">理解 trace 的树状结构：Agent → LLM call → Tool call → LLM call</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <div class="resource">📖 <a href="https://docs.smith.langchain.com/" target="_blank">LangSmith 官方文档</a></div>
+  </div>
+
+  <div class="card">
+    <h3>Day 13 下午：OpenTelemetry 基础</h3>
+    <div class="task" data-id="13-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('13-3')"></div>
+      <div class="task-body">
+        <div class="task-title">安装 OpenTelemetry</div>
+        <div class="task-time">10 分钟</div>
+      </div>
+    </div>
+    <pre>pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp</pre>
+
+    <div class="task" data-id="13-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('13-4')"></div>
+      <div class="task-body">
+        <div class="task-title">给 Agent 关键环节加 Span</div>
+        <div class="task-desc">handle_request → supervisor_decision → agent_execution → tool_call → llm_call</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Day 14：Prometheus + Grafana</h3>
+    <div class="task" data-id="14-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('14-1')"></div>
+      <div class="task-body">
+        <div class="task-title">添加 Prometheus 指标</div>
+        <div class="task-desc">请求数、延迟、Token 消耗、工具调用次数</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre>pip install prometheus-client</pre>
+
+    <div class="task" data-id="14-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('14-2')"></div>
+      <div class="task-body">
+        <div class="task-title">Docker 跑 Prometheus + Grafana</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <pre># docker-compose.yml 加 prometheus + grafana
+# 配置 prometheus.yml scrape agent-api:8000/metrics</pre>
+
+    <div class="task" data-id="14-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('14-3')"></div>
+      <div class="task-body">
+        <div class="task-title">搭建 Grafana Dashboard</div>
+        <div class="task-desc">4 个面板：请求 QPS、延迟 P50/P99、Token 消耗趋势、错误率</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Week 2 最终检查点：</strong><br>
+    ✅ RAG 有 Reranker + Query Rewrite + 对话压缩<br>
+    ✅ 有 RAGAS 四维评分数据<br>
+    ✅ 向量数据库对比报告（FAISS vs Milvus）<br>
+    ✅ 模型路由 + Fallback 可用<br>
+    ✅ LangSmith 追踪 + Prometheus/Grafana 监控面板
+  </div>
+</div>
+
+</div>
+
+<div class="summary-bar">
+  <div class="text" id="summaryText">0 / 24</div>
+  <div class="bar"><div class="fill" id="summaryFill" style="width:0%"></div></div>
+</div>
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var TOTAL=24;
+  function getProgress(){try{return JSON.parse(localStorage.getItem('w2-progress')||'{}')}catch(e){return{}}}
+  function saveProgress(p){localStorage.setItem('w2-progress',JSON.stringify(p))}
+  function updateUI(){
+    var p=getProgress(),done=0;
+    document.querySelectorAll('.task').forEach(function(el){
+      var id=el.getAttribute('data-id');if(!id)return;
+      var cb=el.querySelector('input[type="checkbox"]');
+      if(p[id]){cb.checked=true;el.classList.add('done');done++}
+      else{cb.checked=false;el.classList.remove('done')}
+    });
+    document.getElementById('summaryText').textContent=done+' / '+TOTAL;
+    document.getElementById('summaryFill').style.width=(done/TOTAL*100)+'%';
+  }
+  window.toggle=function(id){var p=getProgress();p[id]=!p[id];saveProgress(p);updateUI()};
+  updateUI();
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+  });
+  var els=document.querySelectorAll('.card,.checkpoint,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

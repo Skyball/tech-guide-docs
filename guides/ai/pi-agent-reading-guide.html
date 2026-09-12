@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pi Agent 源码阅读指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#10b981 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Pi Agent 源码阅读指南</h1>
+  <p>深入理解 earendil-works/pi 开源 AI Agent 工具链<br>从统一 LLM API 到 Agent 运行时、工具系统与会话管理</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#overview">项目概览</a>
+    <a href="#architecture">分层架构</a>
+    <a href="#pi-ai">pi-ai</a>
+    <a href="#agent-core">Agent 运行时</a>
+    <a href="#tools">工具系统</a>
+    <a href="#coding-agent">编码 Agent</a>
+    <a href="#events">事件与流式</a>
+    <a href="#state">状态与会话</a>
+    <a href="#extensibility">可扩展性</a>
+    <a href="#roadmap">阅读路线</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. 项目概览 ==================== -->
+<section id="overview">
+<h2>项目概览</h2>
+
+<div class="card card-accent">
+  <p><strong>Pi Agent</strong>（<a href="https://github.com/earendil-works/pi" target="_blank">earendil-works/pi</a>）是一个 TypeScript monorepo AI Agent 工具链，MIT 许可，GitHub 61K+ stars。它不是一个「黑盒框架」，而是一组<strong>松耦合、可组合</strong>的包——你可以只用 <code>pi-ai</code> 做 LLM 抽象，也可以整套跑起交互式编码 Agent CLI。</p>
+</div>
+
+<h3>为什么值得读？</h3>
+<div class="grid-2">
+<div class="card">
+  <span class="tag tag-green">架构清晰</span>
+  <p class="mt-2">四层分离：AI → Agent → Application → UI。每层职责单一，依赖方向严格向下，<code>pi-ai</code> 零依赖 agent 逻辑。</p>
+</div>
+<div class="card">
+  <span class="tag tag-blue">工程成熟</span>
+  <p class="mt-2">事件驱动、不可变状态、Provider 抽象、扩展系统——都是生产级 Agent 系统的标配模式，代码量适中、可读性高。</p>
+</div>
+<div class="card">
+  <span class="tag tag-purple">TypeScript 全栈</span>
+  <p class="mt-2">类型安全贯穿 LLM 消息、工具 Schema、Agent 状态。对熟悉 Node/TS 的开发者友好，也便于对比 Python 生态（LangGraph、AutoGen）。</p>
+</div>
+<div class="card">
+  <span class="tag tag-orange">可扩展</span>
+  <p class="mt-2">Extensions、Skills、Prompt Templates、Packages、Themes——扩展点设计可直接借鉴到你自己的 Agent 平台。</p>
+</div>
+</div>
+
+<h3>Monorepo 包结构</h3>
+<div class="card">
+<table>
+<tr><th>包名</th><th>npm 包</th><th>职责</th></tr>
+<tr><td><code>packages/ai</code></td><td><code>@earendil-works/pi-ai</code></td><td>统一多 Provider LLM API（OpenAI、Anthropic、Google 等）</td></tr>
+<tr><td><code>packages/agent</code></td><td><code>@earendil-works/pi-agent-core</code></td><td>Stateful Agent 运行时：循环、工具执行、事件流</td></tr>
+<tr><td><code>packages/coding-agent</code></td><td><code>@earendil-works/pi-coding-agent</code></td><td>交互式编码 Agent CLI：扩展、Skills、会话</td></tr>
+<tr><td><code>packages/tui</code></td><td><code>@earendil-works/pi-tui</code></td><td>终端 UI：差分渲染、组件化</td></tr>
+<tr><td><code>packages/web-ui</code></td><td><code>@earendil-works/pi-web-ui</code></td><td>可复用 Web 组件</td></tr>
+</table>
+</div>
+
+<h3>包依赖关系</h3>
+<div class="card">
+<pre><code>                    ┌─────────────────┐
+                    │    pi-web-ui    │  （独立，可选）
+                    └─────────────────┘
+
+┌──────────┐     ┌──────────────────┐     ┌───────────────────┐
+│  pi-ai   │ ──► │  pi-agent-core   │ ──► │  pi-coding-agent  │
+└──────────┘     └──────────────────┘     └─────────┬─────────┘
+                                                     │
+                                            ┌────────▼────────┐
+                                            │     pi-tui      │
+                                            └─────────────────┘
+
+依赖规则：pi-ai 不依赖 agent；pi-agent-core 只依赖 pi-ai；
+pi-coding-agent 依赖 agent-core + pi-ai；pi-tui 被 coding-agent 使用。</code></pre>
+</div>
+
+<h3>克隆与构建</h3>
+<div class="card card-green">
+<pre><code><span class="cm"># 克隆仓库</span>
+git clone https://github.com/earendil-works/pi.git
+cd pi
+
+<span class="cm"># 安装依赖（npm workspaces）</span>
+npm install
+
+<span class="cm"># 构建所有包</span>
+npm run build
+
+<span class="cm"># 运行编码 Agent CLI（交互模式）</span>
+npx pi
+
+<span class="cm"># 或从 packages/coding-agent 开发</span>
+cd packages/coding-agent && npm run dev</code></pre>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>设计启示</strong>：Monorepo + 严格分层让「LLM 客户端库」和「Agent 框架」可以独立演进。如果你在做 Agent 平台，应把 Provider 层做成零业务依赖的独立包——这正是 Pi 最值得抄的作业。</div>
+</div>
+</section>
+
+<!-- ==================== 2. 分层架构解析 ==================== -->
+<section id="architecture">
+<h2>分层架构解析</h2>
+
+<div class="card card-accent">
+  <p>Pi 采用<strong>四层架构</strong>，每层只依赖下层，扩展点明确。理解这层划分，是阅读整个代码库的主线。</p>
+</div>
+
+<h3>四层一览</h3>
+<div class="card">
+<table>
+<tr><th>层级</th><th>包</th><th>核心职责</th><th>扩展点</th></tr>
+<tr><td><span class="tag tag-blue">AI Layer</span></td><td>pi-ai</td><td>Provider 抽象、流式 API、凭证解析、模型注册</td><td>新增 Provider、自定义 API 实现</td></tr>
+<tr><td><span class="tag tag-green">Agent Layer</span></td><td>pi-agent-core</td><td>Agent 循环、工具执行、状态、事件</td><td>自定义 AgentTool、Hook、消息转换</td></tr>
+<tr><td><span class="tag tag-orange">Application Layer</span></td><td>pi-coding-agent</td><td>CLI、扩展、Skills、会话、内置工具</td><td>Extension 模块、Skill MD、Prompt Template</td></tr>
+<tr><td><span class="tag tag-purple">UI Layer</span></td><td>pi-tui / pi-web-ui</td><td>终端/Web 渲染、订阅 Agent 事件</td><td>Theme、自定义组件</td></tr>
+</table>
+</div>
+
+<h3>为什么分层？</h3>
+<div class="grid-2">
+<div class="card">
+  <h3>单一职责</h3>
+  <p><code>pi-ai</code> 只管「怎么调 LLM」，不关心工具或会话树。换模型 Provider 不动 Agent 逻辑。</p>
+</div>
+<div class="card">
+  <h3>可测试性</h3>
+  <p>Agent 循环可用 Mock LLM 单测；Provider 可独立测流式解析。层间通过接口契约隔离。</p>
+</div>
+<div class="card">
+  <h3>可复用性</h3>
+  <p>第三方可只依赖 <code>pi-agent-core</code> 自建业务 Agent，不必引入整个 CLI。</p>
+</div>
+<div class="card">
+  <h3>Bundle 优化</h3>
+  <p>Provider 工厂 + 懒加载 API 实现，按需打包 SDK chunk，避免一把梭 import 所有厂商。</p>
+</div>
+</div>
+
+<h3>与其他框架对比</h3>
+<div class="vs">
+<div class="card">
+  <h3>Pi Agent</h3>
+  <ul class="text-sm mt-2">
+    <li>四层包分离，TS 类型优先</li>
+    <li>事件流 + 不可变 AgentState</li>
+    <li>Steering / Follow-up 消息队列</li>
+    <li>Extension 即 TS 模块 + Hook</li>
+  </ul>
+</div>
+<div class="vs-divider">vs</div>
+<div class="card">
+  <h3>LangGraph</h3>
+  <ul class="text-sm mt-2">
+    <li>图节点 + 边状态机（Python）</li>
+    <li>Checkpoint 与 interrupt 一等公民</li>
+    <li>Tool 绑定在 Node 上</li>
+    <li>可视化图编排</li>
+  </ul>
+</div>
+</div>
+<div class="vs">
+<div class="card">
+  <h3>Pi Agent</h3>
+  <ul class="text-sm mt-2">
+    <li>线性 Agent Loop + 并行工具</li>
+    <li>Session 树分支（coding-agent）</li>
+  </ul>
+</div>
+<div class="vs-divider">vs</div>
+<div class="card">
+  <h3>AutoGen</h3>
+  <ul class="text-sm mt-2">
+    <li>多 Agent 对话编排</li>
+    <li>角色分工（Assistant/User/GroupChat）</li>
+    <li>更偏协作而非单 Agent 工具链</li>
+  </ul>
+</div>
+</div>
+
+<div class="tip"><strong>类比 FastAPI</strong>：pi-ai ≈ Starlette/HTTP 抽象层；pi-agent-core ≈ 路由 + 依赖注入；pi-coding-agent ≈ 你的业务 App；pi-tui ≈ 前端。分层思路相通。</div>
+</section>
+
+<!-- ==================== 3. pi-ai ==================== -->
+<section id="pi-ai">
+<h2>pi-ai：统一 LLM API 层</h2>
+
+<div class="card card-accent">
+  <p><code>@earendil-works/pi-ai</code> 把所有 LLM 厂商藏在统一接口后面。核心概念：<strong>Provider</strong>（运行时单元）+ <strong>Models</strong>（Provider 集合）+ <strong>Stream</strong>（流式事件）。</p>
+</div>
+
+<h3>Provider 模式</h3>
+<div class="card">
+<pre><code><span class="cm">// Provider = 模型目录 + 鉴权 + API 实现</span>
+<span class="kw">import</span> { createModels } <span class="kw">from</span> <span class="st">"@earendil-works/pi-ai"</span>;
+<span class="kw">import</span> { anthropicProvider } <span class="kw">from</span> <span class="st">"@earendil-works/pi-ai/providers/anthropic"</span>;
+
+<span class="kw">const</span> models = createModels({
+  providers: [anthropicProvider()],
+});
+
+<span class="cm">// 流式调用——与具体厂商无关</span>
+<span class="kw">const</span> stream = models.stream({
+  model: <span class="st">"claude-sonnet-4-20250514"</span>,
+  messages: [{ role: <span class="st">"user"</span>, content: <span class="st">"Hello"</span> }],
+  tools: [...],
+});</code></pre>
+</div>
+
+<h3>内部 API 实现共享</h3>
+<div class="card">
+<table>
+<tr><th>API 实现</th><th>使用的 Provider</th></tr>
+<tr><td><code>anthropic-messages</code></td><td>Anthropic 原生</td></tr>
+<tr><td><code>openai-responses</code></td><td>OpenAI 原生</td></tr>
+<tr><td><code>openai-completions</code></td><td>xAI、Groq、OpenRouter 等兼容端点</td></tr>
+<tr><td>Per-model dispatch</td><td>GitHub Copilot、OpenCode Zen 等混合 API</td></tr>
+</table>
+<p class="text-sm mt-2">多个 Provider 可共享同一 wire protocol，减少重复代码；新 Provider 只需实现 catalog + auth + stream 行为。</p>
+</div>
+
+<h3>流式 API 设计</h3>
+<div class="card card-green">
+  <p>流式返回 <strong>AssistantMessageEventStream</strong>，事件类型包括：</p>
+  <ul class="mt-2">
+    <li><code>text_delta</code> — 文本增量</li>
+    <li><code>thinking_delta</code> — 推理块（支持 o1/Claude thinking）</li>
+    <li><code>tool_call_start</code> / <code>tool_call_delta</code> — 工具调用增量解析</li>
+    <li><code>message_end</code> — 完整 assistant 消息</li>
+  </ul>
+  <p class="text-sm mt-2">上层 Agent 订阅这些事件，无需关心 Anthropic SSE 还是 OpenAI chunk 格式差异。</p>
+</div>
+
+<h3>如何新增 Provider</h3>
+<div class="card">
+<ol>
+  <li>在 <code>packages/ai/src/providers/</code> 新建 Provider 工厂</li>
+  <li>定义模型 catalog（id、context window、tool calling 能力）</li>
+  <li>实现 auth 解析（API Key / OAuth）</li>
+  <li>绑定 API 实现（复用 <code>openai-completions</code> 或写新 adapter）</li>
+  <li>注册到 <code>createModels({ providers: [...] })</code></li>
+</ol>
+</div>
+
+<h3>关键文件</h3>
+<div class="card">
+<table>
+<tr><th>文件</th><th>说明</th></tr>
+<tr><td><code>packages/ai/src/models.ts</code></td><td>Models 集合，路由请求到 Provider</td></tr>
+<tr><td><code>packages/ai/src/providers/*.ts</code></td><td>各厂商 Provider 工厂</td></tr>
+<tr><td><code>packages/ai/src/api/</code></td><td>底层 wire protocol 实现</td></tr>
+<tr><td><code>packages/ai/README.md</code></td><td>Provider 工厂、Tree Shaking 文档</td></tr>
+</table>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>设计模式：Provider 抽象</strong> — 与数据库 Driver、云 SDK Adapter 同构。业务只依赖 <code>stream()</code> 接口，Vendor 差异下沉到 Provider。这是任何多模型 Agent 系统的第一课。</div>
+</div>
+</section>
+
+<!-- ==================== 4. pi-agent-core ==================== -->
+<section id="agent-core">
+<h2>pi-agent-core：Agent 运行时</h2>
+
+<div class="card card-accent">
+  <p><code>@earendil-works/pi-agent-core</code> 在 pi-ai 之上实现<strong>有状态的 Agent 执行引擎</strong>：<code>Agent</code> 类封装状态与事件，<code>agentLoop</code> 驱动 LLM ↔ 工具循环。</p>
+</div>
+
+<h3>Agent 类与生命周期</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> { Agent } <span class="kw">from</span> <span class="st">"@earendil-works/pi-agent-core"</span>;
+
+<span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">Agent</span>({
+  models,
+  tools: [readTool, bashTool],
+  systemPrompt: <span class="st">"You are a coding assistant."</span>,
+});
+
+agent.on(<span class="st">"message_update"</span>, (ev) => { <span class="cm">/* UI 更新 */</span> });
+<span class="kw">await</span> agent.prompt(<span class="st">"Fix the bug in auth.ts"</span>);</code></pre>
+</div>
+
+<h3>Agent Loop 流程</h3>
+<div class="card card-green">
+<pre><code>用户输入 (prompt)
+    │
+    ▼
+┌───────────────────────────────────────┐
+│  turn_start                           │
+│  convertToLlm() 过滤/转换消息          │
+│  LLM stream → message_update 事件      │
+│  解析 tool_calls                       │
+└───────────────┬───────────────────────┘
+                │
+        有 tool_calls?
+         /        \
+       否          是
+        │           ▼
+        │    tool_execution_start
+        │    并行/串行执行 AgentTool
+        │    tool_execution_end
+        │    追加 toolResult 到 state
+        │           │
+        └─────┬─────┘
+              ▼
+         turn_end
+              │
+    shouldStop / steering / followUp?
+              │
+              └──► 下一轮 turn 或 agent_end</code></pre>
+</div>
+
+<h3>事件驱动架构</h3>
+<div class="card">
+  <p>Agent 不直接操作 UI，而是<strong>发射事件</strong>。订阅者（TUI、Web、日志）各自响应。这是 Observer 模式的典型应用。</p>
+  <table class="mt-2">
+  <tr><th>事件</th><th>触发时机</th></tr>
+  <tr><td><code>agent_start</code> / <code>agent_end</code></td><td>整次请求开始/结束</td></tr>
+  <tr><td><code>turn_start</code> / <code>turn_end</code></td><td>单轮 LLM+工具周期</td></tr>
+  <tr><td><code>message_update</code></td><td>LLM 文本/thinking 增量</td></tr>
+  <tr><td><code>tool_execution_start/end</code></td><td>工具执行前后</td></tr>
+  </table>
+</div>
+
+<h3>状态管理</h3>
+<div class="card">
+  <p><code>AgentState</code> 包含不可变的 <code>messages</code> 数组。每次更新产生新 state 引用（而非原地 mutate），便于：</p>
+  <ul>
+    <li>时间旅行 / Session 分支</li>
+    <li>React 式 UI 重渲染</li>
+    <li>序列化 Checkpoint</li>
+  </ul>
+</div>
+
+<h3>消息队列：Steering 与 Follow-up</h3>
+<div class="grid-2">
+<div class="card">
+  <h3>Steering（转向）</h3>
+  <p>Agent 在多轮工具执行<strong>中途</strong>注入新用户消息，改变后续行为。每轮 turn 开始检查 <code>getSteeringMessages</code> hook。</p>
+</div>
+<div class="card">
+  <h3>Follow-up（跟进）</h3>
+  <p>当前 agent 运行<strong>结束后</strong>自动处理的排队消息，适合批量任务链。</p>
+</div>
+</div>
+
+<h3>AgentTool 接口</h3>
+<div class="card">
+<pre><code><span class="kw">interface</span> AgentTool {
+  name: <span class="kw">string</span>;
+  description: <span class="kw">string</span>;
+  parameters: JSONSchema;       <span class="cm">// LLM function calling schema</span>
+  execute(args, ctx): Promise&lt;ToolResult&gt;;
+  execution?: <span class="st">"parallel"</span> | <span class="st">"sequential"</span>;
+}</code></pre>
+</div>
+
+<h3>Abort 与错误恢复</h3>
+<div class="card card-orange">
+  <ul>
+    <li><code>AbortSignal</code> 贯穿 LLM stream 与工具执行</li>
+    <li><code>beforeToolCall</code> hook 可阻止工具（返回 <code>terminate: true</code>）</li>
+    <li><code>agentLoopContinue</code> 支持从失败点重试</li>
+    <li><code>shouldStopAfterTurn</code> 在 turn_end 后优雅退出，不中断进行中的 stream</li>
+  </ul>
+</div>
+
+<h3>关键文件</h3>
+<div class="card">
+<table>
+<tr><th>文件</th><th>说明</th></tr>
+<tr><td><code>packages/agent/src/agent.ts</code></td><td>Agent 类，对外主 API</td></tr>
+<tr><td><code>packages/agent/src/agent-loop.ts</code></td><td>核心循环 runLoop</td></tr>
+<tr><td><code>packages/agent/src/types.ts</code></td><td>AgentState、事件、ToolExecutionMode</td></tr>
+<tr><td><code>packages/agent/src/convert-to-llm.ts</code></td><td>消息 → LLM 格式转换</td></tr>
+<tr><td><code>packages/agent/README.md</code></td><td>Hook、工具模式完整文档</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== 5. 工具系统设计 ==================== -->
+<section id="tools">
+<h2>工具系统设计</h2>
+
+<div class="card card-accent">
+  <p>工具是 Agent 与外部世界（文件系统、Shell、搜索）的桥梁。Pi 在 <code>pi-coding-agent</code> 提供内置工具，在 <code>pi-agent-core</code> 定义通用 <code>AgentTool</code> 契约。</p>
+</div>
+
+<h3>内置工具一览</h3>
+<div class="card">
+<table>
+<tr><th>工具</th><th>功能</th><th>典型场景</th></tr>
+<tr><td><code>read</code></td><td>读取文件内容</td><td>理解代码上下文</td></tr>
+<tr><td><code>write</code></td><td>创建/覆写文件</td><td>生成新文件</td></tr>
+<tr><td><code>edit</code></td><td>精确替换文件片段</td><td> surgical 修改</td></tr>
+<tr><td><code>bash</code></td><td>执行 Shell 命令</td><td>测试、构建、git</td></tr>
+<tr><td><code>grep</code></td><td>代码搜索</td><td>定位符号、引用</td></tr>
+</table>
+</div>
+
+<h3>工具接口设计</h3>
+<div class="card">
+<pre><code><span class="cm">// 工具三要素：name + description + parameters schema</span>
+{
+  name: <span class="st">"read"</span>,
+  description: <span class="st">"Read file contents from the workspace"</span>,
+  parameters: {
+    type: <span class="st">"object"</span>,
+    properties: {
+      path: { type: <span class="st">"string"</span>, description: <span class="st">"Relative file path"</span> },
+    },
+    required: [<span class="st">"path"</span>],
+  },
+  <span class="kw">async</span> execute({ path }, ctx) {
+    <span class="kw">const</span> content = <span class="kw">await</span> fs.readFile(path, <span class="st">"utf-8"</span>);
+    <span class="kw">return</span> { content: [{ type: <span class="st">"text"</span>, text: content }] };
+  },
+}</code></pre>
+</div>
+
+<h3>Agent 如何选择工具？</h3>
+<div class="card card-green">
+  <ol>
+    <li>所有工具的 <code>name</code> + <code>description</code> + <code>parameters</code> 序列化进 LLM 的 <code>tools</code> 字段</li>
+    <li>LLM 在 assistant 消息中返回 <code>tool_calls</code>（含 name + arguments JSON）</li>
+    <li>Agent Loop 校验参数 → 执行对应 <code>execute</code> → 包装为 <code>toolResult</code> 消息</li>
+    <li>Tool Result 追加到 state，触发下一轮 LLM 调用</li>
+  </ol>
+  <p class="text-sm mt-2">与 OpenAI Function Calling / Anthropic Tool Use 标准对齐，Pi 不做「魔法路由」——完全交给模型决策。</p>
+</div>
+
+<h3>工具结果格式化</h3>
+<div class="card">
+  <p><code>ToolResult</code> 支持多模态 content 块（text、image 等）。错误时返回 <code>isError: true</code>，LLM 可据此自我纠正——这是 Agent 鲁棒性的关键。</p>
+<pre><code><span class="kw">return</span> {
+  content: [{ type: <span class="st">"text"</span>, text: <span class="st">"File not found: auth.ts"</span> }],
+  isError: <span class="kw">true</span>,
+};</code></pre>
+</div>
+
+<h3>Hook：beforeToolCall / afterToolCall</h3>
+<div class="card">
+  <ul>
+    <li><strong>beforeToolCall</strong>：审计、权限检查、参数改写；可 block 并设 <code>terminate: true</code></li>
+    <li><strong>afterToolCall</strong>：结果过滤、日志、敏感信息脱敏</li>
+  </ul>
+</div>
+
+<h3>创建自定义工具</h3>
+<div class="card card-green">
+<pre><code><span class="kw">const</span> weatherTool: AgentTool = {
+  name: <span class="st">"get_weather"</span>,
+  description: <span class="st">"Get current weather for a city"</span>,
+  parameters: { type: <span class="st">"object"</span>, properties: { city: { type: <span class="st">"string"</span> } }, required: [<span class="st">"city"</span>] },
+  <span class="kw">async</span> execute({ city }) {
+    <span class="kw">const</span> data = <span class="kw">await</span> fetchWeather(city);
+    <span class="kw">return</span> { content: [{ type: <span class="st">"text"</span>, text: JSON.stringify(data) }] };
+  },
+};
+
+agent.registerTool(weatherTool);</code></pre>
+</div>
+
+<div class="tip"><strong>对比 LangGraph</strong>：LangGraph 用 <code>@tool</code> 装饰器 + <code>bind_tools</code>；Pi 用显式 <code>AgentTool</code> 对象 + JSON Schema。Pi 更偏「配置即对象」，LangGraph 更偏 Python 装饰器风格。</div>
+</section>
+
+<!-- ==================== 6. pi-coding-agent ==================== -->
+<section id="coding-agent">
+<h2>pi-coding-agent：编码 Agent CLI</h2>
+
+<div class="card card-accent">
+  <p><code>@earendil-works/pi-coding-agent</code> 是 Pi 的<strong>旗舰应用</strong>：交互式终端编码助手，整合 Agent 运行时、内置工具、扩展系统与会话管理。</p>
+</div>
+
+<h3>Extension 系统</h3>
+<div class="card">
+  <p>Extension 是 TypeScript 模块，通过 lifecycle hooks 注入行为：</p>
+<pre><code><span class="cm">// extension 示例结构</span>
+<span class="kw">export default</span> {
+  name: <span class="st">"my-extension"</span>,
+  onSessionStart(ctx) { ... },
+  onBeforeToolCall(tool, args) { ... },
+  onMessageComplete(msg) { ... },
+};</code></pre>
+  <p class="text-sm mt-2">类似 VS Code Extension 或 FastAPI 中间件——在固定生命周期点插入逻辑，不改核心代码。</p>
+</div>
+
+<h3>Skills（技能）</h3>
+<div class="card card-green">
+  <p>Markdown 文件（<code>SKILL.md</code>），描述特定任务的 SOP 与约束——<strong>与 Cursor Rules / Claude Skills 同构</strong>。</p>
+  <ul>
+    <li>Agent 根据任务语义选择相关 Skill 注入 system context</li>
+    <li>团队可版本化管理排查手册、代码规范</li>
+    <li>位于 <code>.pi/skills/</code> 或 Extension 包内</li>
+  </ul>
+</div>
+
+<h3>Prompt Templates</h3>
+<div class="card">
+  <p>可复用提示词模板，支持参数化：</p>
+<pre><code><span class="cm"># templates/review.md</span>
+Review the following {{language}} code for {{focus}}:
+{{code}}</code></pre>
+  <p class="text-sm">CLI 或 Extension 调用 <code>renderTemplate("review", { language: "TS", focus: "security", code: "..." })</code></p>
+</div>
+
+<h3>Session 管理</h3>
+<div class="grid-2">
+<div class="card">
+  <h3>分支 (Branching)</h3>
+  <p>Session 是消息树而非线性列表。可从任意节点 fork 新分支，对比不同修复方案。</p>
+</div>
+<div class="card">
+  <h3>Compaction（压缩）</h3>
+  <p>上下文窗口满时，LLM 摘要旧消息，保留关键信息——类似「滚动摘要」策略。</p>
+</div>
+<div class="card">
+  <h3>树导航</h3>
+  <p>TUI 支持在 Session 树中前进/后退（undo/redo 语义）。</p>
+</div>
+<div class="card">
+  <h3>持久化</h3>
+  <p>JSONL Session Repo 落盘，支持恢复中断会话。</p>
+</div>
+</div>
+
+<h3>四种运行模式</h3>
+<div class="card">
+<table>
+<tr><th>模式</th><th>用途</th></tr>
+<tr><td><strong>Interactive</strong></td><td>默认 TUI 交互，实时流式输出</td></tr>
+<tr><td><strong>Print</strong></td><td>单次 prompt，stdout 打印结果（脚本友好）</td></tr>
+<tr><td><strong>JSON</strong></td><td>结构化 JSON 输出，便于 CI/CD 集成</td></tr>
+<tr><td><strong>RPC</strong></td><td>JSON-RPC 服务，供 IDE 插件或远程调用</td></tr>
+</table>
+</div>
+
+<h3>关键文件</h3>
+<div class="card">
+<table>
+<tr><th>文件</th><th>说明</th></tr>
+<tr><td><code>packages/coding-agent/src/core/agent-session.ts</code></td><td>AgentSession 高层协调器</td></tr>
+<tr><td><code>packages/coding-agent/src/core/sdk.ts</code></td><td>对外 SDK 入口</td></tr>
+<tr><td><code>packages/coding-agent/src/tools/</code></td><td>read/write/edit/bash/grep 实现</td></tr>
+<tr><td><code>packages/coding-agent/src/extensions/</code></td><td>Extension 加载与 Hook 分发</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== 7. 事件系统与流式输出 ==================== -->
+<section id="events">
+<h2>事件系统与流式输出</h2>
+
+<div class="card card-accent">
+  <p>Pi 的实时 UI 体验建立在<strong>细粒度事件流</strong>上。从 LLM token 到工具 stdout，每一帧都有对应事件，UI 订阅即可渲染。</p>
+</div>
+
+<h3>完整事件流（单次 Turn）</h3>
+<div class="card card-green">
+<pre><code>agent_start
+  └── turn_start
+        ├── llm_start          <span class="cm">（内部：开始 stream）</span>
+        ├── message_update     <span class="cm">×N  text_delta / thinking_delta</span>
+        ├── llm_end            <span class="cm">（assistant 消息完整）</span>
+        ├── tool_execution_start   <span class="cm">×M（每个 tool call）</span>
+        ├── tool_execution_end     <span class="cm">×M</span>
+        └── turn_end
+  └── agent_end</code></pre>
+</div>
+
+<h3>事件如何驱动 UI</h3>
+<div class="card">
+<pre><code><span class="cm">// pi-tui 简化订阅逻辑</span>
+agent.on(<span class="st">"message_update"</span>, ({ delta }) => {
+  chatPane.appendText(delta.text);  <span class="cm">// 差分渲染，非全量重绘</span>
+});
+
+agent.on(<span class="st">"tool_execution_start"</span>, ({ toolName, args }) => {
+  toolPanel.showRunning(toolName, args);
+});
+
+agent.on(<span class="st">"tool_execution_end"</span>, ({ result }) => {
+  toolPanel.showResult(result);
+});</code></pre>
+</div>
+
+<h3>Observer 模式实现</h3>
+<div class="grid-2">
+<div class="card">
+  <h3>Agent 侧（Subject）</h3>
+  <p><code>Agent</code> 继承 EventEmitter 或内部 dispatch 表。Loop 各阶段 <code>emit(event, payload)</code>，不感知订阅者数量。</p>
+</div>
+<div class="card">
+  <h3>UI 侧（Observer）</h3>
+  <p>TUI/Web/Logger 各自 <code>on()</code> 注册。多个 Observer 可并行存在——日志与 UI 同时消费同一事件流。</p>
+</div>
+</div>
+
+<h3>两层流式：LLM Stream + Agent Events</h3>
+<div class="card">
+  <table>
+  <tr><th>层级</th><th>流</th><th>粒度</th></tr>
+  <tr><td>pi-ai</td><td>AssistantMessageEventStream</td><td>Token / tool_call_delta</td></tr>
+  <tr><td>pi-agent-core</td><td>Agent events</td><td>Turn / Tool 生命周期</td></tr>
+  </table>
+  <p class="text-sm mt-2">Agent Loop 将 pi-ai 的细粒度 delta <strong>转发</strong> 为 <code>message_update</code>，并在此基础上包装 turn/tool 级语义事件。</p>
+</div>
+
+<h3>如何订阅事件</h3>
+<div class="card card-green">
+<pre><code><span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">Agent</span>({ ... });
+
+<span class="cm">// 方式 1：回调</span>
+agent.on(<span class="st">"turn_end"</span>, (ev) => console.log(<span class="st">"Turn done"</span>, ev));
+
+<span class="cm">// 方式 2：AsyncIterator（若支持）</span>
+<span class="kw">for await</span> (<span class="kw">const</span> event <span class="kw">of</span> agent.events()) {
+  <span class="kw">if</span> (event.type === <span class="st">"message_update"</span>) { ... }
+}</code></pre>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>设计启示</strong>：永远不要让 UI 轮询 Agent 状态。事件流是 Agent 框架与前端解耦的标准答案——你的告警分析平台 stream server（NDJSON）也是同一思路。</div>
+</div>
+</section>
+
+<!-- ==================== 8. 状态管理与会话 ==================== -->
+<section id="state">
+<h2>状态管理与会话</h2>
+
+<div class="card card-accent">
+  <p>Agent 的「记忆」= <code>AgentState</code> + 持久化 Session。Pi 用<strong>不可变更新</strong> + <strong>树形 Session</strong> 支持复杂对话场景。</p>
+</div>
+
+<h3>AgentState 结构</h3>
+<div class="card">
+<pre><code><span class="kw">interface</span> AgentState {
+  messages: AgentMessage[];   <span class="cm">// 完整对话 transcript</span>
+  model: <span class="kw">string</span>;
+  systemPrompt?: <span class="kw">string</span>;
+  tools: AgentTool[];
+  <span class="cm">// 扩展字段通过 declaration merging 追加</span>
+}</code></pre>
+</div>
+
+<h3>不可变状态更新</h3>
+<div class="card card-green">
+<pre><code><span class="cm">// 每次 append 产生新 state，不 mutate 旧对象</span>
+<span class="kw">const</span> nextState = {
+  ...prevState,
+  messages: [...prevState.messages, newMessage],
+};
+agent.setState(nextState);</code></pre>
+  <p class="text-sm mt-2">好处：Session 分支只需复制 messages 前缀 + 新后缀；React/Immer 友好；调试时可 diff 相邻 state。</p>
+</div>
+
+<h3>Conversation History 管理</h3>
+<div class="card">
+  <ul>
+    <li><strong>User / Assistant / ToolResult</strong> 三种核心消息类型</li>
+    <li><code>convertToLlm()</code> 在每次 LLM 调用前过滤内部消息、转换格式</li>
+    <li>自定义消息类型通过 TypeScript declaration merging 扩展，convert 函数负责映射</li>
+  </ul>
+</div>
+
+<h3>Context Window 管理（Compaction）</h3>
+<div class="card card-orange">
+  <p>当 messages 总 token 接近模型上限：</p>
+  <ol>
+    <li>选取早期消息块</li>
+    <li>调用 LLM 生成摘要</li>
+    <li>用摘要消息替换原块，释放 token 预算</li>
+    <li>保留最近 N 轮完整消息以保证连贯性</li>
+  </ol>
+  <p class="text-sm mt-2">Compaction 在 <code>AgentSession</code> 层触发，对 Agent Loop 透明。</p>
+</div>
+
+<h3>Session 分支</h3>
+<div class="card">
+<pre><code>Session Tree 示例：
+
+    [root: "Fix auth bug"]
+           │
+     ┌─────┴─────┐
+  [分支 A]    [分支 B]
+  "用 JWT"    "用 Session"
+     │            │
+  [A1 完成]    [B1 进行中]</code></pre>
+  <p class="text-sm mt-2">每个节点存完整 messages 快照。切换分支 = 加载对应 state，无需重跑 LLM。</p>
+</div>
+
+<h3>Checkpoint 序列化</h3>
+<div class="card">
+  <ul>
+    <li><strong>JsonlSessionRepo</strong>：每行一条 operation record，append-only</li>
+    <li>支持 crash 后 replay 恢复</li>
+    <li>可导出/导入 Session 用于调试或分享</li>
+  </ul>
+</div>
+
+<div class="tip"><strong>对比 LangGraph</strong>：LangGraph Checkpoint 是图状态的序列化；Pi Session 是对话树的序列化。Pi 更偏「聊天产品」，LangGraph 更偏「工作流引擎」。</div>
+</section>
+
+<!-- ==================== 9. 可扩展性设计模式 ==================== -->
+<section id="extensibility">
+<h2>可扩展性设计模式</h2>
+
+<div class="card card-accent">
+  <p>Pi 的可扩展性不是事后补丁，而是架构一等公民。以下模式可直接迁移到任何 Agent 框架设计。</p>
+</div>
+
+<h3>1. Declaration Merging（声明合并）</h3>
+<div class="card">
+  <p>通过 TypeScript module augmentation 扩展消息类型，无需改核心类型定义：</p>
+<pre><code><span class="cm">// 在 extension 中</span>
+<span class="kw">declare module</span> <span class="st">"@earendil-works/pi-agent-core"</span> {
+  <span class="kw">interface</span> AgentMessage {
+    customField?: <span class="kw">string</span>;
+  }
+}</code></pre>
+  <p class="text-sm mt-2">类似 FastAPI 的 dependency override——扩展不污染核心包。</p>
+</div>
+
+<h3>2. Plugin / Extension 架构</h3>
+<div class="card card-green">
+  <p>Extension = 独立 npm 包或本地 TS 模块，声明 hooks：</p>
+  <ul>
+    <li><code>onSessionStart</code> / <code>onSessionEnd</code></li>
+    <li><code>onBeforeToolCall</code> / <code>onAfterToolCall</code></li>
+    <li><code>onMessageComplete</code></li>
+    <li>注册额外 tools、commands、keybindings</li>
+  </ul>
+</div>
+
+<h3>3. Hook 系统</h3>
+<div class="card">
+  <p>Agent 核心在关键路径预留 hook 点，Extension 和内置逻辑使用同一机制——<strong>开闭原则</strong>的典型实现。</p>
+</div>
+
+<h3>4. Packages 系统</h3>
+<div class="card">
+  <p>Extension 可发布到 npm（<code>@scope/pi-extension-xxx</code>），用户 <code>pi install @scope/pi-extension-xxx</code> 即可启用。类似 VS Code Marketplace。</p>
+</div>
+
+<h3>5. Theme 系统</h3>
+<div class="card">
+  <p><code>pi-tui</code> 支持 Theme 包定义颜色、边框、组件样式。终端 UI 也能品牌化——对内部工具平台有参考价值。</p>
+</div>
+
+<h3>模式总结</h3>
+<div class="card">
+<table>
+<tr><th>模式</th><th>Pi 实现</th><th>通用场景</th></tr>
+<tr><td>Provider 抽象</td><td>pi-ai Providers</td><td>多 LLM / 多 DB / 多云</td></tr>
+<tr><td>Observer</td><td>Agent events</td><td>Stream UI、审计日志</td></tr>
+<tr><td>Strategy</td><td>Tool execution mode</td><td>可切换算法/后端</td></tr>
+<tr><td>Hook / Middleware</td><td>beforeToolCall</td><td>鉴权、限流、脱敏</td></tr>
+<tr><td>Immutable State</td><td>AgentState</td><td>时间旅行、Undo</td></tr>
+<tr><td>Plugin</td><td>Extensions</td><td>生态扩展</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== 10. 阅读路线图与练习 ==================== -->
+<section id="roadmap">
+<h2>阅读路线图与练习</h2>
+
+<div class="card card-accent">
+  <p>建议按依赖顺序阅读，先底层后应用。每阶段对照 README + 核心源文件，不要试图一次读完整个 monorepo。</p>
+</div>
+
+<h3>推荐阅读顺序</h3>
+<div class="card card-green">
+<ol>
+  <li><strong>Day 1</strong> — <code>packages/ai/README.md</code> + <code>models.ts</code> + 任选一个 Provider → 理解 stream API</li>
+  <li><strong>Day 2</strong> — <code>packages/agent/README.md</code> + <code>agent-loop.ts</code> → 画出 Agent Loop 流程图</li>
+  <li><strong>Day 3</strong> — <code>agent.ts</code> 事件订阅 + <code>convert-to-llm.ts</code> → 理解状态如何喂给 LLM</li>
+  <li><strong>Day 4</strong> — <code>packages/coding-agent/src/tools/read.ts</code> → 读一个完整内置工具</li>
+  <li><strong>Day 5</strong> — <code>agent-session.ts</code> + Session 相关 → 理解应用层编排</li>
+  <li><strong>Day 6</strong> — <code>packages/tui/</code> 选一个组件 → 看事件如何驱动渲染</li>
+  <li><strong>Day 7</strong> — 跑 <code>npx pi</code>，开 DEBUG 日志，对照源码 trace 一次完整请求</li>
+</ol>
+</div>
+
+<h3>练习 1：Trace 完整请求流</h3>
+<div class="card">
+  <p><strong>目标</strong>：从用户输入 <code>"Read README.md"</code> 到 LLM 返回最终文本，列出关键函数调用链。</p>
+  <details>
+  <summary>参考答案</summary>
+  <pre><code>1. CLI 入口 packages/coding-agent/src/cli.ts
+   └── AgentSession.prompt(userInput)
+
+2. AgentSession packages/coding-agent/src/core/agent-session.ts
+   └── agent.prompt() / agentLoop()
+
+3. agentLoop packages/agent/src/agent-loop.ts
+   ├── emit("agent_start")
+   ├── runLoop():
+   │   ├── emit("turn_start")
+   │   ├── convertToLlm(state.messages)
+   │   ├── models.stream({ messages, tools })
+   │   │   └── pi-ai Provider → HTTP SSE
+   │   ├── on each delta → emit("message_update")
+   │   ├── parse tool_calls from assistant message
+   │   ├── for each tool:
+   │   │   ├── emit("tool_execution_start")
+   │   │   ├── tool.execute(args)
+   │   │   └── emit("tool_execution_end")
+   │   ├── append toolResults to state
+   │   └── emit("turn_end")
+   └── emit("agent_end")
+
+4. 若无 tool_calls → turn_end 后直接 agent_end
+   若有 tool_calls → 新一轮 turn_start（带着 tool results）</code></pre>
+  </details>
+</div>
+
+<h3>练习 2：实现简单自定义工具</h3>
+<div class="card">
+  <p><strong>目标</strong>：实现 <code>echo</code> 工具，接收 <code>message</code> 参数并原样返回；注册到 Agent 并测试。</p>
+  <details>
+  <summary>参考答案</summary>
+  <pre><code><span class="kw">import</span> { Agent } <span class="kw">from</span> <span class="st">"@earendil-works/pi-agent-core"</span>;
+<span class="kw">import</span> type { AgentTool } <span class="kw">from</span> <span class="st">"@earendil-works/pi-agent-core"</span>;
+
+<span class="kw">const</span> echoTool: AgentTool = {
+  name: <span class="st">"echo"</span>,
+  description: <span class="st">"Echo back the given message unchanged"</span>,
+  parameters: {
+    type: <span class="st">"object"</span>,
+    properties: {
+      message: { type: <span class="st">"string"</span>, description: <span class="st">"Text to echo"</span> },
+    },
+    required: [<span class="st">"message"</span>],
+  },
+  <span class="kw">async</span> execute({ message }) {
+    <span class="kw">return</span> {
+      content: [{ type: <span class="st">"text"</span>, text: message }],
+    };
+  },
+};
+
+<span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">Agent</span>({
+  models,
+  tools: [echoTool],
+});
+
+<span class="kw">await</span> agent.prompt(<span class="st">"Use the echo tool to repeat: hello pi"</span>);
+<span class="cm">// 期望：LLM 调用 echo({ message: "hello pi" })，返回 tool result</span></code></pre>
+  </details>
+</div>
+
+<h3>练习 3：对比 Pi 与 LangGraph 的 Tool Calling</h3>
+<div class="card">
+  <p><strong>目标</strong>：列表对比两者在工具定义、绑定、执行、结果回传上的异同。</p>
+  <details>
+  <summary>参考答案</summary>
+  <table>
+  <tr><th>维度</th><th>Pi Agent</th><th>LangGraph</th></tr>
+  <tr><td>工具定义</td><td><code>AgentTool</code> 对象 + JSON Schema</td><td><code>@tool</code> 装饰器 + Pydantic schema</td></tr>
+  <tr><td>绑定方式</td><td>传入 <code>Agent({ tools: [...] })</code></td><td><code>llm.bind_tools(tools)</code> 或 ToolNode</td></tr>
+  <tr><td>执行触发</td><td>Agent Loop 解析 assistant tool_calls</td><td>ToolNode 或 prebuilt <code>ToolExecutor</code></td></tr>
+  <tr><td>并行执行</td><td>默认 parallel，可 per-tool 设 sequential</td><td>ToolNode 可配置 parallel</td></tr>
+  <tr><td>结果格式</td><td><code>ToolResult</code> content blocks + isError</td><td><code>ToolMessage</code> content string</td></tr>
+  <tr><td>Hook/拦截</td><td>beforeToolCall / afterToolCall</td><td>Middleware / custom ToolNode</td></tr>
+  <tr><td>状态集成</td><td>messages 数组 append toolResult</td><td>Graph state reducer 合并 messages</td></tr>
+  <tr><td>编排模型</td><td>线性 loop + steering 队列</td><td>有向图 + conditional edges</td></tr>
+  </table>
+  <p class="text-sm mt-2"><strong>相似点</strong>：都依赖 LLM native function calling；都需把 tool result 喂回模型；都支持并行工具。</p>
+  <p class="text-sm"><strong>差异点</strong>：Pi 更简单直接（单 loop）；LangGraph 适合复杂分支/多 Agent；Pi 用 TS 显式对象，LangGraph 用 Python 装饰器 + 图 DSL。</p>
+  </details>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🚀</div>
+<div><strong>下一步</strong>：读完 Pi 后，对比你们自己的 <code>gdp-gravitysvr-alertAnalysis</code> Agent Gateway——哪些模式已具备（stream、skills、rules），哪些可借鉴（Provider 分层、Session 树、Extension Hook）。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['overview','architecture','pi-ai','agent-core','tools','coding-agent','events','state','extensibility','roadmap'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

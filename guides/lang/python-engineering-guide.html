@@ -1,0 +1,3009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python 工程实战指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#3776ab 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Python 工程实战指南</h1>
+  <p>面向 AI Agent 开发的 Python 技能图谱<br>从基础语法到异步编程、FastAPI、类型系统</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#basics">基础语法</a>
+    <a href="#data">数据结构</a>
+    <a href="#functions">函数</a>
+    <a href="#oop">面向对象</a>
+    <a href="#typing">类型系统</a>
+    <a href="#error">异常处理</a>
+    <a href="#async">异步编程</a>
+    <a href="#modules">模块与包</a>
+    <a href="#fastapi">FastAPI</a>
+    <a href="#patterns">常用模式</a>
+    <a href="#stdlib">标准库精选</a>
+    <a href="#concurrency">并发编程</a>
+    <a href="#memory">内存管理</a>
+    <a href="#perf">性能优化</a>
+    <a href="#tips">面试常考</a>
+    <a href="#capstone">综合大题</a>
+    <a href="#incidents">线上事故</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 基础语法 ==================== -->
+<section id="basics">
+<h2>基础语法</h2>
+
+<div class="card card-accent">
+  <p>Python 的哲学：<strong>可读性 > 一切</strong>。代码写给人看，顺便让机器执行。</p>
+</div>
+
+<h3>变量与类型</h3>
+<div class="card">
+<pre><code><span class="cm"># Python 是动态类型语言——变量不声明类型，赋值即定义</span>
+name = <span class="st">"Alice"</span>        <span class="cm"># str</span>
+age = <span class="nu">25</span>               <span class="cm"># int</span>
+score = <span class="nu">98.5</span>           <span class="cm"># float</span>
+is_active = <span class="kw">True</span>       <span class="cm"># bool</span>
+data = <span class="kw">None</span>            <span class="cm"># NoneType</span>
+
+<span class="cm"># 类型检查</span>
+<span class="fn">type</span>(name)             <span class="cm"># &lt;class 'str'&gt;</span>
+<span class="fn">isinstance</span>(age, <span class="kw">int</span>)  <span class="cm"># True</span></code></pre>
+</div>
+
+<h3>字符串</h3>
+<div class="card">
+<pre><code><span class="cm"># f-string（Python 3.6+，最常用）</span>
+msg = <span class="st">f"Hello, </span>{name}<span class="st">! You are </span>{age}<span class="st"> years old."</span>
+
+<span class="cm"># 多行字符串</span>
+prompt = <span class="st">"""
+你是一个客服助手。
+请根据以下文档回答问题。
+"""</span>
+
+<span class="cm"># 常用方法</span>
+<span class="st">"hello world"</span>.split()           <span class="cm"># ['hello', 'world']</span>
+<span class="st">" hello "</span>.strip()                <span class="cm"># 'hello'</span>
+<span class="st">"hello"</span>.startswith(<span class="st">"he"</span>)        <span class="cm"># True</span>
+<span class="st">"a,b,c"</span>.split(<span class="st">","</span>)               <span class="cm"># ['a', 'b', 'c']</span>
+<span class="st">","</span>.join([<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>])       <span class="cm"># 'a,b,c'</span></code></pre>
+</div>
+
+<h3>条件与循环</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="cm"># 条件</span>
+<span class="kw">if</span> score >= <span class="nu">90</span>:
+    grade = <span class="st">"A"</span>
+<span class="kw">elif</span> score >= <span class="nu">60</span>:
+    grade = <span class="st">"B"</span>
+<span class="kw">else</span>:
+    grade = <span class="st">"C"</span>
+
+<span class="cm"># 三元表达式</span>
+status = <span class="st">"pass"</span> <span class="kw">if</span> score >= <span class="nu">60</span> <span class="kw">else</span> <span class="st">"fail"</span></code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm"># for 循环</span>
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">5</span>):
+    <span class="fn">print</span>(i)  <span class="cm"># 0,1,2,3,4</span>
+
+<span class="cm"># 遍历 + 索引</span>
+<span class="kw">for</span> i, item <span class="kw">in</span> <span class="fn">enumerate</span>(items):
+    <span class="fn">print</span>(i, item)
+
+<span class="cm"># while</span>
+<span class="kw">while</span> count > <span class="nu">0</span>:
+    count -= <span class="nu">1</span></code></pre>
+</div>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>写一个函数 <code>format_alert(title, level, timestamp)</code>，返回格式化的告警字符串。要求：level 默认为 "warning"，timestamp 支持传入或默认用当前时间。用 f-string 格式化输出。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="kw">def</span> <span class="fn">format_alert</span>(
+    title: <span class="kw">str</span>,
+    level: <span class="kw">str</span> = <span class="st">"warning"</span>,
+    timestamp: <span class="kw">str</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+) -> <span class="kw">str</span>:
+    ts = timestamp <span class="kw">or</span> datetime.now().strftime(<span class="st">"%Y-%m-%d %H:%M:%S"</span>)
+    <span class="kw">return</span> <span class="st">f"[</span>{level.upper()}<span class="st">] </span>{ts}<span class="st"> - </span>{title}<span class="st">"</span>
+
+<span class="cm"># 测试</span>
+<span class="fn">print</span>(format_alert(<span class="st">"CPU 使用率超过 90%"</span>))
+<span class="cm"># [WARNING] 2026-09-12 10:30:00 - CPU 使用率超过 90%</span>
+<span class="fn">print</span>(format_alert(<span class="st">"磁盘已满"</span>, <span class="st">"critical"</span>, <span class="st">"2026-09-12 09:00:00"</span>))
+<span class="cm"># [CRITICAL] 2026-09-12 09:00:00 - 磁盘已满</span></code></pre>
+</details>
+</div>
+</section>
+<section id="data">
+<h2>数据结构</h2>
+
+<div class="grid-2">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>List 列表 <span class="tag tag-blue">有序 可变</span></h3>
+<pre><code>nums = [<span class="nu">1</span>, <span class="nu">2</span>, <span class="nu">3</span>]
+nums.append(<span class="nu">4</span>)        <span class="cm"># [1,2,3,4]</span>
+nums.extend([<span class="nu">5</span>,<span class="nu">6</span>])    <span class="cm"># [1,2,3,4,5,6]</span>
+nums[<span class="nu">0</span>]               <span class="cm"># 1</span>
+nums[<span class="nu">-1</span>]              <span class="cm"># 6</span>
+nums[<span class="nu">1</span>:<span class="nu">3</span>]             <span class="cm"># [2,3] 切片</span>
+
+<span class="cm"># 列表推导式（必须掌握）</span>
+squares = [x**<span class="nu">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">10</span>)]
+evens = [x <span class="kw">for</span> x <span class="kw">in</span> nums <span class="kw">if</span> x % <span class="nu">2</span> == <span class="nu">0</span>]</code></pre>
+</div>
+
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>Dict 字典 <span class="tag tag-green">键值对</span></h3>
+<pre><code>user = {<span class="st">"name"</span>: <span class="st">"Alice"</span>, <span class="st">"age"</span>: <span class="nu">25</span>}
+user[<span class="st">"name"</span>]          <span class="cm"># 'Alice'</span>
+user.get(<span class="st">"email"</span>, <span class="st">""</span>) <span class="cm"># '' (安全取值)</span>
+user[<span class="st">"email"</span>] = <span class="st">"a@b.c"</span>
+
+<span class="cm"># 遍历</span>
+<span class="kw">for</span> k, v <span class="kw">in</span> user.items():
+    <span class="fn">print</span>(k, v)
+
+<span class="cm"># 字典推导式</span>
+scores = {name: <span class="nu">0</span> <span class="kw">for</span> name <span class="kw">in</span> names}</code></pre>
+</div>
+
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3>Tuple 元组 <span class="tag tag-purple">有序 不可变</span></h3>
+<pre><code>point = (<span class="nu">3</span>, <span class="nu">4</span>)
+x, y = point  <span class="cm"># 解构赋值</span>
+
+<span class="cm"># 常用于函数返回多个值</span>
+<span class="kw">def</span> <span class="fn">get_range</span>(data):
+    <span class="kw">return</span> <span class="fn">min</span>(data), <span class="fn">max</span>(data)
+lo, hi = get_range([<span class="nu">3</span>,<span class="nu">1</span>,<span class="nu">4</span>,<span class="nu">1</span>,<span class="nu">5</span>])</code></pre>
+</div>
+
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3>Set 集合 <span class="tag tag-orange">无序 去重</span></h3>
+<pre><code>tags = {<span class="st">"python"</span>, <span class="st">"ai"</span>, <span class="st">"agent"</span>}
+tags.add(<span class="st">"rag"</span>)
+tags.discard(<span class="st">"ai"</span>)
+
+<span class="cm"># 集合运算</span>
+a = {<span class="nu">1</span>,<span class="nu">2</span>,<span class="nu">3</span>}; b = {<span class="nu">2</span>,<span class="nu">3</span>,<span class="nu">4</span>}
+a & b  <span class="cm"># {2,3}  交集</span>
+a | b  <span class="cm"># {1,2,3,4}  并集</span>
+a - b  <span class="cm"># {1}  差集</span></code></pre>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>AI Agent 开发最常用</strong>：List（消息历史）、Dict（State、JSON 数据）、推导式（数据转换）。</div>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>给定一组告警记录（list of dict），每条包含 <code>level</code>（"info"/"warning"/"critical"）和 <code>message</code> 字段。用推导式和集合操作完成：(1) 筛选出所有 critical 告警；(2) 统计每个 level 的数量；(3) 提取所有不重复的 message。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code>alerts = [
+    {<span class="st">"level"</span>: <span class="st">"critical"</span>, <span class="st">"message"</span>: <span class="st">"OOM"</span>},
+    {<span class="st">"level"</span>: <span class="st">"warning"</span>,  <span class="st">"message"</span>: <span class="st">"CPU high"</span>},
+    {<span class="st">"level"</span>: <span class="st">"critical"</span>, <span class="st">"message"</span>: <span class="st">"OOM"</span>},
+    {<span class="st">"level"</span>: <span class="st">"info"</span>,     <span class="st">"message"</span>: <span class="st">"deploy ok"</span>},
+    {<span class="st">"level"</span>: <span class="st">"warning"</span>,  <span class="st">"message"</span>: <span class="st">"disk 80%"</span>},
+]
+
+<span class="cm"># 1. 筛选 critical</span>
+criticals = [a <span class="kw">for</span> a <span class="kw">in</span> alerts <span class="kw">if</span> a[<span class="st">"level"</span>] == <span class="st">"critical"</span>]
+<span class="cm"># [{'level':'critical','message':'OOM'}, ...]</span>
+
+<span class="cm"># 2. 统计每个 level 数量（Counter 或推导式）</span>
+<span class="kw">from</span> collections <span class="kw">import</span> Counter
+counts = Counter(a[<span class="st">"level"</span>] <span class="kw">for</span> a <span class="kw">in</span> alerts)
+<span class="cm"># Counter({'critical': 2, 'warning': 2, 'info': 1})</span>
+
+<span class="cm"># 3. 不重复的 message</span>
+unique_msgs = {a[<span class="st">"message"</span>] <span class="kw">for</span> a <span class="kw">in</span> alerts}
+<span class="cm"># {'OOM', 'CPU high', 'deploy ok', 'disk 80%'}</span></code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 函数 ==================== -->
+<section id="functions">
+<h2>函数</h2>
+
+<div class="card">
+<h3>基础函数</h3>
+<pre><code><span class="kw">def</span> <span class="fn">greet</span>(name: <span class="kw">str</span>, greeting: <span class="kw">str</span> = <span class="st">"Hello"</span>) -> <span class="kw">str</span>:
+    <span class="st">"""问候某人。"""</span>
+    <span class="kw">return</span> <span class="st">f"</span>{greeting}<span class="st">, </span>{name}<span class="st">!"</span>
+
+greet(<span class="st">"Alice"</span>)                <span class="cm"># "Hello, Alice!"</span>
+greet(<span class="st">"Bob"</span>, greeting=<span class="st">"Hi"</span>)  <span class="cm"># "Hi, Bob!"</span></code></pre>
+</div>
+
+<div class="grid-2">
+<div class="card">
+<h3>*args / **kwargs</h3>
+<pre><code><span class="kw">def</span> <span class="fn">log</span>(*args, **kwargs):
+    <span class="fn">print</span>(<span class="st">"Args:"</span>, args)
+    <span class="fn">print</span>(<span class="st">"Kwargs:"</span>, kwargs)
+
+log(<span class="nu">1</span>, <span class="nu">2</span>, key=<span class="st">"val"</span>)
+<span class="cm"># Args: (1, 2)</span>
+<span class="cm"># Kwargs: {'key': 'val'}</span></code></pre>
+</div>
+<div class="card">
+<h3>Lambda / 高阶函数</h3>
+<pre><code><span class="cm"># Lambda</span>
+square = <span class="kw">lambda</span> x: x ** <span class="nu">2</span>
+
+<span class="cm"># map / filter</span>
+nums = [<span class="nu">1</span>,<span class="nu">2</span>,<span class="nu">3</span>,<span class="nu">4</span>,<span class="nu">5</span>]
+<span class="fn">list</span>(<span class="fn">map</span>(<span class="kw">lambda</span> x: x*<span class="nu">2</span>, nums))
+<span class="cm"># [2, 4, 6, 8, 10]</span>
+
+<span class="cm"># sorted 自定义排序</span>
+<span class="fn">sorted</span>(users, key=<span class="kw">lambda</span> u: u[<span class="st">"age"</span>])</code></pre>
+</div>
+</div>
+
+<div class="card">
+<h3>装饰器（面试必问）</h3>
+<pre><code><span class="kw">import</span> time
+<span class="kw">from</span> functools <span class="kw">import</span> wraps
+
+<span class="kw">def</span> <span class="fn">timer</span>(func):
+    <span class="st">"""测量函数执行时间的装饰器。"""</span>
+    @wraps(func)
+    <span class="kw">def</span> <span class="fn">wrapper</span>(*args, **kwargs):
+        start = time.monotonic()
+        result = func(*args, **kwargs)
+        elapsed = time.monotonic() - start
+        <span class="fn">print</span>(<span class="st">f"</span>{func.__name__}<span class="st"> took </span>{elapsed:.3f}<span class="st">s"</span>)
+        <span class="kw">return</span> result
+    <span class="kw">return</span> wrapper
+
+@timer
+<span class="kw">def</span> <span class="fn">slow_function</span>():
+    time.sleep(<span class="nu">1</span>)
+    <span class="kw">return</span> <span class="st">"done"</span>
+
+slow_function()  <span class="cm"># "slow_function took 1.001s"</span></code></pre>
+<div class="tip">装饰器本质：接收一个函数，返回一个新函数。<code>@timer</code> 等价于 <code>slow_function = timer(slow_function)</code>。</div>
+</div>
+
+<div class="card">
+<h3>生成器（yield）</h3>
+<pre><code><span class="kw">def</span> <span class="fn">read_chunks</span>(file_path, chunk_size=<span class="nu">1024</span>):
+    <span class="st">"""逐块读取大文件，不一次性加载到内存。"""</span>
+    <span class="kw">with</span> <span class="fn">open</span>(file_path) <span class="kw">as</span> f:
+        <span class="kw">while</span> chunk := f.read(chunk_size):
+            <span class="kw">yield</span> chunk
+
+<span class="cm"># 使用</span>
+<span class="kw">for</span> chunk <span class="kw">in</span> read_chunks(<span class="st">"big_file.txt"</span>):
+    process(chunk)</code></pre>
+<div class="tip">生成器是惰性求值——不会一次算完所有值。处理大数据集、流式输出时必用。LangGraph 的 <code>astream_events</code> 就是异步生成器。</div>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目 1：</strong>写一个装饰器 <code>@retry(max_retries=3)</code>，当被装饰函数抛异常时自动重试，超过次数则抛出原始异常。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">from</span> functools <span class="kw">import</span> wraps
+<span class="kw">import</span> time
+
+<span class="kw">def</span> <span class="fn">retry</span>(max_retries: <span class="kw">int</span> = <span class="nu">3</span>, delay: <span class="kw">float</span> = <span class="nu">1.0</span>):
+    <span class="kw">def</span> <span class="fn">decorator</span>(func):
+        @wraps(func)
+        <span class="kw">def</span> <span class="fn">wrapper</span>(*args, **kwargs):
+            <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(max_retries):
+                <span class="kw">try</span>:
+                    <span class="kw">return</span> func(*args, **kwargs)
+                <span class="kw">except</span> Exception:
+                    <span class="kw">if</span> attempt == max_retries - <span class="nu">1</span>:
+                        <span class="kw">raise</span>
+                    time.sleep(delay * (<span class="nu">2</span> ** attempt))
+        <span class="kw">return</span> wrapper
+    <span class="kw">return</span> decorator
+
+@retry(max_retries=<span class="nu">3</span>, delay=<span class="nu">0.5</span>)
+<span class="kw">def</span> <span class="fn">flaky_api_call</span>():
+    <span class="kw">import</span> random
+    <span class="kw">if</span> random.random() < <span class="nu">0.7</span>:
+        <span class="kw">raise</span> ConnectionError(<span class="st">"timeout"</span>)
+    <span class="kw">return</span> <span class="st">"success"</span></code></pre>
+</details>
+
+<p class="mt-2"><strong>题目 2：</strong>写一个生成器 <code>chunked(iterable, size)</code>，将任意可迭代对象按 size 分块。如 <code>list(chunked(range(7), 3))</code> → <code>[[0,1,2], [3,4,5], [6]]</code>。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">from</span> itertools <span class="kw">import</span> islice
+
+<span class="kw">def</span> <span class="fn">chunked</span>(iterable, size: <span class="kw">int</span>):
+    it = <span class="fn">iter</span>(iterable)
+    <span class="kw">while</span> chunk := <span class="fn">list</span>(islice(it, size)):
+        <span class="kw">yield</span> chunk
+
+<span class="cm"># 测试</span>
+<span class="fn">print</span>(<span class="fn">list</span>(chunked(<span class="fn">range</span>(<span class="nu">7</span>), <span class="nu">3</span>)))
+<span class="cm"># [[0, 1, 2], [3, 4, 5], [6]]</span>
+
+<span class="cm"># 实际场景：批量 embedding</span>
+<span class="kw">for</span> batch <span class="kw">in</span> chunked(documents, <span class="nu">32</span>):
+    embeddings = model.encode(batch)</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== OOP ==================== -->
+<section id="oop">
+<h2>面向对象</h2>
+
+<div class="card">
+<h3>类基础</h3>
+<pre><code><span class="kw">class</span> <span class="fn">Agent</span>:
+    <span class="st">"""AI Agent 基类。"""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, name: <span class="kw">str</span>, model: <span class="kw">str</span> = <span class="st">"gpt-4o"</span>):
+        self.name = name
+        self.model = model
+        self._history: <span class="kw">list</span>[<span class="kw">dict</span>] = []
+
+    <span class="kw">def</span> <span class="fn">chat</span>(self, message: <span class="kw">str</span>) -> <span class="kw">str</span>:
+        self._history.append({<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: message})
+        response = self._call_llm(message)
+        self._history.append({<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: response})
+        <span class="kw">return</span> response
+
+    <span class="kw">def</span> <span class="fn">_call_llm</span>(self, message: <span class="kw">str</span>) -> <span class="kw">str</span>:
+        <span class="kw">raise</span> NotImplementedError
+
+    <span class="kw">def</span> <span class="fn">__repr__</span>(self):
+        <span class="kw">return</span> <span class="st">f"Agent(name='</span>{self.name}<span class="st">', model='</span>{self.model}<span class="st">')"</span></code></pre>
+</div>
+
+<div class="card">
+<h3>继承 + 多态</h3>
+<pre><code><span class="kw">class</span> <span class="fn">OpenAIAgent</span>(Agent):
+    <span class="kw">def</span> <span class="fn">_call_llm</span>(self, message: <span class="kw">str</span>) -> <span class="kw">str</span>:
+        <span class="kw">return</span> openai.chat(model=self.model, messages=self._history)
+
+<span class="kw">class</span> <span class="fn">ClaudeAgent</span>(Agent):
+    <span class="kw">def</span> <span class="fn">_call_llm</span>(self, message: <span class="kw">str</span>) -> <span class="kw">str</span>:
+        <span class="kw">return</span> anthropic.messages.create(model=self.model, messages=self._history)
+
+<span class="cm"># 多态：调用方不关心具体实现</span>
+<span class="kw">def</span> <span class="fn">run_agent</span>(agent: Agent, query: <span class="kw">str</span>):
+    <span class="kw">return</span> agent.chat(query)
+
+run_agent(OpenAIAgent(<span class="st">"gpt"</span>), <span class="st">"hi"</span>)
+run_agent(ClaudeAgent(<span class="st">"claude"</span>), <span class="st">"hi"</span>)</code></pre>
+</div>
+
+<div class="card">
+<h3>dataclass（Python 3.7+，极常用）</h3>
+<pre><code><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+
+@dataclass
+<span class="kw">class</span> <span class="fn">ToolCall</span>:
+    name: <span class="kw">str</span>
+    arguments: <span class="kw">dict</span>
+    result: <span class="kw">str</span> | <span class="kw">None</span> = <span class="kw">None</span>
+
+@dataclass
+<span class="kw">class</span> <span class="fn">AgentState</span>:
+    messages: <span class="kw">list</span>[<span class="kw">dict</span>] = field(default_factory=<span class="kw">list</span>)
+    tool_calls: <span class="kw">list</span>[ToolCall] = field(default_factory=<span class="kw">list</span>)
+    current_agent: <span class="kw">str</span> = <span class="st">"supervisor"</span>
+
+state = AgentState()
+state.messages.append({<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="st">"hello"</span>})</code></pre>
+<div class="tip">dataclass 自动生成 __init__、__repr__、__eq__。比手写 __init__ 少 60% 代码。LangGraph 的 State 用 TypedDict，Pydantic 模型也是类似概念。</div>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>设计一个 <code>ToolRegistry</code> 类，支持：(1) 用 <code>@registry.register</code> 装饰器注册工具函数；(2) 用 <code>registry.get("tool_name")</code> 获取工具；(3) 用 <code>registry.list_tools()</code> 列出所有已注册工具的名称和描述。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> typing <span class="kw">import</span> Callable
+
+@dataclass
+<span class="kw">class</span> <span class="fn">ToolInfo</span>:
+    name: <span class="kw">str</span>
+    description: <span class="kw">str</span>
+    func: Callable
+
+<span class="kw">class</span> <span class="fn">ToolRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self._tools: <span class="kw">dict</span>[<span class="kw">str</span>, ToolInfo] = {}
+
+    <span class="kw">def</span> <span class="fn">register</span>(self, func: Callable) -> Callable:
+        name = func.__name__
+        desc = func.__doc__ <span class="kw">or</span> <span class="st">"No description"</span>
+        self._tools[name] = ToolInfo(name, desc.strip(), func)
+        <span class="kw">return</span> func
+
+    <span class="kw">def</span> <span class="fn">get</span>(self, name: <span class="kw">str</span>) -> Callable:
+        <span class="kw">if</span> name <span class="kw">not in</span> self._tools:
+            <span class="kw">raise</span> KeyError(<span class="st">f"Tool '</span>{name}<span class="st">' not found"</span>)
+        <span class="kw">return</span> self._tools[name].func
+
+    <span class="kw">def</span> <span class="fn">list_tools</span>(self) -> <span class="kw">list</span>[<span class="kw">dict</span>]:
+        <span class="kw">return</span> [{<span class="st">"name"</span>: t.name, <span class="st">"description"</span>: t.description}
+                <span class="kw">for</span> t <span class="kw">in</span> self._tools.values()]
+
+registry = ToolRegistry()
+
+@registry.register
+<span class="kw">def</span> <span class="fn">search_orders</span>(user_id: <span class="kw">str</span>):
+    <span class="st">"""根据用户 ID 查询订单列表。"""</span>
+    <span class="kw">return</span> [{<span class="st">"order_id"</span>: <span class="st">"123"</span>}]
+
+@registry.register
+<span class="kw">def</span> <span class="fn">create_refund</span>(order_id: <span class="kw">str</span>, reason: <span class="kw">str</span>):
+    <span class="st">"""发起退款申请。"""</span>
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"submitted"</span>}
+
+<span class="fn">print</span>(registry.list_tools())
+fn = registry.get(<span class="st">"search_orders"</span>)
+<span class="fn">print</span>(fn(<span class="st">"user_001"</span>))</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 类型系统 ==================== -->
+<section id="typing">
+<h2>类型系统（Type Hints）</h2>
+
+<div class="card card-accent">
+<p>Python 3.5+ 支持类型注解。不影响运行，但让 IDE 补全更智能，代码更可读。<strong>AI Agent 代码几乎全部使用类型注解。</strong></p>
+</div>
+
+<div class="card">
+<pre><code><span class="kw">from</span> typing <span class="kw">import</span> Optional, Union, Literal, TypedDict, Annotated
+
+<span class="cm"># 基础类型</span>
+name: <span class="kw">str</span> = <span class="st">"Alice"</span>
+scores: <span class="kw">list</span>[<span class="kw">int</span>] = [<span class="nu">90</span>, <span class="nu">85</span>]
+config: <span class="kw">dict</span>[<span class="kw">str</span>, <span class="kw">str</span>] = {<span class="st">"model"</span>: <span class="st">"gpt-4o"</span>}
+
+<span class="cm"># Optional = 可以是 None</span>
+<span class="kw">def</span> <span class="fn">find_user</span>(user_id: <span class="kw">str</span>) -> Optional[<span class="kw">dict</span>]:
+    ...
+
+<span class="cm"># Union = 多种类型之一（Python 3.10+ 用 | 更简洁）</span>
+<span class="kw">def</span> <span class="fn">process</span>(data: <span class="kw">str</span> | <span class="kw">list</span>[<span class="kw">str</span>]) -> <span class="kw">str</span>:
+    ...
+
+<span class="cm"># Literal = 限定值范围</span>
+<span class="kw">def</span> <span class="fn">route</span>(agent: Literal[<span class="st">"faq"</span>, <span class="st">"order"</span>, <span class="st">"refund"</span>]) -> <span class="kw">str</span>:
+    ...
+
+<span class="cm"># TypedDict = LangGraph State 的基础</span>
+<span class="kw">class</span> <span class="fn">AgentState</span>(TypedDict):
+    messages: Annotated[<span class="kw">list</span>, add_messages]
+    current_agent: <span class="kw">str</span></code></pre>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>用 TypedDict 定义一个 <code>AgentConfig</code> 类型，包含：<code>name</code>（str）、<code>model</code>（Literal["gpt-4o", "claude-3.5-sonnet"]）、<code>tools</code>（list[str]）、<code>max_retries</code>（int，可选，默认 3）。然后写一个函数接收此类型参数并打印配置摘要。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">from</span> typing <span class="kw">import</span> TypedDict, Literal, NotRequired
+
+<span class="kw">class</span> <span class="fn">AgentConfig</span>(TypedDict):
+    name: <span class="kw">str</span>
+    model: Literal[<span class="st">"gpt-4o"</span>, <span class="st">"claude-3.5-sonnet"</span>]
+    tools: <span class="kw">list</span>[<span class="kw">str</span>]
+    max_retries: NotRequired[<span class="kw">int</span>]  <span class="cm"># Python 3.11+</span>
+
+<span class="kw">def</span> <span class="fn">print_config</span>(config: AgentConfig) -> <span class="kw">None</span>:
+    retries = config.get(<span class="st">"max_retries"</span>, <span class="nu">3</span>)
+    <span class="fn">print</span>(<span class="st">f"Agent: </span>{config[<span class="st">'name'</span>]}<span class="st">"</span>)
+    <span class="fn">print</span>(<span class="st">f"Model: </span>{config[<span class="st">'model'</span>]}<span class="st">"</span>)
+    <span class="fn">print</span>(<span class="st">f"Tools: </span>{<span class="st">', '</span>.join(config[<span class="st">'tools'</span>])}<span class="st">"</span>)
+    <span class="fn">print</span>(<span class="st">f"Max retries: </span>{retries}<span class="st">"</span>)
+
+cfg: AgentConfig = {
+    <span class="st">"name"</span>: <span class="st">"customer_service"</span>,
+    <span class="st">"model"</span>: <span class="st">"gpt-4o"</span>,
+    <span class="st">"tools"</span>: [<span class="st">"search_orders"</span>, <span class="st">"create_refund"</span>],
+}
+print_config(cfg)</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 异常处理 ==================== -->
+<section id="error">
+<h2>异常处理</h2>
+
+<div class="card">
+<pre><code><span class="kw">import</span> httpx
+
+<span class="kw">def</span> <span class="fn">call_model_api</span>(prompt: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="kw">try</span>:
+        response = httpx.post(<span class="st">"https://api.openai.com/..."</span>, json={...}, timeout=<span class="nu">30</span>)
+        response.raise_for_status()
+        <span class="kw">return</span> response.json()[<span class="st">"choices"</span>][<span class="nu">0</span>][<span class="st">"message"</span>][<span class="st">"content"</span>]
+    <span class="kw">except</span> httpx.TimeoutException:
+        <span class="kw">return</span> <span class="st">"模型 API 超时，请稍后重试"</span>
+    <span class="kw">except</span> httpx.HTTPStatusError <span class="kw">as</span> e:
+        <span class="kw">if</span> e.response.status_code == <span class="nu">429</span>:
+            <span class="kw">return</span> <span class="st">"请求过于频繁，请稍后重试"</span>
+        <span class="kw">raise</span>
+    <span class="kw">except</span> (KeyError, IndexError):
+        <span class="kw">return</span> <span class="st">"模型返回格式异常"</span>
+    <span class="kw">finally</span>:
+        log_request(prompt)  <span class="cm"># 无论成功失败都记日志</span></code></pre>
+</div>
+
+<div class="card">
+<h3>自定义异常</h3>
+<pre><code><span class="kw">class</span> <span class="fn">AgentError</span>(Exception):
+    <span class="st">"""Agent 执行错误基类。"""</span>
+
+<span class="kw">class</span> <span class="fn">ToolCallError</span>(AgentError):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, tool_name: <span class="kw">str</span>, reason: <span class="kw">str</span>):
+        self.tool_name = tool_name
+        super().__init__(<span class="st">f"Tool '</span>{tool_name}<span class="st">' failed: </span>{reason}<span class="st">"</span>)
+
+<span class="kw">class</span> <span class="fn">MaxRetriesError</span>(AgentError):
+    <span class="kw">pass</span></code></pre>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>设计一个异常体系用于 Agent 工具调用场景。包含：<code>ToolError</code>（基类）、<code>ToolNotFoundError</code>、<code>ToolTimeoutError</code>、<code>ToolValidationError</code>。然后写一个 <code>execute_tool</code> 函数，根据不同错误返回不同的用户友好提示。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">class</span> <span class="fn">ToolError</span>(Exception):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, tool_name: <span class="kw">str</span>, message: <span class="kw">str</span>):
+        self.tool_name = tool_name
+        super().__init__(<span class="st">f"[</span>{tool_name}<span class="st">] </span>{message}<span class="st">"</span>)
+
+<span class="kw">class</span> <span class="fn">ToolNotFoundError</span>(ToolError):
+    <span class="kw">pass</span>
+
+<span class="kw">class</span> <span class="fn">ToolTimeoutError</span>(ToolError):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, tool_name: <span class="kw">str</span>, timeout_s: <span class="kw">float</span>):
+        self.timeout_s = timeout_s
+        super().__init__(tool_name, <span class="st">f"timed out after </span>{timeout_s}<span class="st">s"</span>)
+
+<span class="kw">class</span> <span class="fn">ToolValidationError</span>(ToolError):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, tool_name: <span class="kw">str</span>, field: <span class="kw">str</span>, reason: <span class="kw">str</span>):
+        self.field = field
+        super().__init__(tool_name, <span class="st">f"invalid param '</span>{field}<span class="st">': </span>{reason}<span class="st">"</span>)
+
+<span class="kw">def</span> <span class="fn">execute_tool</span>(name: <span class="kw">str</span>, params: <span class="kw">dict</span>) -> <span class="kw">str</span>:
+    <span class="kw">try</span>:
+        tool = registry.get(name)
+        <span class="kw">return</span> tool(**params)
+    <span class="kw">except</span> ToolNotFoundError <span class="kw">as</span> e:
+        <span class="kw">return</span> <span class="st">f"抱歉，功能 </span>{e.tool_name}<span class="st"> 不可用"</span>
+    <span class="kw">except</span> ToolTimeoutError <span class="kw">as</span> e:
+        <span class="kw">return</span> <span class="st">f"操作超时（</span>{e.timeout_s}<span class="st">s），请稍后重试"</span>
+    <span class="kw">except</span> ToolValidationError <span class="kw">as</span> e:
+        <span class="kw">return</span> <span class="st">f"参数错误：</span>{e.field}<span class="st"> - </span>{e}<span class="st">"</span>
+    <span class="kw">except</span> ToolError:
+        <span class="kw">return</span> <span class="st">"工具执行出错，请稍后重试"</span></code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 异步编程 ==================== -->
+<section id="async">
+<h2>异步编程（async/await）</h2>
+
+<div class="card card-accent">
+<p><strong>AI Agent 服务的核心技能。</strong>调模型 API 要等 1-3 秒，不能让整个服务阻塞。异步 = 等待时去干别的事。</p>
+</div>
+
+<div class="vs">
+<div class="card" style="border-top:3px solid var(--red)">
+<div class="tag tag-red mb-2">同步（阻塞）</div>
+<pre><code><span class="cm"># 调 3 次模型，串行等待</span>
+r1 = call_model(q1)  <span class="cm"># 等 2s</span>
+r2 = call_model(q2)  <span class="cm"># 等 2s</span>
+r3 = call_model(q3)  <span class="cm"># 等 2s</span>
+<span class="cm"># 总共 6s</span></code></pre>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<div class="tag tag-green mb-2">异步（并发）</div>
+<pre><code><span class="cm"># 同时发 3 个请求</span>
+r1, r2, r3 = <span class="kw">await</span> asyncio.gather(
+    call_model(q1),
+    call_model(q2),
+    call_model(q3),
+)
+<span class="cm"># 总共 ~2s</span></code></pre>
+</div>
+</div>
+
+<div class="card">
+<h3>async/await 基础</h3>
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="kw">async def</span> <span class="fn">fetch_data</span>(url: <span class="kw">str</span>) -> <span class="kw">dict</span>:
+    <span class="kw">async with</span> httpx.AsyncClient() <span class="kw">as</span> client:
+        response = <span class="kw">await</span> client.get(url)
+        <span class="kw">return</span> response.json()
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    data = <span class="kw">await</span> fetch_data(<span class="st">"https://api.example.com/data"</span>)
+    <span class="fn">print</span>(data)
+
+asyncio.run(main())</code></pre>
+</div>
+
+<div class="card">
+<h3>异步生成器（流式输出的基础）</h3>
+<pre><code><span class="kw">async def</span> <span class="fn">stream_response</span>(prompt: <span class="kw">str</span>):
+    <span class="st">"""流式调用 LLM，逐 token 返回。"""</span>
+    <span class="kw">async for</span> chunk <span class="kw">in</span> llm.astream(prompt):
+        <span class="kw">yield</span> chunk.content
+
+<span class="cm"># 消费</span>
+<span class="kw">async for</span> text <span class="kw">in</span> stream_response(<span class="st">"Hello"</span>):
+    <span class="fn">print</span>(text, end=<span class="st">""</span>, flush=<span class="kw">True</span>)</code></pre>
+</div>
+
+<div class="card">
+<h3>并发控制</h3>
+<pre><code><span class="cm"># Semaphore 限制并发数（避免打爆模型 API）</span>
+sem = asyncio.Semaphore(<span class="nu">5</span>)  <span class="cm"># 最多 5 个并发</span>
+
+<span class="kw">async def</span> <span class="fn">limited_call</span>(query):
+    <span class="kw">async with</span> sem:
+        <span class="kw">return await</span> call_model(query)
+
+results = <span class="kw">await</span> asyncio.gather(*[limited_call(q) <span class="kw">for</span> q <span class="kw">in</span> queries])</code></pre>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>写一个异步函数 <code>batch_call_model</code>，接收一组 prompt，用 <code>asyncio.Semaphore</code> 限制最多 3 个并发，用 <code>asyncio.as_completed</code> 实现"谁先完成先处理谁"。模拟每次调用耗时 0.5-2 秒。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">import</span> random
+
+sem = asyncio.Semaphore(<span class="nu">3</span>)
+
+<span class="kw">async def</span> <span class="fn">call_model</span>(prompt: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="kw">async with</span> sem:
+        delay = random.uniform(<span class="nu">0.5</span>, <span class="nu">2.0</span>)
+        <span class="kw">await</span> asyncio.sleep(delay)
+        <span class="kw">return</span> <span class="st">f"[</span>{delay:.1f}<span class="st">s] Response to: </span>{prompt[:20]}<span class="st">"</span>
+
+<span class="kw">async def</span> <span class="fn">batch_call_model</span>(prompts: <span class="kw">list</span>[<span class="kw">str</span>]) -> <span class="kw">list</span>[<span class="kw">str</span>]:
+    tasks = [asyncio.create_task(call_model(p)) <span class="kw">for</span> p <span class="kw">in</span> prompts]
+    results = []
+    <span class="kw">for</span> coro <span class="kw">in</span> asyncio.as_completed(tasks):
+        result = <span class="kw">await</span> coro
+        <span class="fn">print</span>(<span class="st">f"Done: </span>{result}<span class="st">"</span>)
+        results.append(result)
+    <span class="kw">return</span> results
+
+<span class="cm"># 测试</span>
+<span class="kw">async def</span> <span class="fn">main</span>():
+    prompts = [<span class="st">f"Question </span>{i}<span class="st">"</span> <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">8</span>)]
+    results = <span class="kw">await</span> batch_call_model(prompts)
+    <span class="fn">print</span>(<span class="st">f"Total: </span>{<span class="fn">len</span>(results)}<span class="st"> results"</span>)
+
+asyncio.run(main())</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 模块与包 ==================== -->
+<section id="modules">
+<h2>模块与包</h2>
+
+<div class="card">
+<h3>项目结构（AI Agent 项目推荐）</h3>
+<pre><code>my-agent/
+├── src/
+│   ├── __init__.py
+│   ├── main.py            <span class="cm"># FastAPI 入口</span>
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── supervisor.py  <span class="cm"># Supervisor Agent</span>
+│   │   ├── faq_agent.py
+│   │   └── refund_agent.py
+│   ├── tools/
+│   │   ├── __init__.py
+│   │   ├── rag.py         <span class="cm"># RAG 检索工具</span>
+│   │   └── order_api.py   <span class="cm"># 订单 API 工具</span>
+│   ├── prompts/
+│   │   ├── supervisor.txt
+│   │   └── faq_agent.txt
+│   └── config.py          <span class="cm"># 配置管理</span>
+├── tests/
+├── requirements.txt
+├── Dockerfile
+└── .env</code></pre>
+</div>
+
+<div class="card">
+<h3>导入规范</h3>
+<pre><code><span class="cm"># 标准库</span>
+<span class="kw">import</span> os
+<span class="kw">import</span> json
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+<span class="cm"># 第三方库</span>
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+
+<span class="cm"># 本项目</span>
+<span class="kw">from</span> src.agents.supervisor <span class="kw">import</span> SupervisorAgent
+<span class="kw">from</span> src.tools.rag <span class="kw">import</span> search_knowledge_base</code></pre>
+<div class="tip">导入顺序：标准库 → 第三方 → 本项目。每组之间空一行。</div>
+</div>
+</section>
+
+<!-- ==================== FastAPI ==================== -->
+<section id="fastapi">
+<h2>FastAPI</h2>
+
+<div class="card card-accent">
+<p>Python 异步 Web 框架。<strong>AI Agent 后端的首选</strong>——自动生成 API 文档、原生异步、类型校验。</p>
+</div>
+
+<div class="card">
+<h3>最小示例</h3>
+<pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+
+app = FastAPI()
+
+<span class="kw">class</span> <span class="fn">ChatRequest</span>(BaseModel):
+    message: <span class="kw">str</span>
+    session_id: <span class="kw">str</span> = <span class="st">"default"</span>
+
+<span class="kw">class</span> <span class="fn">ChatResponse</span>(BaseModel):
+    reply: <span class="kw">str</span>
+    agent_used: <span class="kw">str</span>
+
+@app.post(<span class="st">"/chat"</span>, response_model=ChatResponse)
+<span class="kw">async def</span> <span class="fn">chat</span>(req: ChatRequest):
+    result = <span class="kw">await</span> agent.ainvoke({<span class="st">"messages"</span>: [(<span class="st">"human"</span>, req.message)]})
+    <span class="kw">return</span> ChatResponse(reply=result[<span class="st">"output"</span>], agent_used=result[<span class="st">"agent"</span>])</code></pre>
+<div class="tip">Pydantic BaseModel 自动做请求体校验 + 响应序列化。传错类型直接返回 422 错误，不用手写校验逻辑。</div>
+</div>
+
+<div class="card">
+<h3>流式输出（SSE）</h3>
+<pre><code><span class="kw">from</span> fastapi.responses <span class="kw">import</span> StreamingResponse
+
+@app.post(<span class="st">"/chat/stream"</span>)
+<span class="kw">async def</span> <span class="fn">chat_stream</span>(req: ChatRequest):
+    <span class="kw">async def</span> <span class="fn">generate</span>():
+        <span class="kw">async for</span> chunk <span class="kw">in</span> agent.astream(req.message):
+            <span class="kw">yield</span> <span class="st">f"data: </span>{json.dumps({<span class="st">'content'</span>: chunk})}<span class="st">\n\n"</span>
+        <span class="kw">yield</span> <span class="st">"data: [DONE]\n\n"</span>
+    <span class="kw">return</span> StreamingResponse(generate(), media_type=<span class="st">"text/event-stream"</span>)</code></pre>
+</div>
+
+<div class="card">
+<h3>依赖注入 + 中间件</h3>
+<pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> Depends, HTTPException
+
+<span class="cm"># 依赖注入：获取当前用户</span>
+<span class="kw">async def</span> <span class="fn">get_current_user</span>(token: <span class="kw">str</span> = Header()):
+    user = <span class="kw">await</span> verify_token(token)
+    <span class="kw">if not</span> user:
+        <span class="kw">raise</span> HTTPException(status_code=<span class="nu">401</span>, detail=<span class="st">"Invalid token"</span>)
+    <span class="kw">return</span> user
+
+@app.post(<span class="st">"/chat"</span>)
+<span class="kw">async def</span> <span class="fn">chat</span>(req: ChatRequest, user = Depends(get_current_user)):
+    <span class="cm"># user 自动注入，token 无效自动返回 401</span>
+    ...</code></pre>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>写一个完整的 FastAPI 应用，包含：(1) POST <code>/analyze</code> 接口，接收 <code>alert_message</code> 字段；(2) 用 Pydantic 做请求/响应校验；(3) SSE 流式返回分析结果（模拟逐字输出）；(4) 依赖注入获取 API Key。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">import</span> json
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Depends, Header, HTTPException
+<span class="kw">from</span> fastapi.responses <span class="kw">import</span> StreamingResponse
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field
+
+app = FastAPI()
+
+<span class="kw">class</span> <span class="fn">AnalyzeRequest</span>(BaseModel):
+    alert_message: <span class="kw">str</span> = Field(min_length=<span class="nu">1</span>, max_length=<span class="nu">5000</span>)
+    model: <span class="kw">str</span> = <span class="st">"gpt-4o"</span>
+
+<span class="kw">class</span> <span class="fn">AnalyzeResponse</span>(BaseModel):
+    summary: <span class="kw">str</span>
+    severity: <span class="kw">str</span>
+
+<span class="kw">async def</span> <span class="fn">verify_api_key</span>(x_api_key: <span class="kw">str</span> = Header()):
+    <span class="kw">if</span> x_api_key != <span class="st">"valid-key"</span>:
+        <span class="kw">raise</span> HTTPException(<span class="nu">401</span>, <span class="st">"Invalid API key"</span>)
+    <span class="kw">return</span> x_api_key
+
+@app.post(<span class="st">"/analyze"</span>, response_model=AnalyzeResponse)
+<span class="kw">async def</span> <span class="fn">analyze</span>(req: AnalyzeRequest, key=Depends(verify_api_key)):
+    <span class="kw">return</span> AnalyzeResponse(
+        summary=<span class="st">f"已分析: </span>{req.alert_message[:50]}<span class="st">"</span>,
+        severity=<span class="st">"warning"</span>,
+    )
+
+@app.post(<span class="st">"/analyze/stream"</span>)
+<span class="kw">async def</span> <span class="fn">analyze_stream</span>(req: AnalyzeRequest, key=Depends(verify_api_key)):
+    <span class="kw">async def</span> <span class="fn">generate</span>():
+        analysis = <span class="st">f"告警分析：</span>{req.alert_message}<span class="st"> 看起来是网络波动导致的暂时性故障。"</span>
+        <span class="kw">for</span> char <span class="kw">in</span> analysis:
+            <span class="kw">yield</span> <span class="st">f"data: </span>{json.dumps({<span class="st">'content'</span>: char})}<span class="st">\n\n"</span>
+            <span class="kw">await</span> asyncio.sleep(<span class="nu">0.05</span>)
+        <span class="kw">yield</span> <span class="st">"data: [DONE]\n\n"</span>
+    <span class="kw">return</span> StreamingResponse(generate(), media_type=<span class="st">"text/event-stream"</span>)</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 常用模式 ==================== -->
+<section id="patterns">
+<h2>AI Agent 常用编程模式</h2>
+
+<div class="card">
+<h3>上下文管理器（with 语句）</h3>
+<pre><code><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+
+@asynccontextmanager
+<span class="kw">async def</span> <span class="fn">get_db_session</span>():
+    session = <span class="kw">await</span> create_session()
+    <span class="kw">try</span>:
+        <span class="kw">yield</span> session
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> session.close()
+
+<span class="kw">async with</span> get_db_session() <span class="kw">as</span> db:
+    result = <span class="kw">await</span> db.execute(query)</code></pre>
+</div>
+
+<div class="card">
+<h3>重试模式（调模型 API 必用）</h3>
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">from</span> typing <span class="kw">import</span> TypeVar, Callable
+
+T = TypeVar(<span class="st">"T"</span>)
+
+<span class="kw">async def</span> <span class="fn">retry</span>(
+    func: Callable[..., T],
+    max_retries: <span class="kw">int</span> = <span class="nu">3</span>,
+    backoff: <span class="kw">float</span> = <span class="nu">1.0</span>,
+) -> T:
+    <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(max_retries):
+        <span class="kw">try</span>:
+            <span class="kw">return await</span> func()
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="kw">if</span> attempt == max_retries - <span class="nu">1</span>:
+                <span class="kw">raise</span>
+            wait = backoff * (<span class="nu">2</span> ** attempt)  <span class="cm"># 指数退避</span>
+            <span class="kw">await</span> asyncio.sleep(wait)</code></pre>
+</div>
+
+<div class="card">
+<h3>Pydantic 数据校验（Agent 工具参数必用）</h3>
+<pre><code><span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field, field_validator
+
+<span class="kw">class</span> <span class="fn">RefundRequest</span>(BaseModel):
+    order_id: <span class="kw">str</span> = Field(pattern=<span class="st">r"^\d{13}$"</span>)
+    reason: <span class="kw">str</span> = Field(min_length=<span class="nu">5</span>, max_length=<span class="nu">200</span>)
+    amount: <span class="kw">float</span> = Field(gt=<span class="nu">0</span>)
+
+    @field_validator(<span class="st">"reason"</span>)
+    @classmethod
+    <span class="kw">def</span> <span class="fn">reason_must_be_meaningful</span>(cls, v):
+        <span class="kw">if</span> <span class="fn">len</span>(v.strip()) < <span class="nu">5</span>:
+            <span class="kw">raise</span> ValueError(<span class="st">"退款原因太短"</span>)
+        <span class="kw">return</span> v
+
+<span class="cm"># 自动校验，不合法直接抛 ValidationError</span>
+req = RefundRequest(order_id=<span class="st">"2026090900001"</span>, reason=<span class="st">"不想要了"</span>, amount=<span class="nu">29.9</span>)</code></pre>
+</div>
+
+<div class="card">
+<h3>环境变量管理</h3>
+<pre><code><span class="kw">from</span> pydantic_settings <span class="kw">import</span> BaseSettings
+
+<span class="kw">class</span> <span class="fn">Settings</span>(BaseSettings):
+    openai_api_key: <span class="kw">str</span>
+    redis_url: <span class="kw">str</span> = <span class="st">"redis://localhost:6379"</span>
+    model_name: <span class="kw">str</span> = <span class="st">"gpt-4o"</span>
+    debug: <span class="kw">bool</span> = <span class="kw">False</span>
+
+    <span class="kw">class</span> <span class="fn">Config</span>:
+        env_file = <span class="st">".env"</span>
+
+settings = Settings()  <span class="cm"># 自动从 .env 读取</span></code></pre>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>写一个异步上下文管理器 <code>timed_operation(name)</code>，进入时记录开始时间，退出时打印耗时。如果耗时超过 5 秒，打印警告。然后用它包装一个模拟 API 调用。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> time
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+
+@asynccontextmanager
+<span class="kw">async def</span> <span class="fn">timed_operation</span>(name: <span class="kw">str</span>):
+    start = time.monotonic()
+    <span class="kw">try</span>:
+        <span class="kw">yield</span>
+    <span class="kw">finally</span>:
+        elapsed = time.monotonic() - start
+        msg = <span class="st">f"[</span>{name}<span class="st">] took </span>{elapsed:.2f}<span class="st">s"</span>
+        <span class="kw">if</span> elapsed > <span class="nu">5</span>:
+            <span class="fn">print</span>(<span class="st">f"⚠️  SLOW: </span>{msg}<span class="st">"</span>)
+        <span class="kw">else</span>:
+            <span class="fn">print</span>(msg)
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    <span class="kw">async with</span> timed_operation(<span class="st">"model_call"</span>):
+        <span class="kw">await</span> asyncio.sleep(<span class="nu">2</span>)
+    <span class="cm"># [model_call] took 2.00s</span>
+
+    <span class="kw">async with</span> timed_operation(<span class="st">"slow_query"</span>):
+        <span class="kw">await</span> asyncio.sleep(<span class="nu">6</span>)
+    <span class="cm"># ⚠️  SLOW: [slow_query] took 6.00s</span>
+
+asyncio.run(main())</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 标准库 ==================== -->
+<section id="stdlib">
+<h2>标准库精选</h2>
+
+<table>
+<tr><th>模块</th><th>用途</th><th>Agent 开发场景</th></tr>
+<tr><td><code>json</code></td><td>JSON 序列化</td><td>模型输入输出、API 通信</td></tr>
+<tr><td><code>asyncio</code></td><td>异步编程</td><td>并发调用模型 API</td></tr>
+<tr><td><code>pathlib</code></td><td>文件路径操作</td><td>管理 prompt 文件、文档</td></tr>
+<tr><td><code>os / os.environ</code></td><td>环境变量</td><td>读取 API Key</td></tr>
+<tr><td><code>logging</code></td><td>日志</td><td>Agent 决策日志</td></tr>
+<tr><td><code>hashlib</code></td><td>哈希</td><td>A/B 测试分流</td></tr>
+<tr><td><code>time / datetime</code></td><td>时间</td><td>延迟计时、日志时间戳</td></tr>
+<tr><td><code>re</code></td><td>正则表达式</td><td>输入过滤、Prompt Injection 检测</td></tr>
+<tr><td><code>functools</code></td><td>函数工具</td><td>缓存（lru_cache）、装饰器（wraps）</td></tr>
+<tr><td><code>collections</code></td><td>高级容器</td><td>defaultdict、Counter</td></tr>
+<tr><td><code>abc</code></td><td>抽象基类</td><td>定义 Agent 接口</td></tr>
+</table>
+</section>
+
+<!-- ==================== 并发编程 ==================== -->
+<section id="concurrency">
+<h2>并发编程深入</h2>
+
+<div class="card card-accent">
+<p>Python 有三种并发模型：<strong>threading</strong>（IO密集）、<strong>multiprocessing</strong>（CPU密集）、<strong>asyncio</strong>（IO密集+高并发）。AI Agent 开发以 asyncio 为主，偶尔用 multiprocessing 做 embedding 计算。</p>
+</div>
+
+<div class="grid-3">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3><span class="tag tag-blue">threading</span></h3>
+<p class="text-sm">多线程，受 GIL 限制</p>
+<pre><code><span class="kw">from</span> concurrent.futures <span class="kw">import</span> (
+    ThreadPoolExecutor
+)
+
+<span class="kw">def</span> <span class="fn">fetch_url</span>(url):
+    <span class="kw">return</span> httpx.get(url).text
+
+urls = [<span class="st">"https://a.com"</span>,
+        <span class="st">"https://b.com"</span>,
+        <span class="st">"https://c.com"</span>]
+
+<span class="kw">with</span> ThreadPoolExecutor(<span class="nu">3</span>) <span class="kw">as</span> pool:
+    results = <span class="fn">list</span>(
+        pool.map(fetch_url, urls)
+    )</code></pre>
+<p class="text-sm mt-2">适合：HTTP 请求、文件 IO、数据库查询</p>
+</div>
+
+<div class="card" style="border-top:3px solid var(--green)">
+<h3><span class="tag tag-green">multiprocessing</span></h3>
+<p class="text-sm">多进程，绕过 GIL</p>
+<pre><code><span class="kw">from</span> concurrent.futures <span class="kw">import</span> (
+    ProcessPoolExecutor
+)
+
+<span class="kw">def</span> <span class="fn">compute_embedding</span>(text):
+    <span class="kw">return</span> model.encode(text)
+
+texts = [<span class="st">"doc1"</span>, <span class="st">"doc2"</span>, ...]
+
+<span class="kw">with</span> ProcessPoolExecutor(<span class="nu">4</span>) <span class="kw">as</span> pool:
+    embeddings = <span class="fn">list</span>(
+        pool.map(compute_embedding, texts)
+    )</code></pre>
+<p class="text-sm mt-2">适合：向量计算、数据预处理、PDF 解析</p>
+</div>
+
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3><span class="tag tag-purple">asyncio</span></h3>
+<p class="text-sm">协程，单线程高并发</p>
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="kw">async def</span> <span class="fn">call_llm</span>(prompt):
+    <span class="kw">async with</span> httpx.AsyncClient() <span class="kw">as</span> c:
+        r = <span class="kw">await</span> c.post(url, json={
+            <span class="st">"prompt"</span>: prompt
+        })
+        <span class="kw">return</span> r.json()
+
+results = <span class="kw">await</span> asyncio.gather(
+    call_llm(<span class="st">"q1"</span>),
+    call_llm(<span class="st">"q2"</span>),
+    call_llm(<span class="st">"q3"</span>),
+)</code></pre>
+<p class="text-sm mt-2">适合：模型 API 调用、WebSocket、SSE 流</p>
+</div>
+</div>
+
+<div class="card">
+<h3>选择决策树</h3>
+<table>
+<tr><th>场景</th><th>选择</th><th>原因</th></tr>
+<tr><td>调模型 API（IO 密集）</td><td><code>asyncio</code></td><td>单线程并发上千请求，无锁竞争</td></tr>
+<tr><td>Embedding 批量计算（CPU 密集）</td><td><code>multiprocessing</code></td><td>绕过 GIL，多核并行</td></tr>
+<tr><td>同步库没有异步版本</td><td><code>threading</code></td><td>GIL 限制对 IO 无影响</td></tr>
+<tr><td>同步代码里调异步函数</td><td><code>asyncio.run()</code></td><td>创建事件循环运行协程</td></tr>
+<tr><td>异步代码里跑同步阻塞函数</td><td><code>run_in_executor</code></td><td>丢给线程池，不阻塞事件循环</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>asyncio 进阶：Task、Future、事件循环内部</h3>
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="kw">async def</span> <span class="fn">process_batch</span>(items: <span class="kw">list</span>[<span class="kw">str</span>]):
+    <span class="st">"""创建 Task 而非直接 await——让调度器决定执行顺序。"""</span>
+    tasks = []
+    <span class="kw">for</span> item <span class="kw">in</span> items:
+        task = asyncio.create_task(process_one(item))
+        tasks.append(task)
+
+    <span class="cm"># as_completed：谁先完成谁先返回（不用等全部完成）</span>
+    <span class="kw">for</span> coro <span class="kw">in</span> asyncio.as_completed(tasks):
+        result = <span class="kw">await</span> coro
+        <span class="fn">print</span>(<span class="st">f"Got: </span>{result}<span class="st">"</span>)
+
+<span class="kw">async def</span> <span class="fn">process_one</span>(item: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="kw">await</span> asyncio.sleep(<span class="nu">1</span>)
+    <span class="kw">return</span> <span class="st">f"done: </span>{item}<span class="st">"</span></code></pre>
+<div class="tip"><code>asyncio.gather</code> = 等所有完成再返回。<code>asyncio.as_completed</code> = 谁先完成先处理谁。流式场景多用后者。</div>
+</div>
+
+<div class="card">
+<h3>生产者-消费者模式（Agent 任务队列）</h3>
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="kw">async def</span> <span class="fn">producer</span>(queue: asyncio.Queue, alerts: <span class="kw">list</span>):
+    <span class="kw">for</span> alert <span class="kw">in</span> alerts:
+        <span class="kw">await</span> queue.put(alert)
+    <span class="kw">await</span> queue.put(<span class="kw">None</span>)  <span class="cm"># 毒丸信号</span>
+
+<span class="kw">async def</span> <span class="fn">consumer</span>(queue: asyncio.Queue, worker_id: <span class="kw">int</span>):
+    <span class="kw">while True</span>:
+        alert = <span class="kw">await</span> queue.get()
+        <span class="kw">if</span> alert <span class="kw">is None</span>:
+            <span class="kw">await</span> queue.put(<span class="kw">None</span>)  <span class="cm"># 传递毒丸给其他消费者</span>
+            <span class="kw">break</span>
+        result = <span class="kw">await</span> analyze_alert(alert)
+        <span class="fn">print</span>(<span class="st">f"Worker </span>{worker_id}<span class="st">: </span>{result}<span class="st">"</span>)
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    queue = asyncio.Queue(maxsize=<span class="nu">10</span>)
+    alerts = load_alerts()
+    <span class="kw">await</span> asyncio.gather(
+        producer(queue, alerts),
+        consumer(queue, <span class="nu">1</span>),
+        consumer(queue, <span class="nu">2</span>),
+        consumer(queue, <span class="nu">3</span>),
+    )</code></pre>
+</div>
+
+<div class="card">
+<h3>同步 ↔ 异步桥接（混合调用）</h3>
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="cm"># 场景 1：异步代码里调同步阻塞函数</span>
+<span class="kw">async def</span> <span class="fn">async_handler</span>():
+    loop = asyncio.get_running_loop()
+    result = <span class="kw">await</span> loop.run_in_executor(
+        <span class="kw">None</span>,        <span class="cm"># 默认线程池</span>
+        sync_heavy_function,
+        arg1, arg2,
+    )
+    <span class="kw">return</span> result
+
+<span class="cm"># 场景 2：同步代码里调异步函数</span>
+<span class="kw">def</span> <span class="fn">sync_caller</span>():
+    result = asyncio.run(async_function())
+    <span class="kw">return</span> result
+
+<span class="cm"># 场景 3：FastAPI 中自动处理</span>
+<span class="cm"># async def → 直接在事件循环中执行</span>
+<span class="cm"># def（无 async）→ FastAPI 自动放到线程池执行</span></code></pre>
+<div class="tip">FastAPI 的 <code>def</code> 端点自动在线程池中运行，所以即使用了同步数据库驱动也不会阻塞其他请求。但性能不如 <code>async def</code> + 异步驱动。</div>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>写一个 Worker Pool：创建一个 <code>asyncio.Queue</code>，3 个 worker 协程从队列中取任务执行。主函数往队列中放 10 个 URL，等待所有 worker 处理完毕。要求：(1) worker 遇到异常不退出，记录错误继续处理下一个；(2) 所有任务完成后优雅关闭所有 worker。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="kw">async def</span> <span class="fn">fetch</span>(url: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="kw">await</span> asyncio.sleep(<span class="nu">0.5</span>)
+    <span class="kw">if</span> <span class="st">"bad"</span> <span class="kw">in</span> url:
+        <span class="kw">raise</span> ValueError(<span class="st">f"Bad URL: </span>{url}<span class="st">"</span>)
+    <span class="kw">return</span> <span class="st">f"OK: </span>{url}<span class="st">"</span>
+
+<span class="kw">async def</span> <span class="fn">worker</span>(name: <span class="kw">str</span>, queue: asyncio.Queue, results: <span class="kw">list</span>):
+    <span class="kw">while True</span>:
+        url = <span class="kw">await</span> queue.get()
+        <span class="kw">try</span>:
+            result = <span class="kw">await</span> fetch(url)
+            results.append(result)
+            <span class="fn">print</span>(<span class="st">f"</span>{name}<span class="st">: </span>{result}<span class="st">"</span>)
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="fn">print</span>(<span class="st">f"</span>{name}<span class="st"> error: </span>{e}<span class="st">"</span>)
+        <span class="kw">finally</span>:
+            queue.task_done()
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    queue = asyncio.Queue()
+    results = []
+    urls = [<span class="st">f"https://api.com/</span>{i}<span class="st">"</span> <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">8</span>)]
+    urls += [<span class="st">"https://bad.com/1"</span>, <span class="st">"https://bad.com/2"</span>]
+
+    <span class="kw">for</span> url <span class="kw">in</span> urls:
+        queue.put_nowait(url)
+
+    workers = [
+        asyncio.create_task(worker(<span class="st">f"W</span>{i}<span class="st">"</span>, queue, results))
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">3</span>)
+    ]
+
+    <span class="kw">await</span> queue.join()  <span class="cm"># 等所有任务 task_done</span>
+    <span class="kw">for</span> w <span class="kw">in</span> workers:
+        w.cancel()       <span class="cm"># 优雅关闭 worker</span>
+    <span class="fn">print</span>(<span class="st">f"Done: </span>{<span class="fn">len</span>(results)}<span class="st"> successes"</span>)
+
+asyncio.run(main())</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 内存管理 ==================== -->
+<section id="memory">
+<h2>内存管理</h2>
+
+<div class="card card-accent">
+<p>Python 使用<strong>引用计数 + 分代垃圾回收</strong>。理解内存模型能帮你避免内存泄漏，在处理大量文档、长对话历史时尤其重要。</p>
+</div>
+
+<div class="card">
+<h3>引用计数</h3>
+<pre><code><span class="kw">import</span> sys
+
+a = [<span class="nu">1</span>, <span class="nu">2</span>, <span class="nu">3</span>]
+<span class="fn">print</span>(sys.getrefcount(a))  <span class="cm"># 2（a 本身 + getrefcount 的参数）</span>
+
+b = a                      <span class="cm"># 引用计数 +1</span>
+c = [a, a]                 <span class="cm"># 引用计数 +2</span>
+<span class="fn">print</span>(sys.getrefcount(a))  <span class="cm"># 5</span>
+
+<span class="kw">del</span> b                      <span class="cm"># 引用计数 -1</span>
+c = <span class="kw">None</span>                   <span class="cm"># 引用计数 -2</span>
+<span class="cm"># 当引用计数归零 → 立即释放内存</span></code></pre>
+<div class="tip">引用计数的问题：循环引用（A 引用 B，B 引用 A）无法归零。Python 靠分代 GC 回收它们。</div>
+</div>
+
+<div class="card">
+<h3>分代垃圾回收</h3>
+<pre><code><span class="kw">import</span> gc
+
+<span class="cm"># 三代 GC：新对象在第 0 代，存活越久升代</span>
+<span class="fn">print</span>(gc.get_count())    <span class="cm"># (700, 10, 1) → 各代待扫描对象数</span>
+<span class="fn">print</span>(gc.get_threshold()) <span class="cm"># (700, 10, 10) → 各代触发回收的阈值</span>
+
+<span class="cm"># 手动触发 GC（通常不需要，除非你确定有循环引用）</span>
+gc.collect()
+
+<span class="cm"># 调试循环引用</span>
+gc.set_debug(gc.DEBUG_LEAK)
+gc.collect()
+<span class="fn">print</span>(gc.garbage)  <span class="cm"># 无法回收的对象列表</span></code></pre>
+</div>
+
+<div class="card">
+<h3>__slots__：减少内存占用</h3>
+<div class="vs">
+<div class="card" style="border-top:3px solid var(--red)">
+<div class="tag tag-red mb-2">普通类</div>
+<pre><code><span class="kw">class</span> <span class="fn">Message</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, role, content):
+        self.role = role
+        self.content = content
+
+<span class="cm"># 每个实例有 __dict__</span>
+<span class="cm"># 100 万个 Message ≈ 250 MB</span></code></pre>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<div class="tag tag-green mb-2">__slots__</div>
+<pre><code><span class="kw">class</span> <span class="fn">Message</span>:
+    __slots__ = (<span class="st">"role"</span>, <span class="st">"content"</span>)
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, role, content):
+        self.role = role
+        self.content = content
+
+<span class="cm"># 无 __dict__，固定属性</span>
+<span class="cm"># 100 万个 Message ≈ 100 MB</span></code></pre>
+</div>
+</div>
+<div class="tip">__slots__ 去掉了 __dict__，节省 40-60% 内存。适合海量实例（消息列表、embedding 结果）。代价：不能动态加属性。</div>
+</div>
+
+<div class="card">
+<h3>weakref：弱引用避免内存泄漏</h3>
+<pre><code><span class="kw">import</span> weakref
+
+<span class="kw">class</span> <span class="fn">AgentSession</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, session_id: <span class="kw">str</span>):
+        self.session_id = session_id
+        self.messages = []
+
+<span class="cm"># 缓存不阻止 GC 回收</span>
+cache: weakref.WeakValueDictionary[<span class="kw">str</span>, AgentSession] = weakref.WeakValueDictionary()
+
+session = AgentSession(<span class="st">"abc123"</span>)
+cache[<span class="st">"abc123"</span>] = session
+
+<span class="cm"># 当 session 的强引用消失 → cache 自动清除该条目</span>
+<span class="kw">del</span> session
+<span class="fn">print</span>(<span class="st">"abc123"</span> <span class="kw">in</span> cache)  <span class="cm"># False</span></code></pre>
+<div class="tip">Agent 服务常用缓存（会话、模型实例）。WeakValueDictionary 让缓存对象在无其他引用时自动释放，避免内存无限增长。</div>
+</div>
+
+<div class="card">
+<h3>对象大小检查</h3>
+<pre><code><span class="kw">import</span> sys
+
+<span class="fn">print</span>(sys.getsizeof([]))        <span class="cm"># 56 bytes（空 list）</span>
+<span class="fn">print</span>(sys.getsizeof({}))        <span class="cm"># 64 bytes（空 dict）</span>
+<span class="fn">print</span>(sys.getsizeof(<span class="st">"hello"</span>))   <span class="cm"># 54 bytes</span>
+<span class="fn">print</span>(sys.getsizeof(<span class="nu">42</span>))        <span class="cm"># 28 bytes（int）</span>
+
+<span class="cm"># 递归计算对象总大小（含引用的子对象）</span>
+<span class="kw">def</span> <span class="fn">deep_sizeof</span>(obj, seen=<span class="kw">None</span>):
+    <span class="kw">if</span> seen <span class="kw">is None</span>:
+        seen = <span class="fn">set</span>()
+    obj_id = <span class="fn">id</span>(obj)
+    <span class="kw">if</span> obj_id <span class="kw">in</span> seen:
+        <span class="kw">return</span> <span class="nu">0</span>
+    seen.add(obj_id)
+    size = sys.getsizeof(obj)
+    <span class="kw">if</span> <span class="fn">isinstance</span>(obj, <span class="kw">dict</span>):
+        size += <span class="fn">sum</span>(deep_sizeof(k, seen) + deep_sizeof(v, seen)
+                    <span class="kw">for</span> k, v <span class="kw">in</span> obj.items())
+    <span class="kw">elif</span> <span class="fn">isinstance</span>(obj, (<span class="kw">list</span>, <span class="kw">tuple</span>, <span class="kw">set</span>, <span class="kw">frozenset</span>)):
+        size += <span class="fn">sum</span>(deep_sizeof(i, seen) <span class="kw">for</span> i <span class="kw">in</span> obj)
+    <span class="kw">return</span> size</code></pre>
+</div>
+
+<div class="card">
+<h3>内存分析工具：tracemalloc</h3>
+<pre><code><span class="kw">import</span> tracemalloc
+
+tracemalloc.start()
+
+<span class="cm"># 执行需要分析的代码</span>
+messages = [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="st">"x"</span> * <span class="nu">1000</span>} <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">10000</span>)]
+
+snapshot = tracemalloc.take_snapshot()
+top = snapshot.statistics(<span class="st">"lineno"</span>)
+
+<span class="fn">print</span>(<span class="st">"Top 5 内存分配："</span>)
+<span class="kw">for</span> stat <span class="kw">in</span> top[:<span class="nu">5</span>]:
+    <span class="fn">print</span>(stat)
+
+<span class="cm"># 对比两个快照，找内存增长</span>
+snapshot1 = tracemalloc.take_snapshot()
+<span class="cm"># ... 执行更多代码 ...</span>
+snapshot2 = tracemalloc.take_snapshot()
+diff = snapshot2.compare_to(snapshot1, <span class="st">"lineno"</span>)
+<span class="kw">for</span> stat <span class="kw">in</span> diff[:<span class="nu">5</span>]:
+    <span class="fn">print</span>(stat)  <span class="cm"># 显示内存增长最多的位置</span></code></pre>
+</div>
+
+<div class="card card-orange">
+<h3>Agent 开发常见内存泄漏</h3>
+<table>
+<tr><th>泄漏场景</th><th>原因</th><th>解决方案</th></tr>
+<tr><td>对话历史无限增长</td><td>每轮对话都 append，不截断</td><td>设置最大历史长度，压缩旧消息</td></tr>
+<tr><td>全局缓存无上限</td><td>dict 做缓存但从不清除</td><td>用 <code>functools.lru_cache(maxsize=N)</code></td></tr>
+<tr><td>模型实例泄漏</td><td>每次请求创建新 client 但不关闭</td><td>复用 client（单例 / 连接池）</td></tr>
+<tr><td>大文件全部读入内存</td><td><code>f.read()</code> 读 GB 级文件</td><td>生成器逐块读取</td></tr>
+<tr><td>闭包持有大对象</td><td>装饰器/回调引用了外层作用域的大变量</td><td>只传必要的小数据</td></tr>
+</table>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>用 <code>__slots__</code> 和 <code>tracemalloc</code> 做一个对比实验。定义两个类 <code>MessageNormal</code>（普通）和 <code>MessageSlots</code>（用 __slots__），各创建 10 万个实例，对比内存占用差异。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> tracemalloc
+
+<span class="kw">class</span> <span class="fn">MessageNormal</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, role, content, ts):
+        self.role = role
+        self.content = content
+        self.ts = ts
+
+<span class="kw">class</span> <span class="fn">MessageSlots</span>:
+    __slots__ = (<span class="st">"role"</span>, <span class="st">"content"</span>, <span class="st">"ts"</span>)
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, role, content, ts):
+        self.role = role
+        self.content = content
+        self.ts = ts
+
+N = <span class="nu">100_000</span>
+
+<span class="cm"># 测试普通类</span>
+tracemalloc.start()
+normals = [MessageNormal(<span class="st">"user"</span>, <span class="st">"hi"</span>, <span class="nu">0</span>) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(N)]
+snap1 = tracemalloc.take_snapshot()
+mem1 = <span class="fn">sum</span>(s.size <span class="kw">for</span> s <span class="kw">in</span> snap1.statistics(<span class="st">"filename"</span>))
+tracemalloc.stop()
+
+<span class="cm"># 测试 slots 类</span>
+tracemalloc.start()
+slots = [MessageSlots(<span class="st">"user"</span>, <span class="st">"hi"</span>, <span class="nu">0</span>) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(N)]
+snap2 = tracemalloc.take_snapshot()
+mem2 = <span class="fn">sum</span>(s.size <span class="kw">for</span> s <span class="kw">in</span> snap2.statistics(<span class="st">"filename"</span>))
+tracemalloc.stop()
+
+<span class="fn">print</span>(<span class="st">f"Normal: </span>{mem1 / <span class="nu">1024</span> / <span class="nu">1024</span>:.1f}<span class="st"> MB"</span>)
+<span class="fn">print</span>(<span class="st">f"Slots:  </span>{mem2 / <span class="nu">1024</span> / <span class="nu">1024</span>:.1f}<span class="st"> MB"</span>)
+<span class="fn">print</span>(<span class="st">f"节省:   </span>{(mem1 - mem2) / mem1 * <span class="nu">100</span>:.0f}<span class="st">%"</span>)
+<span class="cm"># 典型输出: Normal: 24.1 MB, Slots: 10.3 MB, 节省: 57%</span></code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 性能优化 ==================== -->
+<section id="perf">
+<h2>性能优化</h2>
+
+<div class="card card-accent">
+<p>优化的铁律：<strong>先量化，后优化</strong>。不 profiling 直接"优化"= 盲猜。AI Agent 的性能瓶颈 90% 在网络 IO（模型 API）和数据处理（embedding/解析），不在 Python 语言本身。</p>
+</div>
+
+<div class="card">
+<h3>cProfile：函数级性能分析</h3>
+<pre><code><span class="kw">import</span> cProfile
+<span class="kw">import</span> pstats
+
+<span class="cm"># 方式 1：命令行</span>
+<span class="cm"># python -m cProfile -o output.prof my_script.py</span>
+
+<span class="cm"># 方式 2：代码内</span>
+profiler = cProfile.Profile()
+profiler.enable()
+
+<span class="cm"># 要分析的代码</span>
+result = process_documents(docs)
+
+profiler.disable()
+stats = pstats.Stats(profiler)
+stats.sort_stats(<span class="st">"cumulative"</span>)  <span class="cm"># 按累计时间排序</span>
+stats.print_stats(<span class="nu">20</span>)            <span class="cm"># 打印 Top 20</span>
+
+<span class="cm"># 输出示例：</span>
+<span class="cm">#  ncalls  tottime  cumtime  filename:lineno(function)</span>
+<span class="cm">#  1000    0.003    45.231   api_client.py:42(call_model)</span>
+<span class="cm">#  1000    0.001    2.105    embedder.py:18(encode)</span>
+<span class="cm"># → 一眼看出瓶颈在 call_model</span></code></pre>
+</div>
+
+<div class="card">
+<h3>timeit：微基准测试</h3>
+<pre><code><span class="kw">import</span> timeit
+
+<span class="cm"># 比较两种字符串拼接方式</span>
+<span class="fn">print</span>(timeit.timeit(
+    <span class="st">'s = ""; [s := s + str(i) for i in range(1000)]'</span>,
+    number=<span class="nu">1000</span>
+))  <span class="cm"># ~0.15s</span>
+
+<span class="fn">print</span>(timeit.timeit(
+    <span class="st">'"".join(str(i) for i in range(1000))'</span>,
+    number=<span class="nu">1000</span>
+))  <span class="cm"># ~0.06s  ← join 快 2.5x</span></code></pre>
+</div>
+
+<div class="card">
+<h3>缓存：避免重复计算</h3>
+<pre><code><span class="kw">from</span> functools <span class="kw">import</span> lru_cache, cache
+
+<span class="cm"># lru_cache：有上限的缓存（LRU 淘汰）</span>
+@lru_cache(maxsize=<span class="nu">256</span>)
+<span class="kw">def</span> <span class="fn">get_embedding</span>(text: <span class="kw">str</span>) -> <span class="kw">list</span>[<span class="kw">float</span>]:
+    <span class="kw">return</span> model.encode(text)
+
+<span class="cm"># cache（Python 3.9+）：无上限缓存</span>
+@cache
+<span class="kw">def</span> <span class="fn">load_prompt_template</span>(name: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="kw">return</span> Path(<span class="st">f"prompts/</span>{name}<span class="st">.txt"</span>).read_text()
+
+<span class="cm"># 查看缓存命中率</span>
+<span class="fn">print</span>(get_embedding.cache_info())
+<span class="cm"># CacheInfo(hits=150, misses=20, maxsize=256, currsize=20)</span></code></pre>
+<div class="tip">注意：<code>lru_cache</code> 的参数必须是 hashable 的。list、dict 不行，tuple 可以。</div>
+</div>
+
+<div class="card">
+<h3>数据结构选择</h3>
+<table>
+<tr><th>操作</th><th>差的选择</th><th>好的选择</th><th>差异</th></tr>
+<tr><td>频繁头部插入/弹出</td><td><code>list</code></td><td><code>collections.deque</code></td><td>O(n) → O(1)</td></tr>
+<tr><td>成员检查（in）</td><td><code>list</code></td><td><code>set / frozenset</code></td><td>O(n) → O(1)</td></tr>
+<tr><td>带默认值的 dict</td><td><code>if key in d: d[key]+=1 else: d[key]=1</code></td><td><code>collections.Counter</code></td><td>代码量少 3x</td></tr>
+<tr><td>Top-K 最大/最小值</td><td><code>sorted(data)[:k]</code></td><td><code>heapq.nlargest(k, data)</code></td><td>O(n log n) → O(n log k)</td></tr>
+<tr><td>合并多个 dict</td><td>循环 update</td><td><code>{**d1, **d2}</code> 或 <code>d1 | d2</code></td><td>更简洁，Python 3.9+</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>collections.deque vs list</h3>
+<pre><code><span class="kw">from</span> collections <span class="kw">import</span> deque
+
+<span class="cm"># 场景：滑动窗口（保留最近 N 条消息）</span>
+recent_messages = deque(maxlen=<span class="nu">50</span>)
+
+<span class="kw">for</span> msg <span class="kw">in</span> message_stream:
+    recent_messages.append(msg)  <span class="cm"># 超过 50 条自动弹出最老的</span>
+
+<span class="cm"># 场景：BFS 广度优先搜索</span>
+queue = deque([start_node])
+<span class="kw">while</span> queue:
+    node = queue.popleft()  <span class="cm"># O(1)，list.pop(0) 是 O(n)</span>
+    <span class="kw">for</span> neighbor <span class="kw">in</span> node.children:
+        queue.append(neighbor)</code></pre>
+</div>
+
+<div class="card">
+<h3>字符串拼接</h3>
+<div class="vs">
+<div class="card" style="border-top:3px solid var(--red)">
+<div class="tag tag-red mb-2">慢 O(n^2)</div>
+<pre><code>result = <span class="st">""</span>
+<span class="kw">for</span> chunk <span class="kw">in</span> chunks:
+    result += chunk
+<span class="cm"># 每次 += 创建新字符串</span></code></pre>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<div class="tag tag-green mb-2">快 O(n)</div>
+<pre><code>result = <span class="st">""</span>.join(chunks)
+<span class="cm"># 一次性分配，拼接完成</span>
+
+<span class="cm"># 或用 io.StringIO</span>
+<span class="kw">from</span> io <span class="kw">import</span> StringIO
+buf = StringIO()
+<span class="kw">for</span> chunk <span class="kw">in</span> chunks:
+    buf.write(chunk)
+result = buf.getvalue()</code></pre>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h3>生成器替代列表（惰性求值节省内存）</h3>
+<pre><code><span class="cm"># 处理 100 万条日志——不要一次性加载</span>
+
+<span class="cm"># 差：一次性读入内存</span>
+lines = <span class="fn">open</span>(<span class="st">"huge.log"</span>).readlines()  <span class="cm"># 可能 OOM</span>
+
+<span class="cm"># 好：生成器逐行处理</span>
+<span class="kw">def</span> <span class="fn">parse_errors</span>(path):
+    <span class="kw">with</span> <span class="fn">open</span>(path) <span class="kw">as</span> f:
+        <span class="kw">for</span> line <span class="kw">in</span> f:
+            <span class="kw">if</span> <span class="st">"ERROR"</span> <span class="kw">in</span> line:
+                <span class="kw">yield</span> line.strip()
+
+<span class="cm"># 链式组合——每一步都是惰性的</span>
+errors = parse_errors(<span class="st">"huge.log"</span>)
+recent = (e <span class="kw">for</span> e <span class="kw">in</span> errors <span class="kw">if</span> <span class="st">"2026-09"</span> <span class="kw">in</span> e)
+first_10 = [<span class="fn">next</span>(recent) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">10</span>)]</code></pre>
+</div>
+
+<div class="card card-green">
+<h3>AI Agent 性能优化 Checklist</h3>
+<table>
+<tr><th>#</th><th>优化项</th><th>预期收益</th></tr>
+<tr><td>1</td><td>模型 API 并发调用（<code>asyncio.gather</code>）</td><td>3-5x 延迟降低</td></tr>
+<tr><td>2</td><td>Embedding 结果缓存（Redis / <code>lru_cache</code>）</td><td>避免重复计算，节省 API 费用</td></tr>
+<tr><td>3</td><td>流式输出（SSE / WebSocket）</td><td>用户首字节时间 5s → 0.3s</td></tr>
+<tr><td>4</td><td>对话历史截断 / 压缩</td><td>避免 token 浪费，降低延迟</td></tr>
+<tr><td>5</td><td>连接池复用（httpx.AsyncClient）</td><td>减少 TCP 握手开销</td></tr>
+<tr><td>6</td><td>批量 embedding（一次传多个文本）</td><td>降低 API 调用次数</td></tr>
+<tr><td>7</td><td>向量检索预热 + 索引优化</td><td>RAG 检索 200ms → 20ms</td></tr>
+<tr><td>8</td><td>模型路由（简单问题用小模型）</td><td>降低 40-60% 费用</td></tr>
+</table>
+</div>
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>对一个"查询去重"函数做性能优化。原始实现用 list 存储已见过的查询，用 <code>in</code> 检查是否重复。优化后用 set。用 <code>timeit</code> 对比 1 万条数据的性能差异。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> timeit
+<span class="kw">import</span> random
+<span class="kw">import</span> string
+
+<span class="kw">def</span> <span class="fn">random_query</span>():
+    <span class="kw">return</span> <span class="st">""</span>.join(random.choices(string.ascii_lowercase, k=<span class="nu">8</span>))
+
+queries = [random_query() <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">10000</span>)]
+queries += queries[:<span class="nu">3000</span>]  <span class="cm"># 加入 30% 重复</span>
+random.shuffle(queries)
+
+<span class="cm"># 慢：用 list 做 in 检查 → O(n^2)</span>
+<span class="kw">def</span> <span class="fn">dedup_list</span>(items):
+    seen = []
+    result = []
+    <span class="kw">for</span> item <span class="kw">in</span> items:
+        <span class="kw">if</span> item <span class="kw">not in</span> seen:
+            seen.append(item)
+            result.append(item)
+    <span class="kw">return</span> result
+
+<span class="cm"># 快：用 set 做 in 检查 → O(n)</span>
+<span class="kw">def</span> <span class="fn">dedup_set</span>(items):
+    seen = <span class="fn">set</span>()
+    result = []
+    <span class="kw">for</span> item <span class="kw">in</span> items:
+        <span class="kw">if</span> item <span class="kw">not in</span> seen:
+            seen.add(item)
+            result.append(item)
+    <span class="kw">return</span> result
+
+t1 = timeit.timeit(<span class="kw">lambda</span>: dedup_list(queries), number=<span class="nu">3</span>)
+t2 = timeit.timeit(<span class="kw">lambda</span>: dedup_set(queries), number=<span class="nu">3</span>)
+<span class="fn">print</span>(<span class="st">f"list: </span>{t1:.2f}<span class="st">s"</span>)   <span class="cm"># ~3.5s</span>
+<span class="fn">print</span>(<span class="st">f"set:  </span>{t2:.4f}<span class="st">s"</span>)   <span class="cm"># ~0.004s</span>
+<span class="fn">print</span>(<span class="st">f"set 快 </span>{t1/t2:.0f}<span class="st">x"</span>)  <span class="cm"># ~800x</span></code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 面试常考 ==================== -->
+<section id="tips">
+<h2>Python 面试常考</h2>
+
+<details class="card">
+<summary>可变 vs 不可变类型</summary>
+<div class="mt-2">
+<p>不可变：int, float, str, tuple, frozenset。可变：list, dict, set。</p>
+<p class="mt-2"><strong>陷阱</strong>：可变对象做函数默认参数会共享状态。</p>
+<pre><code><span class="cm"># 错误：所有调用共享同一个 list</span>
+<span class="kw">def</span> <span class="fn">add_item</span>(item, items=[]):
+    items.append(item)
+    <span class="kw">return</span> items
+
+<span class="cm"># 正确：用 None 做默认值</span>
+<span class="kw">def</span> <span class="fn">add_item</span>(item, items=<span class="kw">None</span>):
+    <span class="kw">if</span> items <span class="kw">is None</span>:
+        items = []
+    items.append(item)
+    <span class="kw">return</span> items</code></pre>
+</div>
+</details>
+
+<details class="card">
+<summary>GIL（全局解释器锁）</summary>
+<div class="mt-2">
+<p>CPython 的 GIL 让同一时刻只有一个线程执行 Python 字节码。</p>
+<p><strong>影响</strong>：CPU 密集型任务多线程无法加速。IO 密集型（网络请求）不受影响——线程在等 IO 时释放 GIL。</p>
+<p><strong>AI Agent 的做法</strong>：用 asyncio（协程）处理 IO 密集型任务（模型 API 调用），用 multiprocessing 处理 CPU 密集型任务（embedding 计算）。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>深拷贝 vs 浅拷贝</summary>
+<div class="mt-2">
+<pre><code><span class="kw">import</span> copy
+a = [[<span class="nu">1</span>,<span class="nu">2</span>], [<span class="nu">3</span>,<span class="nu">4</span>]]
+b = copy.copy(a)      <span class="cm"># 浅拷贝：外层新 list，内层共享</span>
+c = copy.deepcopy(a)  <span class="cm"># 深拷贝：完全独立</span>
+
+a[<span class="nu">0</span>].append(<span class="nu">99</span>)
+<span class="fn">print</span>(b[<span class="nu">0</span>])  <span class="cm"># [1, 2, 99] — 浅拷贝受影响</span>
+<span class="fn">print</span>(c[<span class="nu">0</span>])  <span class="cm"># [1, 2]    — 深拷贝不受影响</span></code></pre>
+</div>
+</details>
+
+<details class="card">
+<summary>列表推导 vs 生成器表达式</summary>
+<div class="mt-2">
+<pre><code><span class="cm"># 列表推导：一次性生成所有结果（占内存）</span>
+squares = [x**<span class="nu">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">1000000</span>)]
+
+<span class="cm"># 生成器表达式：惰性求值（省内存）</span>
+squares = (x**<span class="nu">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">1000000</span>))</code></pre>
+<p class="mt-2">数据量小用列表推导（简洁），数据量大用生成器（省内存）。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>__init__ vs __new__ vs __call__</summary>
+<div class="mt-2">
+<table>
+<tr><td><code>__new__</code></td><td>创建实例（分配内存）</td><td>极少重写</td></tr>
+<tr><td><code>__init__</code></td><td>初始化实例（设置属性）</td><td>最常用</td></tr>
+<tr><td><code>__call__</code></td><td>让实例可以像函数一样调用</td><td>实现中间件、装饰器</td></tr>
+</table>
+</div>
+</details>
+
+<details class="card">
+<summary>asyncio 事件循环</summary>
+<div class="mt-2">
+<p>事件循环是异步编程的核心——一个 while 循环不断检查有没有任务可以执行。</p>
+<p><code>await</code> 的意思是"这里要等 IO，先去执行别的协程"。事件循环在 IO 完成后把控制权交回来。</p>
+<p><strong>关键</strong>：<code>asyncio.run()</code> 创建事件循环并运行。FastAPI 自动管理事件循环，你只管 <code>async def</code> + <code>await</code>。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 综合大题 ==================== -->
+<section id="capstone">
+<h2>综合大题：用 Python 实现 Mini Agent</h2>
+
+<div class="card card-accent">
+<p><strong>这是一道综合练习</strong>，串联本指南的核心知识点：TypedDict / 类型注解、装饰器、异步编程、异常处理、生成器、Pydantic、FastAPI。完成这道题，你就具备了 AI Agent 开发的基础编码能力。</p>
+</div>
+
+<div class="card">
+<h3>题目：实现一个能使用工具的 Mini Agent</h3>
+<p>你需要实现一个简化版的 ReAct Agent，它能够：</p>
+<ol style="padding-left:20px;margin:10px 0;line-height:2">
+<li>接收用户问题</li>
+<li>判断是否需要调用工具（模拟 LLM 路由）</li>
+<li>如果需要，调用工具并把结果作为上下文</li>
+<li>生成最终回答</li>
+<li>通过 FastAPI 提供 HTTP 接口，支持流式输出</li>
+</ol>
+</div>
+
+<div class="card">
+<h3>Step 1：定义 State 和 Tool 类型</h3>
+<p>用 TypedDict 定义 Agent 状态，用 dataclass 定义工具调用结果。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">from</span> typing <span class="kw">import</span> TypedDict, Literal
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="kw">class</span> <span class="fn">Message</span>(TypedDict):
+    role: Literal[<span class="st">"user"</span>, <span class="st">"assistant"</span>, <span class="st">"tool"</span>]
+    content: <span class="kw">str</span>
+
+<span class="kw">class</span> <span class="fn">AgentState</span>(TypedDict):
+    messages: <span class="kw">list</span>[Message]
+    tool_calls: <span class="kw">list</span>[<span class="kw">str</span>]
+    current_step: Literal[<span class="st">"think"</span>, <span class="st">"act"</span>, <span class="st">"respond"</span>, <span class="st">"done"</span>]
+
+@dataclass
+<span class="kw">class</span> <span class="fn">ToolResult</span>:
+    tool_name: <span class="kw">str</span>
+    success: <span class="kw">bool</span>
+    output: <span class="kw">str</span></code></pre>
+</details>
+</div>
+
+<div class="card">
+<h3>Step 2：实现工具注册和调用</h3>
+<p>用装饰器模式注册工具。工具函数用 <code>async def</code>，支持异步。加入异常处理，工具失败不应该让 Agent 崩溃。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">from</span> functools <span class="kw">import</span> wraps
+<span class="kw">from</span> typing <span class="kw">import</span> Callable, Any
+
+<span class="kw">class</span> <span class="fn">ToolRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self._tools: <span class="kw">dict</span>[<span class="kw">str</span>, Callable] = {}
+
+    <span class="kw">def</span> <span class="fn">tool</span>(self, description: <span class="kw">str</span>):
+        <span class="kw">def</span> <span class="fn">decorator</span>(func: Callable) -> Callable:
+            @wraps(func)
+            <span class="kw">async def</span> <span class="fn">wrapper</span>(*args, **kwargs) -> ToolResult:
+                <span class="kw">try</span>:
+                    result = <span class="kw">await</span> func(*args, **kwargs)
+                    <span class="kw">return</span> ToolResult(func.__name__, <span class="kw">True</span>, <span class="fn">str</span>(result))
+                <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                    <span class="kw">return</span> ToolResult(func.__name__, <span class="kw">False</span>, <span class="st">f"Error: </span>{e}<span class="st">"</span>)
+            wrapper._description = description
+            self._tools[func.__name__] = wrapper
+            <span class="kw">return</span> wrapper
+        <span class="kw">return</span> decorator
+
+    <span class="kw">async def</span> <span class="fn">call</span>(self, name: <span class="kw">str</span>, **kwargs) -> ToolResult:
+        <span class="kw">if</span> name <span class="kw">not in</span> self._tools:
+            <span class="kw">return</span> ToolResult(name, <span class="kw">False</span>, <span class="st">f"Tool '</span>{name}<span class="st">' not found"</span>)
+        <span class="kw">return await</span> self._tools[name](**kwargs)
+
+    <span class="kw">def</span> <span class="fn">list_tools</span>(self) -> <span class="kw">list</span>[<span class="kw">dict</span>]:
+        <span class="kw">return</span> [
+            {<span class="st">"name"</span>: n, <span class="st">"description"</span>: f._description}
+            <span class="kw">for</span> n, f <span class="kw">in</span> self._tools.items()
+        ]
+
+registry = ToolRegistry()
+
+@registry.tool(<span class="st">"查询订单状态"</span>)
+<span class="kw">async def</span> <span class="fn">query_order</span>(order_id: <span class="kw">str</span>) -> <span class="kw">dict</span>:
+    <span class="kw">import</span> asyncio
+    <span class="kw">await</span> asyncio.sleep(<span class="nu">0.3</span>)  <span class="cm"># 模拟数据库查询</span>
+    orders = {
+        <span class="st">"ORD001"</span>: {<span class="st">"status"</span>: <span class="st">"shipped"</span>, <span class="st">"amount"</span>: <span class="nu">299.0</span>},
+        <span class="st">"ORD002"</span>: {<span class="st">"status"</span>: <span class="st">"pending"</span>, <span class="st">"amount"</span>: <span class="nu">59.9</span>},
+    }
+    <span class="kw">if</span> order_id <span class="kw">not in</span> orders:
+        <span class="kw">raise</span> KeyError(<span class="st">f"Order </span>{order_id}<span class="st"> not found"</span>)
+    <span class="kw">return</span> orders[order_id]
+
+@registry.tool(<span class="st">"发起退款"</span>)
+<span class="kw">async def</span> <span class="fn">create_refund</span>(order_id: <span class="kw">str</span>, reason: <span class="kw">str</span>) -> <span class="kw">dict</span>:
+    <span class="kw">import</span> asyncio
+    <span class="kw">await</span> asyncio.sleep(<span class="nu">0.5</span>)
+    <span class="kw">return</span> {<span class="st">"refund_id"</span>: <span class="st">"RF001"</span>, <span class="st">"status"</span>: <span class="st">"submitted"</span>}</code></pre>
+</details>
+</div>
+
+<div class="card">
+<h3>Step 3：实现 Agent 核心循环</h3>
+<p>Agent 是一个 while 循环：Think → Act → Respond。用异步生成器实现流式输出。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">import</span> re
+
+<span class="kw">class</span> <span class="fn">MiniAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, tools: ToolRegistry):
+        self.tools = tools
+        self.max_steps = <span class="nu">5</span>
+
+    <span class="kw">async def</span> <span class="fn">_think</span>(self, state: AgentState) -> <span class="kw">tuple</span>[<span class="kw">str</span>, <span class="kw">dict</span> | <span class="kw">None</span>]:
+        <span class="st">"""模拟 LLM 决策：是否调用工具。"""</span>
+        last_msg = state[<span class="st">"messages"</span>][<span class="nu">-1</span>][<span class="st">"content"</span>].lower()
+
+        <span class="kw">if</span> <span class="st">"订单"</span> <span class="kw">in</span> last_msg <span class="kw">or</span> <span class="st">"order"</span> <span class="kw">in</span> last_msg:
+            match = re.search(<span class="st">r"(ORD\d+)"</span>, last_msg, re.IGNORECASE)
+            order_id = match.group(<span class="nu">1</span>) <span class="kw">if</span> match <span class="kw">else</span> <span class="st">"ORD001"</span>
+            <span class="kw">return</span> <span class="st">"query_order"</span>, {<span class="st">"order_id"</span>: order_id}
+
+        <span class="kw">if</span> <span class="st">"退款"</span> <span class="kw">in</span> last_msg <span class="kw">or</span> <span class="st">"refund"</span> <span class="kw">in</span> last_msg:
+            <span class="kw">return</span> <span class="st">"create_refund"</span>, {<span class="st">"order_id"</span>: <span class="st">"ORD001"</span>, <span class="st">"reason"</span>: <span class="st">"用户申请"</span>}
+
+        <span class="kw">return</span> <span class="st">"respond"</span>, <span class="kw">None</span>
+
+    <span class="kw">async def</span> <span class="fn">_respond</span>(self, state: AgentState) -> <span class="kw">str</span>:
+        <span class="st">"""模拟 LLM 生成回复。"""</span>
+        tool_results = [
+            m[<span class="st">"content"</span>] <span class="kw">for</span> m <span class="kw">in</span> state[<span class="st">"messages"</span>]
+            <span class="kw">if</span> m[<span class="st">"role"</span>] == <span class="st">"tool"</span>
+        ]
+        user_msg = state[<span class="st">"messages"</span>][<span class="nu">0</span>][<span class="st">"content"</span>]
+
+        <span class="kw">if</span> tool_results:
+            <span class="kw">return</span> <span class="st">f"根据查询结果，</span>{tool_results[<span class="nu">-1</span>]}<span class="st">。请问还需要其他帮助吗？"</span>
+        <span class="kw">return</span> <span class="st">f"您好！关于「</span>{user_msg}<span class="st">」，我是智能客服，请问有什么可以帮您？"</span>
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self, user_message: <span class="kw">str</span>):
+        <span class="st">"""Agent 主循环，异步生成器逐步返回过程。"""</span>
+        state: AgentState = {
+            <span class="st">"messages"</span>: [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: user_message}],
+            <span class="st">"tool_calls"</span>: [],
+            <span class="st">"current_step"</span>: <span class="st">"think"</span>,
+        }
+
+        <span class="kw">for</span> step <span class="kw">in</span> <span class="fn">range</span>(self.max_steps):
+            <span class="kw">if</span> state[<span class="st">"current_step"</span>] == <span class="st">"think"</span>:
+                tool_name, params = <span class="kw">await</span> self._think(state)
+                <span class="kw">if</span> tool_name == <span class="st">"respond"</span>:
+                    state[<span class="st">"current_step"</span>] = <span class="st">"respond"</span>
+                <span class="kw">else</span>:
+                    <span class="kw">yield</span> <span class="st">f"🔧 调用工具: </span>{tool_name}<span class="st">(</span>{params}<span class="st">)\n"</span>
+                    result = <span class="kw">await</span> self.tools.call(tool_name, **params)
+                    state[<span class="st">"tool_calls"</span>].append(tool_name)
+                    state[<span class="st">"messages"</span>].append({
+                        <span class="st">"role"</span>: <span class="st">"tool"</span>,
+                        <span class="st">"content"</span>: result.output,
+                    })
+                    status = <span class="st">"✅"</span> <span class="kw">if</span> result.success <span class="kw">else</span> <span class="st">"❌"</span>
+                    <span class="kw">yield</span> <span class="st">f"</span>{status}<span class="st"> 工具结果: </span>{result.output}<span class="st">\n"</span>
+                    state[<span class="st">"current_step"</span>] = <span class="st">"respond"</span>
+
+            <span class="kw">if</span> state[<span class="st">"current_step"</span>] == <span class="st">"respond"</span>:
+                answer = <span class="kw">await</span> self._respond(state)
+                <span class="kw">for</span> char <span class="kw">in</span> answer:
+                    <span class="kw">yield</span> char
+                    <span class="kw">await</span> asyncio.sleep(<span class="nu">0.02</span>)  <span class="cm"># 模拟逐字输出</span>
+                state[<span class="st">"current_step"</span>] = <span class="st">"done"</span>
+                <span class="kw">break</span></code></pre>
+</details>
+</div>
+
+<div class="card">
+<h3>Step 4：用 FastAPI 提供 HTTP + SSE 接口</h3>
+<p>把 Agent 包装成 API 服务，支持普通 JSON 响应和 SSE 流式输出。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">import</span> json
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> fastapi.responses <span class="kw">import</span> StreamingResponse
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field
+
+app = FastAPI(title=<span class="st">"Mini Agent API"</span>)
+agent = MiniAgent(tools=registry)
+
+<span class="kw">class</span> <span class="fn">ChatRequest</span>(BaseModel):
+    message: <span class="kw">str</span> = Field(min_length=<span class="nu">1</span>, max_length=<span class="nu">2000</span>)
+
+<span class="kw">class</span> <span class="fn">ChatResponse</span>(BaseModel):
+    reply: <span class="kw">str</span>
+    tools_used: <span class="kw">list</span>[<span class="kw">str</span>]
+
+@app.post(<span class="st">"/chat"</span>, response_model=ChatResponse)
+<span class="kw">async def</span> <span class="fn">chat</span>(req: ChatRequest):
+    chunks = []
+    tools_used = []
+    <span class="kw">async for</span> chunk <span class="kw">in</span> agent.run(req.message):
+        chunks.append(chunk)
+        <span class="kw">if</span> chunk.startswith(<span class="st">"🔧"</span>):
+            tools_used.append(chunk.strip())
+    <span class="kw">return</span> ChatResponse(reply=<span class="st">""</span>.join(chunks), tools_used=tools_used)
+
+@app.post(<span class="st">"/chat/stream"</span>)
+<span class="kw">async def</span> <span class="fn">chat_stream</span>(req: ChatRequest):
+    <span class="kw">async def</span> <span class="fn">generate</span>():
+        <span class="kw">async for</span> chunk <span class="kw">in</span> agent.run(req.message):
+            data = json.dumps({<span class="st">"content"</span>: chunk}, ensure_ascii=<span class="kw">False</span>)
+            <span class="kw">yield</span> <span class="st">f"data: </span>{data}<span class="st">\n\n"</span>
+        <span class="kw">yield</span> <span class="st">"data: [DONE]\n\n"</span>
+    <span class="kw">return</span> StreamingResponse(generate(), media_type=<span class="st">"text/event-stream"</span>)
+
+@app.get(<span class="st">"/tools"</span>)
+<span class="kw">async def</span> <span class="fn">list_tools</span>():
+    <span class="kw">return</span> registry.list_tools()</code></pre>
+</details>
+</div>
+
+<div class="card">
+<h3>Step 5：完整运行测试</h3>
+<p>把所有代码组合到一个文件中，运行并测试。</p>
+<details>
+<summary>完整代码 + 测试脚本</summary>
+<pre><code><span class="cm"># 保存为 mini_agent.py</span>
+<span class="cm"># 运行：uvicorn mini_agent:app --reload</span>
+<span class="cm"># 测试：</span>
+
+<span class="cm"># 1. 普通 JSON 请求</span>
+<span class="cm"># curl -X POST http://localhost:8000/chat \</span>
+<span class="cm">#   -H "Content-Type: application/json" \</span>
+<span class="cm">#   -d '{"message": "帮我查一下 ORD001 的订单状态"}'</span>
+
+<span class="cm"># 2. 流式请求</span>
+<span class="cm"># curl -N -X POST http://localhost:8000/chat/stream \</span>
+<span class="cm">#   -H "Content-Type: application/json" \</span>
+<span class="cm">#   -d '{"message": "帮我查 ORD001 的订单"}'</span>
+
+<span class="cm"># 3. 查看可用工具</span>
+<span class="cm"># curl http://localhost:8000/tools</span>
+
+<span class="cm"># 4. 纯 Python 异步测试（不需要启动服务器）</span>
+<span class="kw">async def</span> <span class="fn">test_agent</span>():
+    agent = MiniAgent(tools=registry)
+
+    <span class="fn">print</span>(<span class="st">"=== 测试 1：需要工具 ==="</span>)
+    <span class="kw">async for</span> chunk <span class="kw">in</span> agent.run(<span class="st">"帮我查 ORD001 的订单状态"</span>):
+        <span class="fn">print</span>(chunk, end=<span class="st">""</span>, flush=<span class="kw">True</span>)
+
+    <span class="fn">print</span>(<span class="st">"\n\n=== 测试 2：不需要工具 ==="</span>)
+    <span class="kw">async for</span> chunk <span class="kw">in</span> agent.run(<span class="st">"你好，请介绍一下你自己"</span>):
+        <span class="fn">print</span>(chunk, end=<span class="st">""</span>, flush=<span class="kw">True</span>)
+
+    <span class="fn">print</span>(<span class="st">"\n\n=== 测试 3：工具查不到 ==="</span>)
+    <span class="kw">async for</span> chunk <span class="kw">in</span> agent.run(<span class="st">"查一下 ORD999 的订单"</span>):
+        <span class="fn">print</span>(chunk, end=<span class="st">""</span>, flush=<span class="kw">True</span>)
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    asyncio.run(test_agent())</code></pre>
+</details>
+</div>
+
+<div class="card card-orange">
+<h3>知识点覆盖清单</h3>
+<table>
+<tr><th>Step</th><th>覆盖章节</th><th>知识点</th></tr>
+<tr><td>1</td><td>类型系统 + OOP</td><td>TypedDict、Literal、dataclass</td></tr>
+<tr><td>2</td><td>函数 + 异常处理</td><td>带参装饰器、wraps、try/except 包装</td></tr>
+<tr><td>3</td><td>异步编程 + 数据结构</td><td>async 生成器、yield、状态 dict 管理</td></tr>
+<tr><td>4</td><td>FastAPI + 常用模式</td><td>Pydantic 校验、SSE 流式、路由</td></tr>
+<tr><td>5</td><td>模块与包 + 并发</td><td>完整项目结构、asyncio.run 测试</td></tr>
+</table>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>进阶挑战</strong>：在此基础上，加入 (1) <code>lru_cache</code> 缓存工具调用结果；(2) <code>asyncio.Semaphore</code> 限制并发工具调用数；(3) <code>tracemalloc</code> 监控对话历史的内存增长；(4) 用 <code>__slots__</code> 优化 ToolResult 类。</div>
+</div>
+</section>
+
+<!-- ==================== 线上事故 ==================== -->
+<section id="incidents">
+<h2>线上事故案例复盘</h2>
+
+<div class="card card-accent">
+<p>以下 5 个案例来自 AI Agent / 后端服务的真实线上问题。每个案例包含：<strong>现象</strong>（告警长什么样）、<strong>根因分析</strong>（怎么定位的）、<strong>解决方案</strong>（怎么修的）、<strong>复盘改进</strong>（怎么防止再发生）。</p>
+</div>
+
+<!-- 事故 1 -->
+<div class="card" style="border-left:4px solid var(--red)">
+<h3><span class="tag tag-red">P0</span> 事故 1：Agent 服务 OOM 被 K8s 杀掉</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：Pod 频繁重启，<code>OOMKilled</code> 退出码 137</li>
+<li>监控：内存曲线在 2 小时内从 512MB 线性增长到 2GB 后被杀</li>
+<li>日志：无明显错误日志，重启后恢复正常，但几小时后再次 OOM</li>
+<li>触发条件：工作日白天高峰期必现，凌晨不发生</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p><strong>排查过程</strong>：</p>
+<pre><code><span class="cm"># 1. 先用 tracemalloc 找内存大户</span>
+<span class="kw">import</span> tracemalloc
+tracemalloc.start()
+<span class="cm"># 运行 30 分钟后取快照</span>
+snap = tracemalloc.take_snapshot()
+<span class="kw">for</span> stat <span class="kw">in</span> snap.statistics(<span class="st">"lineno"</span>)[:<span class="nu">5</span>]:
+    <span class="fn">print</span>(stat)
+<span class="cm"># → chat_service.py:45: 1.2 GB</span>
+<span class="cm"># → 定位到 session 缓存代码</span></code></pre>
+<p class="mt-2"><strong>根因</strong>：全局 <code>dict</code> 缓存会话历史，没有上限也没有过期机制。每个用户的对话历史包含完整的消息列表（含 LLM 回复），平均每个 session 5MB。高峰期 400 并发用户 → 2GB。</p>
+<pre><code><span class="cm"># 问题代码</span>
+session_cache: <span class="kw">dict</span>[<span class="kw">str</span>, <span class="kw">list</span>[<span class="kw">dict</span>]] = {}  <span class="cm"># ← 无上限，不过期</span>
+
+<span class="kw">def</span> <span class="fn">get_session</span>(session_id: <span class="kw">str</span>):
+    <span class="kw">if</span> session_id <span class="kw">not in</span> session_cache:
+        session_cache[session_id] = []
+    <span class="kw">return</span> session_cache[session_id]</code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="kw">from</span> functools <span class="kw">import</span> lru_cache
+<span class="kw">from</span> collections <span class="kw">import</span> OrderedDict
+<span class="kw">import</span> time
+
+<span class="kw">class</span> <span class="fn">TTLCache</span>:
+    <span class="st">"""带 TTL 和容量上限的缓存。"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, maxsize: <span class="kw">int</span> = <span class="nu">200</span>, ttl: <span class="kw">int</span> = <span class="nu">3600</span>):
+        self._cache: OrderedDict = OrderedDict()
+        self._maxsize = maxsize
+        self._ttl = ttl
+
+    <span class="kw">def</span> <span class="fn">get</span>(self, key: <span class="kw">str</span>) -> <span class="kw">list</span> | <span class="kw">None</span>:
+        <span class="kw">if</span> key <span class="kw">in</span> self._cache:
+            val, ts = self._cache[key]
+            <span class="kw">if</span> time.time() - ts < self._ttl:
+                self._cache.move_to_end(key)
+                <span class="kw">return</span> val
+            <span class="kw">del</span> self._cache[key]
+        <span class="kw">return None</span>
+
+    <span class="kw">def</span> <span class="fn">set</span>(self, key: <span class="kw">str</span>, value: <span class="kw">list</span>):
+        self._cache[key] = (value, time.time())
+        <span class="kw">if</span> <span class="fn">len</span>(self._cache) > self._maxsize:
+            self._cache.popitem(last=<span class="kw">False</span>)  <span class="cm"># 淘汰最老</span>
+
+session_cache = TTLCache(maxsize=<span class="nu">200</span>, ttl=<span class="nu">3600</span>)</code></pre>
+<p class="mt-2">另外，每个 session 的消息历史限制为最近 20 条，超出的压缩成摘要。</p>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>监控</td><td>加内存使用率 Prometheus 指标 + 80% 预警</td></tr>
+<tr><td>防御</td><td>缓存必须有 maxsize + TTL，写入代码规范</td></tr>
+<tr><td>压测</td><td>上线前模拟 500 并发会话跑 1 小时</td></tr>
+<tr><td>兜底</td><td>K8s 配置 memory limit + 优雅降级（缓存满时回退到 DB 查询）</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 2 -->
+<div class="card" style="border-left:4px solid var(--orange)">
+<h3><span class="tag tag-orange">P1</span> 事故 2：模型 API 429 限流导致批量请求雪崩</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：API 错误率从 0.1% 飙升到 85%，全部返回 429 Too Many Requests</li>
+<li>监控：模型 API 延迟从 2s 增加到 30s（timeout），之后全部失败</li>
+<li>业务影响：所有 Agent 分析请求排队超时，上游告警堆积</li>
+<li>触发条件：某业务线一次性发送了 200 条待分析告警</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p><strong>代码问题</strong>：收到批量请求后直接 <code>asyncio.gather</code> 200 个并发请求打给模型 API，超过供应商的 RPM 限制（60次/分钟）。触发限流后，重试逻辑没有退避，反而发了更多请求。</p>
+<pre><code><span class="cm"># 问题代码</span>
+<span class="kw">async def</span> <span class="fn">analyze_batch</span>(alerts: <span class="kw">list</span>[<span class="kw">str</span>]):
+    <span class="cm"># 200 个请求同时打出去 → 瞬间打爆限流</span>
+    results = <span class="kw">await</span> asyncio.gather(
+        *[call_model(a) <span class="kw">for</span> a <span class="kw">in</span> alerts]
+    )
+    <span class="kw">return</span> results
+
+<span class="cm"># 重试也是问题——无退避的重试</span>
+<span class="kw">async def</span> <span class="fn">call_model</span>(prompt):
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">5</span>):
+        <span class="kw">try</span>:
+            <span class="kw">return await</span> client.post(...)
+        <span class="kw">except</span>:
+            <span class="kw">pass</span>  <span class="cm"># ← 无退避，立即重试，加剧雪崩</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="kw">class</span> <span class="fn">RateLimiter</span>:
+    <span class="st">"""令牌桶限流器。"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, rpm: <span class="kw">int</span> = <span class="nu">50</span>):
+        self._sem = asyncio.Semaphore(rpm)
+        self._rpm = rpm
+
+    <span class="kw">async def</span> <span class="fn">acquire</span>(self):
+        <span class="kw">await</span> self._sem.acquire()
+        asyncio.get_running_loop().call_later(
+            <span class="nu">60.0</span> / self._rpm, self._sem.release
+        )
+
+limiter = RateLimiter(rpm=<span class="nu">50</span>)
+
+<span class="kw">async def</span> <span class="fn">call_model_safe</span>(prompt: <span class="kw">str</span>, max_retries=<span class="nu">3</span>):
+    <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(max_retries):
+        <span class="kw">await</span> limiter.acquire()
+        <span class="kw">try</span>:
+            <span class="kw">return await</span> client.post(url, json={<span class="st">"prompt"</span>: prompt}, timeout=<span class="nu">30</span>)
+        <span class="kw">except</span> httpx.HTTPStatusError <span class="kw">as</span> e:
+            <span class="kw">if</span> e.response.status_code == <span class="nu">429</span>:
+                wait = <span class="kw">float</span>(e.response.headers.get(<span class="st">"Retry-After"</span>, <span class="nu">2</span> ** attempt))
+                <span class="kw">await</span> asyncio.sleep(wait)
+            <span class="kw">else</span>:
+                <span class="kw">raise</span>
+    <span class="kw">raise</span> MaxRetriesError(f<span class="st">"Failed after </span>{max_retries}<span class="st"> retries"</span>)
+
+<span class="kw">async def</span> <span class="fn">analyze_batch</span>(alerts):
+    <span class="kw">return await</span> asyncio.gather(
+        *[call_model_safe(a) <span class="kw">for</span> a <span class="kw">in</span> alerts]
+    )</code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>限流</td><td>全局 RateLimiter，RPM 设为供应商限额的 80%</td></tr>
+<tr><td>退避</td><td>指数退避 + 尊重 Retry-After header</td></tr>
+<tr><td>队列</td><td>批量请求走异步任务队列（Redis Queue），不直接并发</td></tr>
+<tr><td>降级</td><td>429 超过阈值时自动切换备用模型（如 GPT-4o → GPT-4o-mini）</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 3 -->
+<div class="card" style="border-left:4px solid var(--red)">
+<h3><span class="tag tag-red">P0</span> 事故 3：同步阻塞代码卡死 FastAPI 事件循环</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：API 延迟 P99 从 3s 突增到 60s，健康检查超时</li>
+<li>监控：CPU 使用率只有 5%，但请求全部超时</li>
+<li>奇怪现象：服务没挂，日志还在写，但所有新请求都卡住不响应</li>
+<li>触发条件：上线了一个新工具函数（PDF 解析），之后复现</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p>新上线的 PDF 解析工具用了同步库 <code>PyPDF2</code>，在 <code>async def</code> 处理函数中直接调用。这把整个事件循环阻塞住了——其他所有请求都得等 PDF 解析完才能处理。</p>
+<pre><code><span class="cm"># 问题代码</span>
+@app.post(<span class="st">"/analyze"</span>)
+<span class="kw">async def</span> <span class="fn">analyze</span>(req: Request):
+    <span class="cm"># ↓ 同步阻塞操作在 async 函数中 → 阻塞事件循环</span>
+    text = extract_pdf_text(req.file_path)  <span class="cm"># PyPDF2，同步，耗时 10-30s</span>
+    result = <span class="kw">await</span> call_model(text)
+    <span class="kw">return</span> result
+
+<span class="kw">def</span> <span class="fn">extract_pdf_text</span>(path: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    reader = PyPDF2.PdfReader(path)  <span class="cm"># 同步 IO + CPU</span>
+    <span class="kw">return</span> <span class="st">""</span>.join(p.extract_text() <span class="kw">for</span> p <span class="kw">in</span> reader.pages)</code></pre>
+<div class="tip"><strong>关键概念</strong>：<code>async def</code> 中的代码运行在事件循环线程上。如果你在里面做了 10 秒的同步操作，事件循环就被阻塞 10 秒。这 10 秒内所有其他请求都无法处理。</div>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="kw">import</span> asyncio
+<span class="kw">from</span> concurrent.futures <span class="kw">import</span> ProcessPoolExecutor
+
+executor = ProcessPoolExecutor(max_workers=<span class="nu">4</span>)
+
+<span class="kw">def</span> <span class="fn">extract_pdf_text</span>(path: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="st">"""同步函数，将在独立进程中运行。"""</span>
+    <span class="kw">import</span> PyPDF2
+    reader = PyPDF2.PdfReader(path)
+    <span class="kw">return</span> <span class="st">""</span>.join(p.extract_text() <span class="kw">for</span> p <span class="kw">in</span> reader.pages)
+
+@app.post(<span class="st">"/analyze"</span>)
+<span class="kw">async def</span> <span class="fn">analyze</span>(req: Request):
+    loop = asyncio.get_running_loop()
+    <span class="cm"># ↓ 同步操作丢给进程池，不阻塞事件循环</span>
+    text = <span class="kw">await</span> loop.run_in_executor(executor, extract_pdf_text, req.file_path)
+    result = <span class="kw">await</span> call_model(text)
+    <span class="kw">return</span> result</code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>Code Review</td><td>async def 中禁止调用已知的同步阻塞函数，加 lint 规则</td></tr>
+<tr><td>监控</td><td>添加事件循环延迟指标（event loop lag > 1s 告警）</td></tr>
+<tr><td>架构</td><td>CPU 密集任务统一走 ProcessPoolExecutor</td></tr>
+<tr><td>测试</td><td>压测时观察 P99 延迟，而非只看平均值</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 4 -->
+<div class="card" style="border-left:4px solid var(--orange)">
+<h3><span class="tag tag-orange">P1</span> 事故 4：数据库连接池耗尽</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：数据库连接数告警（100/100），新请求报 <code>ConnectionError: pool exhausted</code></li>
+<li>监控：MySQL 显示 100 个活跃连接，全部 state = Sleep</li>
+<li>日志：大量 <code>TimeoutError: failed to acquire connection within 30s</code></li>
+<li>触发条件：某次上线后，流量未增加但连接数持续增长</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p>新代码在异常路径中没有释放数据库连接。正常请求没问题，但一旦 LLM 调用超时（进入 except 分支），数据库 session 就泄漏了。</p>
+<pre><code><span class="cm"># 问题代码</span>
+<span class="kw">async def</span> <span class="fn">save_analysis</span>(session_id, result):
+    db = <span class="kw">await</span> get_db_session()  <span class="cm"># 获取连接</span>
+    <span class="kw">try</span>:
+        <span class="kw">await</span> db.execute(insert_query, values)
+        llm_summary = <span class="kw">await</span> call_model(result)  <span class="cm"># ← 这里超时抛异常</span>
+        <span class="kw">await</span> db.execute(update_query, summary=llm_summary)
+        <span class="kw">await</span> db.commit()
+    <span class="kw">except</span> Exception:
+        <span class="kw">await</span> db.rollback()
+        <span class="kw">raise</span>
+    <span class="cm"># ← 没有 finally: await db.close()！异常路径连接泄漏</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+
+@asynccontextmanager
+<span class="kw">async def</span> <span class="fn">get_db</span>():
+    db = <span class="kw">await</span> create_session()
+    <span class="kw">try</span>:
+        <span class="kw">yield</span> db
+    <span class="kw">except</span> Exception:
+        <span class="kw">await</span> db.rollback()
+        <span class="kw">raise</span>
+    <span class="kw">else</span>:
+        <span class="kw">await</span> db.commit()
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> db.close()  <span class="cm"># ← 无论成功失败都释放连接</span>
+
+<span class="kw">async def</span> <span class="fn">save_analysis</span>(session_id, result):
+    <span class="kw">async with</span> get_db() <span class="kw">as</span> db:
+        <span class="kw">await</span> db.execute(insert_query, values)
+        llm_summary = <span class="kw">await</span> call_model(result)
+        <span class="kw">await</span> db.execute(update_query, summary=llm_summary)</code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>代码规范</td><td>禁止裸用 db session，必须通过 <code>async with</code> 上下文管理器</td></tr>
+<tr><td>监控</td><td>连接池使用率指标 + 80% 预警（不要等到 100%）</td></tr>
+<tr><td>连接池配置</td><td>设置 <code>pool_recycle=3600</code>（1小时回收空闲连接）</td></tr>
+<tr><td>测试</td><td>单测中注入异常，验证连接释放</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 5 -->
+<div class="card" style="border-left:4px solid var(--red)">
+<h3><span class="tag tag-red">P0</span> 事故 5：RAG 文档全量加载导致服务启动 OOM</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：服务启动后立即 OOMKilled，从未就绪</li>
+<li>监控：Pod 启动 → 内存飙到 4GB → 被杀 → 重启 → 再次被杀（CrashLoopBackOff）</li>
+<li>日志：<code>Loading knowledge base...</code> 之后直接被杀，无其他日志</li>
+<li>触发条件：知识库从 5000 篇文档增长到 50000 篇后首次发版</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p>服务启动时一次性加载全部文档到内存做 embedding 构建向量索引。文档从 5000 篇增长到 50000 篇后，embedding 内存需求从 400MB 变成 4GB，超过 Pod 的 memory limit。</p>
+<pre><code><span class="cm"># 问题代码</span>
+<span class="kw">def</span> <span class="fn">init_knowledge_base</span>():
+    docs = load_all_documents()  <span class="cm"># ← 50000 篇全部加载到内存</span>
+    chunks = []
+    <span class="kw">for</span> doc <span class="kw">in</span> docs:
+        chunks.extend(splitter.split(doc))  <span class="cm"># ← 200 万个 chunk 在内存</span>
+    embeddings = model.encode(chunks)  <span class="cm"># ← 200 万个向量在内存</span>
+    index = faiss.IndexFlatL2(embeddings)
+    <span class="kw">return</span> index</code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="kw">def</span> <span class="fn">init_knowledge_base</span>(batch_size: <span class="kw">int</span> = <span class="nu">500</span>):
+    <span class="st">"""分批处理 + 持久化索引，避免一次性加载全部文档。"""</span>
+    index_path = Path(<span class="st">"data/faiss.index"</span>)
+
+    <span class="cm"># 如果索引文件存在且不过期，直接加载索引（< 200MB）</span>
+    <span class="kw">if</span> index_path.exists():
+        <span class="kw">return</span> faiss.read_index(<span class="fn">str</span>(index_path))
+
+    <span class="cm"># 否则分批构建</span>
+    index = faiss.IndexFlatL2(<span class="nu">1536</span>)
+    <span class="kw">for</span> batch <span class="kw">in</span> chunked(load_documents_lazy(), batch_size):
+        chunks = []
+        <span class="kw">for</span> doc <span class="kw">in</span> batch:
+            chunks.extend(splitter.split(doc))
+        embeddings = model.encode(chunks)
+        index.add(embeddings)
+        <span class="kw">del</span> chunks, embeddings  <span class="cm"># 主动释放</span>
+
+    faiss.write_index(index, <span class="fn">str</span>(index_path))
+    <span class="kw">return</span> index
+
+<span class="kw">def</span> <span class="fn">load_documents_lazy</span>():
+    <span class="st">"""生成器：逐个文件读取，不一次性全部加载。"""</span>
+    <span class="kw">for</span> path <span class="kw">in</span> Path(<span class="st">"data/docs"</span>).glob(<span class="st">"*.txt"</span>):
+        <span class="kw">yield</span> path.read_text()</code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>架构</td><td>向量索引预构建（CI/CD 阶段生成索引文件），服务启动只加载索引</td></tr>
+<tr><td>生成器</td><td>文档加载必须用生成器（<code>yield</code>），禁止 <code>list(all_docs)</code></td></tr>
+<tr><td>限制</td><td>启动脚本检查数据量，超阈值走增量更新而非全量重建</td></tr>
+<tr><td>K8s</td><td>initContainer 预热索引 + startupProbe 延长启动超时</td></tr>
+<tr><td>监控</td><td>知识库文档数作为指标上报，增长超 50% 自动告警</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">📖</div>
+<div><strong>5 个案例的共性教训</strong>：(1) 缓存/资源必须有上限和过期机制；(2) 异步代码中不能混入同步阻塞；(3) 资源获取必须用上下文管理器（with）保证释放；(4) 处理大数据必须用生成器/分批，不能一次性加载；(5) 监控要提前预警，不要等到 100% 才报。</div>
+</div>
+
+<h3 style="margin-top:40px;padding-top:20px;border-top:2px dashed var(--border)">分布式场景事故</h3>
+
+<!-- 事故 6 -->
+<div class="card" style="border-left:4px solid var(--red)">
+<h3><span class="tag tag-red">P0</span> 事故 6：Redis 集群脑裂导致 Session 数据丢失</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：用户反馈"对话历史消失了"，客服系统重复问同样的问题</li>
+<li>监控：Redis Cluster 的 master 节点有 2 个在抢同一个 slot</li>
+<li>日志：<code>CLUSTERDOWN The cluster is down</code>，接着 <code>READONLY You can't write against a read only replica</code></li>
+<li>触发条件：机房网络抖动 30 秒，节点间短暂失联后恢复</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p><strong>什么是脑裂</strong>：网络分区把集群分成两半，每一半都以为另一半挂了，各自选举出新的 master。恢复后出现两个 master 持有同一个 slot，数据冲突。</p>
+<pre><code><span class="cm"># 分区前：正常</span>
+<span class="cm"># Master-A(slot 0-5000) ←→ Master-B(slot 5001-16383)</span>
+<span class="cm">#     ↕                         ↕</span>
+<span class="cm"># Replica-A                  Replica-B</span>
+
+<span class="cm"># 网络分区期间：</span>
+<span class="cm"># [分区1] Master-A, Replica-B  ←✗→  [分区2] Master-B, Replica-A</span>
+<span class="cm"># Replica-A 被选举为新 Master-A'</span>
+<span class="cm"># 两个 Master 同时写入 → 数据分叉</span>
+
+<span class="cm"># 恢复后：Redis 自动让一个 Master 降级</span>
+<span class="cm"># 但降级 Master 上 30 秒内写入的数据 → 丢失</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="cm"># redis.conf 关键配置</span>
+
+<span class="cm"># 1. 减少脑裂窗口：master 发现连不到多数节点时拒绝写入</span>
+<span class="cm">min-replicas-to-write 1</span>
+<span class="cm">min-replicas-max-lag 10</span>
+
+<span class="cm"># 2. 缩短故障检测时间</span>
+<span class="cm">cluster-node-timeout 5000</span></code></pre>
+
+<pre><code><span class="cm"># 应用层防御</span>
+<span class="kw">import</span> redis
+
+<span class="kw">class</span> <span class="fn">SafeSessionStore</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.redis = redis.RedisCluster(...)
+        self.local_fallback: <span class="kw">dict</span> = {}  <span class="cm"># 本地兜底缓存</span>
+
+    <span class="kw">async def</span> <span class="fn">get_session</span>(self, sid: <span class="kw">str</span>) -> <span class="kw">dict</span> | <span class="kw">None</span>:
+        <span class="kw">try</span>:
+            data = <span class="kw">await</span> self.redis.get(sid)
+            <span class="kw">if</span> data:
+                self.local_fallback[sid] = data  <span class="cm"># 写入本地备份</span>
+                <span class="kw">return</span> json.loads(data)
+        <span class="kw">except</span> redis.ClusterDownError:
+            <span class="cm"># Redis 集群不可用时，降级到本地缓存</span>
+            <span class="kw">if</span> sid <span class="kw">in</span> self.local_fallback:
+                <span class="kw">return</span> json.loads(self.local_fallback[sid])
+        <span class="kw">except</span> redis.ReadOnlyError:
+            <span class="cm"># 连到了 replica，重试一次</span>
+            <span class="kw">await</span> asyncio.sleep(<span class="nu">1</span>)
+            <span class="kw">return await</span> self.get_session(sid)
+        <span class="kw">return None</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>配置</td><td><code>min-replicas-to-write 1</code> 减少脑裂写入窗口</td></tr>
+<tr><td>持久化</td><td>关键 Session 数据同时写 Redis + MySQL（双写）</td></tr>
+<tr><td>降级</td><td>Redis 不可用时自动降级到本地缓存 + DB 查询</td></tr>
+<tr><td>告警</td><td>集群节点数变化、slot 迁移事件实时告警</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 7 -->
+<div class="card" style="border-left:4px solid var(--orange)">
+<h3><span class="tag tag-orange">P1</span> 事故 7：并发写入导致数据不一致（竞态条件）</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：用户报告"余额显示错误"——两笔退款操作后，只扣了一笔</li>
+<li>监控：退款记录表有 2 条成功记录，但账户余额只减少了一次金额</li>
+<li>日志：两个请求的时间戳相差 50ms，都成功执行了 UPDATE</li>
+<li>触发条件：用户快速双击"退款"按钮，发出两个几乎同时的请求</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p><strong>经典的读-改-写竞态</strong>：两个请求同时读到旧余额，各自减去退款金额，然后写回。后写的覆盖了先写的结果。</p>
+<pre><code><span class="cm"># 时间线：</span>
+<span class="cm"># T1: 请求A 读余额 = 1000</span>
+<span class="cm"># T2: 请求B 读余额 = 1000（同一个旧值）</span>
+<span class="cm"># T3: 请求A 写余额 = 1000 - 200 = 800</span>
+<span class="cm"># T4: 请求B 写余额 = 1000 - 300 = 700（覆盖了 A 的结果）</span>
+<span class="cm"># 正确应该是 1000 - 200 - 300 = 500</span>
+
+<span class="cm"># 问题代码</span>
+<span class="kw">async def</span> <span class="fn">process_refund</span>(user_id, amount):
+    balance = <span class="kw">await</span> db.fetchval(
+        <span class="st">"SELECT balance FROM accounts WHERE user_id = $1"</span>, user_id
+    )
+    <span class="kw">if</span> balance < amount:
+        <span class="kw">raise</span> ValueError(<span class="st">"余额不足"</span>)
+    new_balance = balance - amount  <span class="cm"># ← 基于旧值计算</span>
+    <span class="kw">await</span> db.execute(
+        <span class="st">"UPDATE accounts SET balance = $1 WHERE user_id = $2"</span>,
+        new_balance, user_id     <span class="cm"># ← 直接覆盖写，丢失并发更新</span>
+    )</code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="cm"># 方案 1：原子操作（推荐，最简单）</span>
+<span class="kw">async def</span> <span class="fn">process_refund_v1</span>(user_id, amount):
+    result = <span class="kw">await</span> db.execute(
+        <span class="st">"""UPDATE accounts SET balance = balance - $1
+           WHERE user_id = $2 AND balance >= $1
+           RETURNING balance"""</span>,
+        amount, user_id
+    )
+    <span class="kw">if</span> <span class="kw">not</span> result:
+        <span class="kw">raise</span> ValueError(<span class="st">"余额不足或并发冲突"</span>)
+
+<span class="cm"># 方案 2：乐观锁（适合读多写少）</span>
+<span class="kw">async def</span> <span class="fn">process_refund_v2</span>(user_id, amount, max_retries=<span class="nu">3</span>):
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(max_retries):
+        row = <span class="kw">await</span> db.fetchrow(
+            <span class="st">"SELECT balance, version FROM accounts WHERE user_id = $1"</span>,
+            user_id
+        )
+        <span class="kw">if</span> row[<span class="st">"balance"</span>] < amount:
+            <span class="kw">raise</span> ValueError(<span class="st">"余额不足"</span>)
+        updated = <span class="kw">await</span> db.execute(
+            <span class="st">"""UPDATE accounts SET balance = $1, version = version + 1
+               WHERE user_id = $2 AND version = $3"""</span>,
+            row[<span class="st">"balance"</span>] - amount, user_id, row[<span class="st">"version"</span>]
+        )
+        <span class="kw">if</span> updated:  <span class="cm"># version 匹配才更新成功</span>
+            <span class="kw">return</span>
+    <span class="kw">raise</span> Exception(<span class="st">"并发冲突，请重试"</span>)
+
+<span class="cm"># 方案 3：分布式锁（适合跨服务）</span>
+<span class="kw">async def</span> <span class="fn">process_refund_v3</span>(user_id, amount):
+    lock_key = <span class="st">f"lock:refund:</span>{user_id}<span class="st">"</span>
+    <span class="kw">async with</span> redis_lock(lock_key, timeout=<span class="nu">10</span>):
+        balance = <span class="kw">await</span> db.fetchval(<span class="st">"SELECT balance ..."</span>, user_id)
+        <span class="kw">if</span> balance < amount:
+            <span class="kw">raise</span> ValueError(<span class="st">"余额不足"</span>)
+        <span class="kw">await</span> db.execute(<span class="st">"UPDATE ..."</span>, balance - amount, user_id)</code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>前端</td><td>退款按钮加防抖（debounce 2s），防止快速双击</td></tr>
+<tr><td>接口</td><td>幂等键（Idempotency-Key），同一请求重复提交只执行一次</td></tr>
+<tr><td>数据库</td><td>余额更新用 <code>balance = balance - $1</code> 原子操作</td></tr>
+<tr><td>Code Review</td><td>"读-改-写"模式必须评审并发安全性</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 8 -->
+<div class="card" style="border-left:4px solid var(--red)">
+<h3><span class="tag tag-red">P0</span> 事故 8：分布式事务半提交，退款成功但通知失败</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：用户投诉"钱退了但没收到退款通知"，客服无法确认退款状态</li>
+<li>监控：退款服务成功率 99.5%，通知服务成功率只有 85%</li>
+<li>数据库：退款表状态为"已退款"，但通知表状态为"未发送"</li>
+<li>触发条件：通知服务的下游（短信网关）超时率上升时集中出现</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p>退款和通知是两个独立服务。代码先调退款 API，成功后再调通知 API。如果通知失败，退款已经提交无法回滚——典型的<strong>分布式事务不一致</strong>。</p>
+<pre><code><span class="cm"># 问题代码</span>
+<span class="kw">async def</span> <span class="fn">handle_refund</span>(order_id, amount):
+    <span class="cm"># Step 1: 退款（成功）</span>
+    <span class="kw">await</span> refund_service.execute(order_id, amount)
+
+    <span class="cm"># Step 2: 发通知（失败）← 退款已提交，无法回滚</span>
+    <span class="kw">await</span> notification_service.send(
+        user_id, <span class="st">f"退款 </span>{amount}<span class="st"> 元已到账"</span>
+    )  <span class="cm"># ← TimeoutError: 短信网关超时</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="cm"># 方案：本地消息表 + 异步补偿（最终一致性）</span>
+
+<span class="kw">async def</span> <span class="fn">handle_refund</span>(order_id, amount, user_id):
+    <span class="kw">async with</span> get_db() <span class="kw">as</span> db:
+        <span class="cm"># 在同一个事务中：执行退款 + 写入消息表</span>
+        <span class="kw">await</span> db.execute(
+            <span class="st">"UPDATE orders SET status='refunded' WHERE id=$1"</span>,
+            order_id
+        )
+        <span class="kw">await</span> db.execute(
+            <span class="st">"""INSERT INTO outbox (event_type, payload, status)
+               VALUES ('refund_notify', $1, 'pending')"""</span>,
+            json.dumps({
+                <span class="st">"user_id"</span>: user_id,
+                <span class="st">"message"</span>: <span class="st">f"退款 </span>{amount}<span class="st"> 元已到账"</span>,
+            })
+        )
+        <span class="cm"># 同一事务提交 → 退款和消息记录原子性保证</span>
+
+<span class="cm"># 后台任务：定时扫描 outbox 表，发送未完成的通知</span>
+<span class="kw">async def</span> <span class="fn">outbox_worker</span>():
+    <span class="kw">while True</span>:
+        pending = <span class="kw">await</span> db.fetch(
+            <span class="st">"SELECT * FROM outbox WHERE status='pending' LIMIT 10"</span>
+        )
+        <span class="kw">for</span> msg <span class="kw">in</span> pending:
+            <span class="kw">try</span>:
+                <span class="kw">await</span> notification_service.send(msg[<span class="st">"payload"</span>])
+                <span class="kw">await</span> db.execute(
+                    <span class="st">"UPDATE outbox SET status='sent' WHERE id=$1"</span>, msg[<span class="st">"id"</span>]
+                )
+            <span class="kw">except</span> Exception:
+                <span class="kw">await</span> db.execute(
+                    <span class="st">"UPDATE outbox SET retry_count=retry_count+1 WHERE id=$1"</span>,
+                    msg[<span class="st">"id"</span>]
+                )
+        <span class="kw">await</span> asyncio.sleep(<span class="nu">5</span>)</code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>架构</td><td>Outbox 模式：业务操作 + 消息写入在同一事务中</td></tr>
+<tr><td>补偿</td><td>后台 Worker 定时轮询 outbox，失败自动重试</td></tr>
+<tr><td>幂等</td><td>通知接口支持幂等键，重复发送不会重复通知用户</td></tr>
+<tr><td>监控</td><td>outbox 表 pending 数量指标，超过阈值告警</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 9 -->
+<div class="card" style="border-left:4px solid var(--orange)">
+<h3><span class="tag tag-orange">P1</span> 事故 9：DNS 解析失败引发级联故障</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：所有外部 API 调用失败（模型 API、向量数据库、通知服务）</li>
+<li>监控：错误日志全是 <code>socket.gaierror: [Errno -2] Name or service not known</code></li>
+<li>奇怪现象：同机房内部服务（用 IP 直连的）正常，用域名的全挂</li>
+<li>触发条件：K8s 集群的 CoreDNS Pod 因节点内存不足被驱逐</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p>K8s 中所有域名解析依赖 CoreDNS。当 CoreDNS Pod 被驱逐后，集群内所有 DNS 查询超时，导致所有需要域名解析的 HTTP 请求失败。</p>
+<p>更糟糕的是，Python 的 <code>httpx</code> / <code>aiohttp</code> 默认没有 DNS 缓存——每次请求都重新解析，放大了影响。</p>
+<pre><code><span class="cm"># 每次 HTTP 请求都触发 DNS 查询</span>
+<span class="kw">async with</span> httpx.AsyncClient() <span class="kw">as</span> client:
+    <span class="cm"># api.openai.com → DNS 查询 → 超时</span>
+    r = <span class="kw">await</span> client.post(<span class="st">"https://api.openai.com/v1/chat"</span>, ...)
+    <span class="cm"># milvus.internal → DNS 查询 → 超时</span>
+    r2 = <span class="kw">await</span> client.post(<span class="st">"https://milvus.internal/query"</span>, ...)</code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="cm"># 1. 复用 httpx.AsyncClient（连接池 + 内置 DNS 缓存效果）</span>
+<span class="cm"># 不要每次请求都创建新的 client</span>
+
+<span class="cm"># 差：每次创建新 client</span>
+<span class="kw">async def</span> <span class="fn">call_api_bad</span>(url, data):
+    <span class="kw">async with</span> httpx.AsyncClient() <span class="kw">as</span> client:
+        <span class="kw">return await</span> client.post(url, json=data)
+
+<span class="cm"># 好：复用全局 client</span>
+_client = httpx.AsyncClient(timeout=<span class="nu">30</span>, limits=httpx.Limits(max_connections=<span class="nu">100</span>))
+
+<span class="kw">async def</span> <span class="fn">call_api_good</span>(url, data):
+    <span class="kw">return await</span> _client.post(url, json=data)
+
+<span class="cm"># 2. 应用层 DNS 缓存</span>
+<span class="kw">import</span> socket
+<span class="kw">from</span> functools <span class="kw">import</span> lru_cache
+
+@lru_cache(maxsize=<span class="nu">128</span>)
+<span class="kw">def</span> <span class="fn">resolve_cached</span>(hostname: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="kw">return</span> socket.gethostbyname(hostname)</code></pre>
+
+<pre><code><span class="cm"># 3. K8s 层面：CoreDNS 高可用</span>
+<span class="cm"># - CoreDNS 至少 2 个副本，分布在不同节点</span>
+<span class="cm"># - 设置 PodDisruptionBudget，最少保持 1 个可用</span>
+<span class="cm"># - nodeSelector 确保 CoreDNS 不会和业务 Pod 争资源</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>K8s</td><td>CoreDNS 设 PodDisruptionBudget + 反亲和 + 资源预留</td></tr>
+<tr><td>HTTP Client</td><td>全局复用 AsyncClient，不要每次请求新建</td></tr>
+<tr><td>关键服务</td><td>核心依赖用 IP 直连或本地 hosts 备份</td></tr>
+<tr><td>监控</td><td>DNS 解析延迟指标 + CoreDNS 存活告警</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<!-- 事故 10 -->
+<div class="card" style="border-left:4px solid var(--red)">
+<h3><span class="tag tag-red">P0</span> 事故 10：消息队列消费积压导致 Agent 分析延迟 2 小时</h3>
+
+<details open>
+<summary>现象</summary>
+<div class="mt-2">
+<ul style="padding-left:20px;line-height:2">
+<li>告警：消息队列 Lag 从 0 增长到 50000+，用户提交的告警分析请求 2 小时没有响应</li>
+<li>监控：Consumer 消费速度从 100 msg/s 下降到 2 msg/s</li>
+<li>日志：大量 <code>TimeoutError: Model API timeout after 60s</code></li>
+<li>触发条件：模型供应商侧故障，API 延迟从 2s 增加到 60s（超时）</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>根因分析</summary>
+<div class="mt-2">
+<p>Consumer 同步处理每条消息：接收消息 → 调模型 API → 等结果 → ack。当模型 API 变慢（2s → 60s），消费速度线性下降 30 倍。加上失败重试，实际消费速度降到 2 msg/s，远低于生产速度。积压越来越多。</p>
+<pre><code><span class="cm"># 问题代码：串行消费</span>
+<span class="kw">async def</span> <span class="fn">consume</span>():
+    <span class="kw">while True</span>:
+        msg = <span class="kw">await</span> queue.get()
+        <span class="kw">try</span>:
+            result = <span class="kw">await</span> call_model(msg.body, timeout=<span class="nu">60</span>)  <span class="cm"># ← 一条一条串行</span>
+            <span class="kw">await</span> save_result(result)
+            <span class="kw">await</span> msg.ack()
+        <span class="kw">except</span> TimeoutError:
+            <span class="kw">await</span> msg.nack()  <span class="cm"># ← 重新入队，再等 60s 超时</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>解决方案</summary>
+<div class="mt-2">
+<pre><code><span class="kw">import</span> asyncio
+
+<span class="kw">class</span> <span class="fn">ResilientConsumer</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, max_concurrent=<span class="nu">10</span>, max_retries=<span class="nu">2</span>, dlq_threshold=<span class="nu">3</span>):
+        self.sem = asyncio.Semaphore(max_concurrent)
+        self.max_retries = max_retries
+        self.dlq_threshold = dlq_threshold
+
+    <span class="kw">async def</span> <span class="fn">process_message</span>(self, msg):
+        <span class="kw">async with</span> self.sem:
+            retry_count = msg.headers.get(<span class="st">"retry_count"</span>, <span class="nu">0</span>)
+
+            <span class="cm"># 超过重试次数 → 进死信队列，不再阻塞主流程</span>
+            <span class="kw">if</span> retry_count >= self.dlq_threshold:
+                <span class="kw">await</span> dead_letter_queue.put(msg)
+                <span class="kw">await</span> msg.ack()
+                <span class="kw">return</span>
+
+            <span class="kw">try</span>:
+                result = <span class="kw">await</span> asyncio.wait_for(
+                    call_model(msg.body), timeout=<span class="nu">30</span>
+                )
+                <span class="kw">await</span> save_result(result)
+                <span class="kw">await</span> msg.ack()
+            <span class="kw">except</span> asyncio.TimeoutError:
+                <span class="cm"># 超时：降级到小模型快速处理</span>
+                <span class="kw">try</span>:
+                    result = <span class="kw">await</span> call_model_fallback(msg.body)
+                    <span class="kw">await</span> save_result(result)
+                    <span class="kw">await</span> msg.ack()
+                <span class="kw">except</span> Exception:
+                    <span class="kw">await</span> msg.nack(requeue=<span class="kw">True</span>)
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="st">"""并发消费：最多同时处理 max_concurrent 条消息。"""</span>
+        <span class="kw">while True</span>:
+            msg = <span class="kw">await</span> queue.get()
+            asyncio.create_task(self.process_message(msg))</code></pre>
+</div>
+</details>
+
+<details>
+<summary>复盘改进</summary>
+<div class="mt-2">
+<table>
+<tr><th>改进项</th><th>措施</th></tr>
+<tr><td>并发消费</td><td>Semaphore 控制并发数，不要串行一条一条处理</td></tr>
+<tr><td>超时降级</td><td>主模型超时后自动 fallback 到小模型（GPT-4o → GPT-4o-mini）</td></tr>
+<tr><td>死信队列</td><td>重试超过 N 次的消息进 DLQ，人工后续处理</td></tr>
+<tr><td>监控</td><td>消费 Lag 告警（Lag > 1000 条 = P1，> 10000 条 = P0）</td></tr>
+<tr><td>弹性伸缩</td><td>Lag 增长时自动扩 Consumer Pod 副本数（HPA）</td></tr>
+</table>
+</div>
+</details>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">📖</div>
+<div><strong>分布式 5 案例共性教训</strong>：(1) 分布式系统中"部分失败"是常态，必须设计降级路径；(2) 跨服务操作用 Outbox 模式保证最终一致性，不要依赖分布式事务；(3) 并发控制三板斧——原子操作、乐观锁、分布式锁，按场景选；(4) 基础设施（DNS、消息队列）的高可用是上层服务的前提；(5) 超时和重试不是万能药——无退避的重试会加剧故障。</div>
+</div>
+
+<h3 style="margin-top:40px;padding-top:20px;border-top:2px dashed var(--border)">线上事故防御 Checklist</h3>
+<p class="text-sm mb-2">从 10 个真实案例中提炼的 30 条通用防御措施，按 Code Review → 测试 → 部署 → 监控 → 应急 五个阶段组织。每条标注了对应的案例编号，方便回溯上下文。</p>
+
+<div class="card" style="border-left:4px solid var(--accent)">
+<h3>一、Code Review 阶段（写代码时就防住）</h3>
+<table>
+<tr><th>#</th><th>检查项</th><th>关联案例</th></tr>
+<tr><td>1</td><td>缓存（dict / Redis）是否设置了 <strong>maxsize + TTL</strong>？禁止无上限的全局 dict 做缓存。</td><td>#1 OOM</td></tr>
+<tr><td>2</td><td><code>async def</code> 中是否存在<strong>同步阻塞调用</strong>？同步 IO / CPU 密集操作必须走 <code>run_in_executor</code> 或 <code>ProcessPoolExecutor</code>。</td><td>#3 事件循环阻塞</td></tr>
+<tr><td>3</td><td>数据库 / 文件 / 网络连接是否通过 <strong><code>async with</code> 上下文管理器</strong>获取和释放？禁止裸用 <code>db = get_session()</code>。</td><td>#4 连接池耗尽</td></tr>
+<tr><td>4</td><td>大数据加载是否使用<strong>生成器（yield）/ 分批处理</strong>？禁止 <code>list(load_all())</code> 全量加载。</td><td>#5 启动 OOM</td></tr>
+<tr><td>5</td><td>外部 API 调用是否有<strong>超时 + 指数退避重试</strong>？重试是否尊重 <code>Retry-After</code> header？</td><td>#2 429 雪崩</td></tr>
+<tr><td>6</td><td>"读-改-写"操作是否有<strong>并发保护</strong>（原子 UPDATE / 乐观锁 / 分布式锁）？</td><td>#7 竞态条件</td></tr>
+<tr><td>7</td><td>跨服务操作是否使用 <strong>Outbox 模式</strong>或<strong>Saga</strong>保证最终一致性？禁止"先调 A 再调 B"的裸串行。</td><td>#8 半提交</td></tr>
+<tr><td>8</td><td>HTTP Client 是否<strong>全局复用</strong>（单例 AsyncClient + 连接池）？禁止每次请求 <code>async with httpx.AsyncClient()</code> 新建。</td><td>#9 DNS 故障</td></tr>
+<tr><td>9</td><td>消息消费者是否<strong>并发处理</strong>（Semaphore 控制并发数）？是否有死信队列兜底？</td><td>#10 消费积压</td></tr>
+<tr><td>10</td><td>对话历史 / 消息列表是否有<strong>长度上限</strong>？超出是否压缩或截断？</td><td>#1 OOM</td></tr>
+</table>
+</div>
+
+<div class="card" style="border-left:4px solid var(--green)">
+<h3>二、测试阶段（上线前验证）</h3>
+<table>
+<tr><th>#</th><th>检查项</th><th>关联案例</th></tr>
+<tr><td>11</td><td><strong>注入异常测试</strong>：模拟外部 API 超时 / 500 / 429，验证重试、降级、错误消息是否符合预期。</td><td>#2 #3 #10</td></tr>
+<tr><td>12</td><td><strong>并发压测</strong>：模拟 500+ 并发会话运行 1 小时，观察内存曲线是否稳定（不持续增长）。</td><td>#1 #4</td></tr>
+<tr><td>13</td><td><strong>大数据量测试</strong>：文档数 / 消息数 / 缓存条目数放大到生产级别的 2-5 倍，验证不 OOM。</td><td>#5</td></tr>
+<tr><td>14</td><td><strong>幂等性测试</strong>：同一请求重复提交 3 次，验证只执行一次（退款 / 通知 / 写入）。</td><td>#7 #8</td></tr>
+<tr><td>15</td><td><strong>异常路径资源释放</strong>：在 DB 操作中间注入异常，验证连接是否正确释放（连接池不泄漏）。</td><td>#4</td></tr>
+<tr><td>16</td><td><strong>P99 延迟</strong>：压测时观察 P99 而非平均值。平均 2s 但 P99 = 60s 说明有阻塞。</td><td>#3</td></tr>
+</table>
+</div>
+
+<div class="card" style="border-left:4px solid var(--purple)">
+<h3>三、部署 / 配置阶段</h3>
+<table>
+<tr><th>#</th><th>检查项</th><th>关联案例</th></tr>
+<tr><td>17</td><td>K8s Pod 是否设置了合理的 <strong>memory limit</strong>？是否配置了 <strong>startupProbe</strong>（大索引加载场景）？</td><td>#1 #5</td></tr>
+<tr><td>18</td><td>CoreDNS / Redis / MQ 等基础设施是否<strong>高可用</strong>（多副本 + PodDisruptionBudget + 反亲和）？</td><td>#6 #9</td></tr>
+<tr><td>19</td><td>Redis Cluster 是否配置 <strong><code>min-replicas-to-write 1</code></strong> 减少脑裂窗口？</td><td>#6</td></tr>
+<tr><td>20</td><td>数据库连接池参数是否合理？<code>max_connections</code>、<code>pool_recycle</code>（空闲连接回收）、<code>pool_timeout</code>。</td><td>#4</td></tr>
+<tr><td>21</td><td>模型 API 限流配置是否设为供应商限额的 <strong>80%</strong>（留安全余量）？</td><td>#2</td></tr>
+<tr><td>22</td><td>向量索引是否在 <strong>CI/CD 阶段预构建</strong>并上传到对象存储？服务启动只加载索引文件。</td><td>#5</td></tr>
+</table>
+</div>
+
+<div class="card" style="border-left:4px solid var(--orange)">
+<h3>四、监控 / 告警阶段</h3>
+<table>
+<tr><th>#</th><th>检查项</th><th>关联案例</th></tr>
+<tr><td>23</td><td><strong>内存使用率</strong>：80% 预警（不要等到 100% OOMKilled 才知道）。</td><td>#1 #5</td></tr>
+<tr><td>24</td><td><strong>数据库连接池使用率</strong>：活跃连接数 / 最大连接数，80% 预警。</td><td>#4</td></tr>
+<tr><td>25</td><td><strong>外部 API 错误率 + 延迟</strong>：429 比率 > 5% 告警，P99 延迟 > 10s 告警。</td><td>#2 #10</td></tr>
+<tr><td>26</td><td><strong>事件循环延迟</strong>（Event Loop Lag）：> 1s 告警，说明有同步阻塞。</td><td>#3</td></tr>
+<tr><td>27</td><td><strong>消息队列 Consumer Lag</strong>：> 1000 条 = P1，> 10000 条 = P0。</td><td>#10</td></tr>
+<tr><td>28</td><td><strong>Redis 集群健康</strong>：节点数变化、slot 迁移事件、CLUSTERDOWN 错误实时告警。</td><td>#6</td></tr>
+<tr><td>29</td><td><strong>Outbox 表 pending 数量</strong>：> 100 条未发送消息告警（通知可能堵了）。</td><td>#8</td></tr>
+</table>
+</div>
+
+<div class="card" style="border-left:4px solid var(--red)">
+<h3>五、应急 / 降级预案</h3>
+<table>
+<tr><th>#</th><th>检查项</th><th>关联案例</th></tr>
+<tr><td>30</td><td><strong>模型降级</strong>：主模型超时/限流时，自动切换到小模型（GPT-4o → GPT-4o-mini）。</td><td>#2 #10</td></tr>
+<tr><td>31</td><td><strong>缓存降级</strong>：Redis 不可用时降级到本地内存缓存 + DB 查询。</td><td>#6</td></tr>
+<tr><td>32</td><td><strong>熔断器</strong>：外部服务连续失败 N 次后自动熔断，快速失败而非慢慢超时。</td><td>#2 #9</td></tr>
+<tr><td>33</td><td><strong>死信队列</strong>：重试超过 N 次的消息进 DLQ，不阻塞主流程，人工后续处理。</td><td>#10</td></tr>
+<tr><td>34</td><td><strong>弹性伸缩</strong>：消费 Lag / CPU / 内存触发 HPA 自动扩容。</td><td>#10</td></tr>
+</table>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>使用建议</strong>：将此 Checklist 嵌入团队的 Code Review 模板和上线发布流程。每次发版前过一遍对应阶段的检查项。不需要全部满足——根据服务的重要性（P0/P1/P2）选择必须项和推荐项。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['basics','data','functions','oop','typing','error','async','modules','fastapi','patterns','stdlib','concurrency','memory','perf','tips','capstone','incidents'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

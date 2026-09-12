@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据库进阶实战指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#4527a0 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}
+.tree-diagram{font-family:'SF Mono',Menlo,monospace;font-size:.78rem;line-height:1.5;background:var(--pre-bg);color:var(--pre-text);padding:16px;border-radius:8px;overflow-x:auto;white-space:pre;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>数据库进阶实战指南</h1>
+  <p>面向后端 / AI Agent 工程师的数据库深度技能图谱<br>索引原理 · SQL 优化 · 事务锁 · 分库分表 · Redis</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#index">索引原理</a>
+    <a href="#sql-optimization">SQL 优化</a>
+    <a href="#transactions">事务与锁</a>
+    <a href="#connection-pool">连接池</a>
+    <a href="#sharding">分库分表</a>
+    <a href="#mysql-vs-pg">MySQL vs PG</a>
+    <a href="#redis">Redis</a>
+    <a href="#practice">面试实战</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 索引原理 ==================== -->
+<section id="index">
+<h2>索引原理</h2>
+
+<div class="card card-accent">
+  <p>索引是数据库的<strong>目录</strong>——用空间换时间，让查询从全表扫描 O(n) 降到 B+ Tree 查找 O(log n)。理解索引原理是 SQL 优化的根基。</p>
+</div>
+
+<h3>B+ Tree 结构</h3>
+<div class="card">
+<p>MySQL InnoDB 默认使用 <strong>B+ Tree</strong> 作为索引数据结构（非 B Tree）。</p>
+<div class="tree-diagram">                    [ 10 | 20 | 30 ]          ← 非叶子节点（只存 key + 指针）
+                   /      |      |      \
+        [ 1|5|8 ]    [12|15]   [22|25]   [35|40]  ← 叶子节点（存 key + 数据/主键）
+        ↓ linked list → → → → → → → → → → → →   ← 叶子节点双向链表（范围查询）</div>
+<ul style="padding-left:20px;margin:10px 0;line-height:2">
+<li><strong>所有数据在叶子节点</strong>：非叶子节点只存索引键，一个节点可存更多 key → 树更矮 → 磁盘 IO 更少</li>
+<li><strong>叶子节点有序链表</strong>：天然支持 <code>WHERE age BETWEEN 20 AND 30</code> 范围扫描</li>
+<li><strong>聚簇索引</strong>：InnoDB 主键索引的叶子节点直接存整行数据；二级索引叶子存主键值（回表）</li>
+</ul>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>为什么不用 Hash 索引？</strong>Hash 只支持等值查询（=），不支持范围查询和排序。Memory 引擎支持 Hash，但 InnoDB 自适应 Hash 是内部优化，不暴露给用户。</div>
+</div>
+
+<h3>索引类型</h3>
+<div class="grid-2">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>主键索引 <span class="tag tag-blue">PRIMARY</span></h3>
+<p>每张 InnoDB 表必须有且只有一个聚簇索引。没显式定义主键时，MySQL 会选第一个 UNIQUE NOT NULL 列，或隐式创建 6 字节 row_id。</p>
+<pre><code><span class="kw">CREATE TABLE</span> alerts (
+  id <span class="kw">BIGINT</span> <span class="kw">PRIMARY KEY</span> AUTO_INCREMENT,
+  title <span class="kw">VARCHAR</span>(<span class="nu">256</span>) <span class="kw">NOT NULL</span>
+);</code></pre>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>唯一索引 <span class="tag tag-green">UNIQUE</span></h3>
+<p>保证列值唯一，允许 NULL（NULL 可重复）。常用于业务唯一键。</p>
+<pre><code><span class="kw">CREATE UNIQUE INDEX</span> uk_task_id
+  <span class="kw">ON</span> analysis_results(task_id);</code></pre>
+</div>
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3>联合索引 <span class="tag tag-purple">Composite</span></h3>
+<p>多列组合索引，遵循<strong>最左前缀原则</strong>：<code>(a,b,c)</code> 可加速 <code>a</code>、<code>a,b</code>、<code>a,b,c</code>，不能加速 <code>b</code> 或 <code>c</code> 单独查询。</p>
+<pre><code><span class="kw">CREATE INDEX</span> idx_biz_status_time
+  <span class="kw">ON</span> alerts(biz_line, status, created_at);</code></pre>
+</div>
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3>覆盖索引 <span class="tag tag-orange">Covering</span></h3>
+<p>查询所需列全在索引中，无需回表。<code>EXPLAIN</code> 的 <code>Extra</code> 显示 <code>Using index</code>。</p>
+<pre><code><span class="cm">-- idx(biz_line, status, created_at)</span>
+<span class="kw">SELECT</span> biz_line, status, created_at
+<span class="kw">FROM</span> alerts
+<span class="kw">WHERE</span> biz_line = <span class="st">'im'</span> <span class="kw">AND</span> status = <span class="st">'pending'</span>;</code></pre>
+</div>
+</div>
+
+<div class="card">
+<h3>全文索引 <span class="tag tag-red">FULLTEXT</span></h3>
+<p>用于自然语言文本搜索（<code>MATCH ... AGAINST</code>）。MySQL 5.7+ InnoDB 支持；PostgreSQL 用 <code>tsvector</code> + GIN 更强大。Agent 场景若需语义搜索，优先考虑 pgvector 而非 FULLTEXT。</p>
+</div>
+
+<h3>MySQL 如何选择索引</h3>
+<div class="card">
+<p>优化器基于<strong>成本模型</strong>选择索引，主要考量：</p>
+<table>
+<tr><th>因素</th><th>说明</th></tr>
+<tr><td>选择性（Cardinality）</td><td>区分度越高越好。性别字段（2 值）索引几乎无用</td></tr>
+<tr><td>最左前缀匹配</td><td>联合索引必须从左列开始匹配 WHERE 条件</td></tr>
+<tr><td>索引列数量</td><td>多个可用索引时，优化器估算各索引扫描行数</td></tr>
+<tr><td>统计信息</td><td><code>ANALYZE TABLE</code> 更新 Cardinality，影响优化器决策</td></tr>
+<tr><td>索引合并</td><td>多个单列索引可能 Index Merge（通常不如联合索引）</td></tr>
+</table>
+</div>
+
+<h3>EXPLAIN 输出解读</h3>
+<div class="card">
+<pre><code><span class="kw">EXPLAIN</span> <span class="kw">SELECT</span> * <span class="kw">FROM</span> alerts
+<span class="kw">WHERE</span> biz_line = <span class="st">'im'</span> <span class="kw">AND</span> status = <span class="st">'done'</span>
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="nu">20</span>;</code></pre>
+<table>
+<tr><th>列</th><th>含义</th><th>理想值</th></tr>
+<tr><td><code>type</code></td><td>访问类型</td><td>const &gt; eq_ref &gt; ref &gt; range &gt; index &gt; ALL</td></tr>
+<tr><td><code>key</code></td><td>实际使用的索引</td><td>非 NULL</td></tr>
+<tr><td><code>rows</code></td><td>预估扫描行数</td><td>越小越好</td></tr>
+<tr><td><code>Extra</code></td><td>额外信息</td><td>Using index（覆盖）最好；避免 Using filesort / Using temporary</td></tr>
+<tr><td><code>possible_keys</code></td><td>候选索引</td><td>参考用，不一定使用</td></tr>
+</table>
+<div class="tip">生产环境用 <code>EXPLAIN ANALYZE</code>（MySQL 8.0.18+）获取真实执行时间和行数，比传统 EXPLAIN 估算更准确。</div>
+</div>
+
+<h3>索引选择性</h3>
+<div class="card card-green">
+<pre><code><span class="cm">-- 计算选择性 = DISTINCT 值数 / 总行数</span>
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> biz_line) / <span class="fn">COUNT</span>(*) <span class="kw">AS</span> biz_selectivity,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> status)     / <span class="fn">COUNT</span>(*) <span class="kw">AS</span> status_selectivity
+<span class="kw">FROM</span> alerts;
+<span class="cm">-- biz_line ≈ 0.01（100 个业务线）→ 适合索引</span>
+<span class="cm">-- status ≈ 0.000003（3 种状态）→ 单独索引价值低</span></code></pre>
+<p class="mt-2">经验法则：选择性 &lt; 0.01 的单列索引通常效果差，应放入联合索引或放弃。</p>
+</div>
+
+<h3>什么时候不该加索引</h3>
+<div class="card card-orange">
+<ul style="padding-left:20px;line-height:2">
+<li><strong>小表</strong>：几百行的配置表，全表扫描比索引查找更快</li>
+<li><strong>写多读少</strong>：每次 INSERT/UPDATE 都要维护索引，Agent 日志表若只写不查，索引是负担</li>
+<li><strong>低选择性列</strong>：性别、布尔值、状态（仅 2-3 值）单独建索引无效</li>
+<li><strong>频繁更新的列</strong>：索引维护成本高，引发页分裂</li>
+<li><strong>索引过多</strong>：优化器选择困难，写入性能下降。单表索引建议 ≤ 5 个</li>
+<li><strong>冗余索引</strong>：<code>(a,b)</code> 已存在时，<code>(a)</code> 是冗余的</li>
+</ul>
+</div>
+</section>
+
+<!-- ==================== SQL 优化 ==================== -->
+<section id="sql-optimization">
+<h2>SQL 优化</h2>
+
+<div class="card card-accent">
+  <p>慢 SQL 是线上 P0 故障的常见根因。优化路径：<strong>发现 → EXPLAIN 分析 → 改索引/改 SQL → 验证</strong>。</p>
+</div>
+
+<h3>慢查询发现</h3>
+<div class="card">
+<pre><code><span class="cm">-- my.cnf 开启慢查询日志</span>
+slow_query_log = <span class="nu">1</span>
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = <span class="nu">1</span>          <span class="cm"># 超过 1 秒记录</span>
+log_queries_not_using_indexes = <span class="nu">1</span>  <span class="cm"># 记录未走索引的查询</span>
+
+<span class="cm">-- 运行时查看</span>
+<span class="kw">SHOW VARIABLES LIKE</span> <span class="st">'slow_query%'</span>;
+<span class="kw">SHOW GLOBAL STATUS LIKE</span> <span class="st">'Slow_queries'</span>;
+
+<span class="cm">-- 分析工具</span>
+mysqldumpslow -s t -t <span class="nu">10</span> /var/log/mysql/slow.log
+<span class="cm"># 或 pt-query-digest（Percona Toolkit）</span></code></pre>
+<div class="callout callout-info">
+<div class="callout-icon">🔍</div>
+<div>Agent 服务还要监控应用层慢查询：Go 用 <code>db.SetConnMaxLifetime</code> + 中间件记录 &gt;500ms 的 SQL；Python 用 SQLAlchemy event listener。</div>
+</div>
+</div>
+
+<h3>EXPLAIN type 等级</h3>
+<div class="card">
+<table>
+<tr><th>type</th><th>含义</th><th>扫描方式</th><th>性能</th></tr>
+<tr><td><code>const</code></td><td>主键/唯一索引等值</td><td>最多 1 行</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><code>eq_ref</code></td><td>JOIN 时主键/唯一索引匹配</td><td>每行关联 1 行</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><code>ref</code></td><td>非唯一索引等值</td><td>匹配多行</td><td>⭐⭐⭐</td></tr>
+<tr><td><code>range</code></td><td>索引范围扫描</td><td>BETWEEN / &gt; / &lt;</td><td>⭐⭐</td></tr>
+<tr><td><code>index</code></td><td>全索引扫描</td><td>遍历整棵索引树</td><td>⭐</td></tr>
+<tr><td><code>ALL</code></td><td>全表扫描</td><td>逐行读取</td><td>❌ 需优化</td></tr>
+</table>
+</div>
+
+<h3>常见反模式</h3>
+<div class="grid-2">
+<div class="card" style="border-left:4px solid var(--red)">
+<h3>❌ SELECT *</h3>
+<pre><code><span class="cm">-- 坏：回表取所有列，含 TEXT/BLOB</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> analysis_results
+<span class="kw">WHERE</span> task_id = <span class="st">'abc123'</span>;
+
+<span class="cm">-- 好：只取需要的列，可能覆盖索引</span>
+<span class="kw">SELECT</span> id, status, summary
+<span class="kw">FROM</span> analysis_results
+<span class="kw">WHERE</span> task_id = <span class="st">'abc123'</span>;</code></pre>
+</div>
+<div class="card" style="border-left:4px solid var(--red)">
+<h3>❌ 前导通配 LIKE</h3>
+<pre><code><span class="cm">-- 坏：'%keyword' 无法使用 B+ Tree</span>
+<span class="kw">WHERE</span> title <span class="kw">LIKE</span> <span class="st">'%OOM%'</span>
+
+<span class="cm">-- 好：前缀匹配可用索引</span>
+<span class="kw">WHERE</span> title <span class="kw">LIKE</span> <span class="st">'OOM%'</span>
+
+<span class="cm">-- 更好：全文索引或 Elasticsearch</span></code></pre>
+</div>
+<div class="card" style="border-left:4px solid var(--red)">
+<h3>❌ 索引列上套函数</h3>
+<pre><code><span class="cm">-- 坏：对 indexed_col 运算，索引失效</span>
+<span class="kw">WHERE</span> <span class="fn">DATE</span>(created_at) = <span class="st">'2026-09-12'</span>
+<span class="kw">WHERE</span> <span class="fn">YEAR</span>(created_at) = <span class="nu">2026</span>
+
+<span class="cm">-- 好：范围查询保留索引</span>
+<span class="kw">WHERE</span> created_at >= <span class="st">'2026-09-12'</span>
+  <span class="kw">AND</span> created_at &lt; <span class="st">'2026-09-13'</span></code></pre>
+</div>
+<div class="card" style="border-left:4px solid var(--red)">
+<h3>❌ 隐式类型转换</h3>
+<pre><code><span class="cm">-- phone 是 VARCHAR，传入 INT → 全表扫描</span>
+<span class="kw">WHERE</span> phone = <span class="nu">13800138000</span>
+
+<span class="cm">-- 正确：类型一致</span>
+<span class="kw">WHERE</span> phone = <span class="st">'13800138000'</span>
+
+<span class="cm">-- 规则：字符串列 vs 数字 → 字符串转数字 → 索引失效</span></code></pre>
+</div>
+</div>
+
+<h3>JOIN 优化</h3>
+<div class="card">
+<ul style="padding-left:20px;line-height:2">
+<li><strong>小表驱动大表</strong>：优化器通常自动选择，但 JOIN 顺序影响中间结果集大小</li>
+<li><strong>JOIN 列加索引</strong>：ON 条件两侧都应有索引，type 达到 ref/eq_ref</li>
+<li><strong>避免 JOIN 过多表</strong>：超过 3-4 表考虑反范式或应用层组装</li>
+<li><strong>STRAIGHT_JOIN</strong>：强制 JOIN 顺序（优化器选错时用）</li>
+</ul>
+<pre><code><span class="cm">-- Agent 场景：分析结果 JOIN 业务线配置</span>
+<span class="kw">SELECT</span> r.id, r.summary, b.display_name
+<span class="kw">FROM</span> analysis_results r
+<span class="kw">INNER JOIN</span> biz_lines b <span class="kw">ON</span> r.biz_line = b.code   <span class="cm">-- b.code 需索引</span>
+<span class="kw">WHERE</span> r.status = <span class="st">'completed'</span>
+  <span class="kw">AND</span> r.created_at >= <span class="st">'2026-09-01'</span>
+<span class="kw">ORDER BY</span> r.created_at <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="nu">50</span>;</code></pre>
+</div>
+
+<h3>子查询 vs JOIN</h3>
+<div class="vs">
+<div class="card">
+<h3>子查询</h3>
+<p class="text-sm">MySQL 8.0 前常产生临时表；适合 EXISTS 半连接、少量结果集。</p>
+<pre><code><span class="kw">SELECT</span> * <span class="kw">FROM</span> alerts a
+<span class="kw">WHERE</span> <span class="kw">EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="nu">1</span> <span class="kw">FROM</span> alert_tags t
+  <span class="kw">WHERE</span> t.alert_id = a.id
+    <span class="kw">AND</span> t.tag = <span class="st">'critical'</span>
+);</code></pre>
+</div>
+<div class="vs-divider">vs</div>
+<div class="card">
+<h3>JOIN</h3>
+<p class="text-sm">大表关联通常更快；优化器选择 Hash Join / Nested Loop。</p>
+<pre><code><span class="kw">SELECT</span> a.* <span class="kw">FROM</span> alerts a
+<span class="kw">INNER JOIN</span> alert_tags t
+  <span class="kw">ON</span> t.alert_id = a.id
+<span class="kw">WHERE</span> t.tag = <span class="st">'critical'</span>;</code></pre>
+</div>
+</div>
+<div class="tip">经验：MySQL 8.0+ 优化器对子查询改进很大，但仍建议用 EXPLAIN 对比两者。IN (SELECT ...) 大结果集时 JOIN 通常更优。</div>
+
+<h3>Index Hint（索引提示）</h3>
+<div class="card">
+<pre><code><span class="cm">-- 强制使用指定索引</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> alerts
+<span class="kw">USE INDEX</span> (idx_biz_status_time)
+<span class="kw">WHERE</span> biz_line = <span class="st">'im'</span> <span class="kw">AND</span> status = <span class="st">'pending'</span>;
+
+<span class="cm">-- 忽略某个索引</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> alerts
+<span class="kw">IGNORE INDEX</span> (idx_status)
+<span class="kw">WHERE</span> status = <span class="st">'pending'</span>;
+
+<span class="cm">-- 强制使用（优化器认为更差时也用）</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> alerts
+<span class="kw">FORCE INDEX</span> (idx_biz_status_time)
+<span class="kw">WHERE</span> biz_line = <span class="st">'im'</span>;</code></pre>
+<div class="tip">Index Hint 是最后手段——优先修正索引设计和统计信息。Hint 硬编码在 SQL 中，表结构变化后可能适得其反。</div>
+</div>
+</section>
+
+<!-- ==================== 事务与锁 ==================== -->
+<section id="transactions">
+<h2>事务与锁</h2>
+
+<div class="card card-accent">
+  <p>并发环境下，事务保证数据一致性。Agent 服务常见场景：任务状态更新、幂等写入、分布式锁——都需要理解隔离级别和锁机制。</p>
+</div>
+
+<h3>ACID 特性</h3>
+<div class="grid-2">
+<div class="card"><strong>A — Atomicity 原子性</strong><p class="text-sm mt-2">事务内操作要么全成功，要么全回滚。InnoDB 通过 undo log 实现。</p></div>
+<div class="card"><strong>C — Consistency 一致性</strong><p class="text-sm mt-2">事务前后数据满足完整性约束（外键、唯一、CHECK）。</p></div>
+<div class="card"><strong>I — Isolation 隔离性</strong><p class="text-sm mt-2">并发事务互不干扰。由隔离级别 + 锁 + MVCC 共同实现。</p></div>
+<div class="card"><strong>D — Durability 持久性</strong><p class="text-sm mt-2">提交后数据不丢。InnoDB 通过 redo log + 双写缓冲保证。</p></div>
+</div>
+
+<h3>隔离级别</h3>
+<div class="card">
+<table>
+<tr><th>级别</th><th>脏读</th><th>不可重复读</th><th>幻读</th><th>实现</th></tr>
+<tr><td>Read Uncommitted</td><td>✅ 可能</td><td>✅</td><td>✅</td><td>几乎不用</td></tr>
+<tr><td>Read Committed</td><td>❌</td><td>✅ 可能</td><td>✅</td><td>Oracle 默认；每次 SELECT 新快照</td></tr>
+<tr><td><strong>Repeatable Read</strong></td><td>❌</td><td>❌</td><td>⚠️ 部分</td><td><strong>MySQL InnoDB 默认</strong>；MVCC + Gap Lock</td></tr>
+<tr><td>Serializable</td><td>❌</td><td>❌</td><td>❌</td><td>串行执行，性能最差</td></tr>
+</table>
+<pre><code><span class="cm">-- 查看/设置隔离级别</span>
+<span class="kw">SELECT</span> @@transaction_isolation;
+<span class="kw">SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED</span>;</code></pre>
+</div>
+
+<h3>MVCC（多版本并发控制）</h3>
+<div class="card">
+<p>InnoDB 每行隐藏列：<code>DB_TRX_ID</code>（最后修改事务 ID）、<code>DB_ROLL_PTR</code>（undo log 指针）。</p>
+<ul style="padding-left:20px;line-height:2;margin:10px 0">
+<li><strong>Read View</strong>：事务开始时创建快照，记录活跃事务 ID 列表</li>
+<li><strong>可见性判断</strong>：行的 TRX_ID 如果在 Read View 创建前已提交 → 可见；否则沿 undo log 找历史版本</li>
+<li><strong>RR  vs RC</strong>：RR 在第一次 SELECT 创建 Read View 并复用；RC 每次 SELECT 新建 Read View</li>
+</ul>
+<div class="callout callout-info">
+<div class="callout-icon">📌</div>
+<div>MVCC 让<strong>普通 SELECT 不加锁</strong>也能保证一致性读。写操作（UPDATE/DELETE）仍需要行锁。</div>
+</div>
+</div>
+
+<h3>Gap Lock 与 Next-Key Lock</h3>
+<div class="card">
+<p><strong>Record Lock</strong>：锁定索引记录（行锁）。<br>
+<strong>Gap Lock</strong>：锁定索引记录之间的间隙，防止幻读插入。<br>
+<strong>Next-Key Lock</strong> = Record Lock + Gap Lock，锁定记录及其前面的间隙。</p>
+<pre><code><span class="cm">-- 事务 A（RR 级别）</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> alerts <span class="kw">WHERE</span> id > <span class="nu">10</span> <span class="kw">AND</span> id &lt; <span class="nu">20</span> <span class="kw">FOR UPDATE</span>;
+<span class="cm">-- 锁住 (10, 20) 区间，其他事务无法 INSERT id=15</span>
+
+<span class="cm">-- 事务 B</span>
+<span class="kw">INSERT INTO</span> alerts (id, ...) <span class="kw">VALUES</span> (<span class="nu">15</span>, ...);  <span class="cm">-- 阻塞等待</span></code></pre>
+<div class="tip">Gap Lock 仅存在于 RR 级别 + 非唯一索引 / 范围查询。等值查询唯一索引时退化为 Record Lock。</div>
+</div>
+
+<h3>死锁检测与处理</h3>
+<div class="card card-orange">
+<p>InnoDB 自动检测死锁：<strong>回滚代价较小的事务</strong>（修改行数少），另一个继续执行。</p>
+<pre><code><span class="cm">-- 查看最近一次死锁</span>
+<span class="kw">SHOW ENGINE INNODB STATUS</span>\G
+<span class="cm">-- LATEST DETECTED DEADLOCK 段落</span>
+
+<span class="cm">-- 应用层处理</span>
+<span class="cm">// Go: 捕获 Error 1213 (Deadlock)，指数退避重试</span>
+<span class="kw">for</span> i := <span class="nu">0</span>; i &lt; maxRetries; i++ {
+    err = tx.UpdateStatus(...)
+    <span class="kw">if</span> !isDeadlock(err) { <span class="kw">break</span> }
+    time.Sleep(time.Duration(<span class="nu">1</span>&lt;&lt;i) * time.Millisecond)
+}</code></pre>
+<p class="mt-2"><strong>预防</strong>：固定加锁顺序（先锁 id 小的行）、缩短事务、避免大事务、索引加速减少锁范围。</p>
+</div>
+
+<h3>SELECT FOR UPDATE</h3>
+<div class="card card-green">
+<pre><code><span class="cm">-- 悲观锁：读取并锁定，其他事务不能修改</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> status <span class="kw">FROM</span> analysis_tasks
+<span class="kw">WHERE</span> task_id = <span class="st">'task-001'</span>
+<span class="kw">FOR UPDATE</span>;   <span class="cm">-- 行锁</span>
+
+<span class="cm">-- 若 status == 'pending'，更新为 running</span>
+<span class="kw">UPDATE</span> analysis_tasks <span class="kw">SET</span> status = <span class="st">'running'</span>
+<span class="kw">WHERE</span> task_id = <span class="st">'task-001'</span>;
+<span class="kw">COMMIT</span>;
+
+<span class="cm">-- 变种</span>
+<span class="kw">FOR SHARE</span>     <span class="cm">-- 共享锁（S 锁），允许读不允许写</span>
+<span class="kw">FOR UPDATE NOWAIT</span>  <span class="cm">-- 不等待，锁冲突立即报错（MySQL 8.0+）</span>
+<span class="kw">FOR UPDATE SKIP LOCKED</span>  <span class="cm">-- 跳过已锁行，适合任务队列抢单</span></code></pre>
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div>Agent 任务调度：<code>SELECT ... WHERE status='pending' ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED</code> 是经典抢任务模式，多 Worker 并发不阻塞。</div>
+</div>
+</div>
+</section>
+
+<!-- ==================== 连接池管理 ==================== -->
+<section id="connection-pool">
+<h2>连接池管理</h2>
+
+<div class="card card-accent">
+  <p>数据库连接建立代价高（TCP 握手 + 认证 + 内存分配）。连接池<strong>复用连接</strong>，是后端服务稳定性的基础设施。</p>
+</div>
+
+<h3>为什么需要连接池</h3>
+<div class="card">
+<ul style="padding-left:20px;line-height:2">
+<li>MySQL 默认 max_connections = 151，无池化时每个 HTTP 请求新建连接，瞬间打满</li>
+<li>连接创建 ~1-5ms，池化后获取连接 ~0.01ms</li>
+<li>控制并发连接数，保护数据库不被压垮</li>
+</ul>
+</div>
+
+<h3>核心参数</h3>
+<div class="card">
+<table>
+<tr><th>参数</th><th>含义</th><th>建议</th></tr>
+<tr><td>min / idle</td><td>最小空闲连接数</td><td>保持预热，避免冷启动延迟</td></tr>
+<tr><td>max</td><td>最大连接数</td><td>按公式估算（见下），不超过 MySQL max_connections 的 70%</td></tr>
+<tr><td>idle timeout</td><td>空闲连接回收时间</td><td>5-10 分钟，过长占资源，过短频繁重建</td></tr>
+<tr><td>max lifetime</td><td>连接最大存活时间</td><td>30-60 分钟，避免 MySQL wait_timeout 断连后用脏连接</td></tr>
+<tr><td>connect timeout</td><td>获取连接超时</td><td>3-5 秒，超时快速失败而非无限等待</td></tr>
+</table>
+</div>
+
+<h3>连接泄漏检测</h3>
+<div class="card card-orange">
+<p><strong>泄漏</strong>：借出连接未归还（忘记 Close / defer 缺失 / 异常路径未释放）。</p>
+<pre><code><span class="cm">-- MySQL 侧：查看连接来源</span>
+<span class="kw">SHOW PROCESSLIST</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> information_schema.processlist
+<span class="kw">WHERE</span> db = <span class="st">'alert_analysis'</span> <span class="kw">ORDER BY</span> time <span class="kw">DESC</span>;
+
+<span class="cm">-- Go: 务必 defer rows.Close() 和 defer tx.Rollback()</span>
+rows, err := db.Query(<span class="st">"SELECT ..."</span>)
+<span class="kw">if</span> err != <span class="kw">nil</span> { <span class="kw">return</span> err }
+<span class="kw">defer</span> rows.Close()  <span class="cm">// 泄漏最常见原因</span></code></pre>
+<div class="tip">监控指标：<code>pool_active / pool_max</code> 持续 &gt;80% 告警；<code>pool_wait_count</code> 持续增长说明池太小或泄漏。</div>
+</div>
+
+<h3>Go database/sql 配置</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> <span class="st">"database/sql"</span>
+
+db, err := sql.Open(<span class="st">"mysql"</span>, dsn)
+<span class="kw">if</span> err != <span class="kw">nil</span> { log.Fatal(err) }
+
+db.SetMaxOpenConns(<span class="nu">25</span>)                  <span class="cm">// 最大连接数</span>
+db.SetMaxIdleConns(<span class="nu">10</span>)                  <span class="cm">// 最大空闲连接</span>
+db.SetConnMaxLifetime(<span class="nu">30</span> * time.Minute) <span class="cm">// 连接最大存活</span>
+db.SetConnMaxIdleTime(<span class="nu">5</span> * time.Minute)  <span class="cm">// 空闲连接超时 (Go 1.15+)</span>
+
+<span class="cm">// 监控</span>
+stats := db.Stats()
+log.Printf(<span class="st">"open=%d inUse=%d idle=%d waitCount=%d"</span>,
+    stats.OpenConnections, stats.InUse, stats.Idle, stats.WaitCount)</code></pre>
+</div>
+
+<h3>Python SQLAlchemy 配置</h3>
+<div class="card">
+<pre><code><span class="kw">from</span> sqlalchemy <span class="kw">import</span> create_engine
+
+engine = create_engine(
+    <span class="st">"mysql+pymysql://user:pass@host/db"</span>,
+    pool_size=<span class="nu">10</span>,           <span class="cm"># 常驻连接数</span>
+    max_overflow=<span class="nu">20</span>,       <span class="cm"># 超出 pool_size 的临时连接</span>
+    pool_timeout=<span class="nu">30</span>,       <span class="cm"># 获取连接超时（秒）</span>
+    pool_recycle=<span class="nu">1800</span>,     <span class="cm"># 30 分钟回收（对应 max lifetime）</span>
+    pool_pre_ping=<span class="kw">True</span>,    <span class="cm"># 使用前 ping，自动剔除断连</span>
+)
+<span class="cm"># 最大连接 = pool_size + max_overflow = 30</span></code></pre>
+</div>
+
+<h3>Agent 服务连接池 sizing</h3>
+<div class="card card-green">
+<pre><code><span class="cm"># 估算公式</span>
+pool_size = (core_count * 2) + effective_spindle_count
+<span class="cm"># 对于 IO 密集型 Agent 服务，可放宽到：</span>
+max_connections_per_instance = QPS * avg_query_time_seconds * safety_factor
+
+<span class="cm"># 示例：Agent 分析服务</span>
+<span class="cm"># - 4 核 Pod，QPS ≈ 50，平均 SQL 耗时 20ms</span>
+<span class="cm"># - 并发 SQL = 50 * 0.02 = 1（看起来很少）</span>
+<span class="cm"># - 但 Agent 分析单次可能触发 5-10 条 SQL（读写 session/chat/result）</span>
+<span class="cm"># - 实际并发 = 50 * 0.02 * 8 ≈ 8，加 3x 安全系数 → max_open = 25</span>
+
+<span class="cm"># 多实例注意</span>
+<span class="cm"># 10 个 Pod × 25 连接 = 250 → 需确保 MySQL max_connections ≥ 300</span></code></pre>
+<div class="callout callout-info">
+<div class="callout-icon">⚠️</div>
+<div>Agent 服务 SQL 模式：短连接高频（状态更新）+ 偶尔长查询（历史检索）。<strong>不要把 max_open 设太大</strong>——Agent 瓶颈通常在 LLM API 而非 DB，50 连接足够大多数场景。</div>
+</div>
+</div>
+</section>
+
+<!-- ==================== 分库分表 ==================== -->
+<section id="sharding">
+<h2>分库分表</h2>
+
+<div class="card card-accent">
+  <p>单表数据量超过 5000 万行或单库 QPS 超过硬件上限时，需要考虑水平扩展。但<strong>分库分表是架构级决策</strong>，过早拆分代价极高。</p>
+</div>
+
+<h3>垂直拆分 vs 水平拆分</h3>
+<div class="vs">
+<div class="card">
+<h3>垂直拆分（按业务）</h3>
+<p class="text-sm">不同业务模块用不同数据库。</p>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>用户库 / 订单库 / 告警分析库</li>
+<li>减少单库压力，团队自治</li>
+<li>无法解决单表过大问题</li>
+</ul>
+</div>
+<div class="vs-divider">→</div>
+<div class="card">
+<h3>水平拆分（按 Key）</h3>
+<p class="text-sm">同一张表的数据分散到多个库/表。</p>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>analysis_results_0 ~ _15</li>
+<li>解决单表数据量和写入瓶颈</li>
+<li>引入跨分片查询复杂度</li>
+</ul>
+</div>
+</div>
+
+<h3>分片策略</h3>
+<div class="grid-3">
+<div class="card">
+<h3>Range 范围</h3>
+<p class="text-sm">按 ID/时间范围分片</p>
+<pre><code>shard_0: id 0~1M
+shard_1: id 1M~2M</code></pre>
+<p class="text-sm mt-2">✅ 范围查询友好<br>❌ 热点集中在最新分片</p>
+</div>
+<div class="card">
+<h3>Hash 哈希</h3>
+<p class="text-sm">hash(key) % N</p>
+<pre><code>shard = hash(task_id) % 16</code></pre>
+<p class="text-sm mt-2">✅ 数据均匀<br>❌ 扩容需 rehash</p>
+</div>
+<div class="card">
+<h3>Consistent Hash</h3>
+<p class="text-sm">一致性哈希环</p>
+<pre><code>vnode → physical node
+扩缩容只迁移部分数据</code></pre>
+<p class="text-sm mt-2">✅ 平滑扩容<br>❌ 实现复杂</p>
+</div>
+</div>
+
+<h3>跨分片查询</h3>
+<div class="card card-orange">
+<p>分片后最痛苦的问题——尽量避免，设计时让查询带分片键。</p>
+<table>
+<tr><th>场景</th><th>方案</th></tr>
+<tr><td>带分片键查询</td><td>直接路由到目标分片 ✅</td></tr>
+<tr><td>不带分片键</td><td>广播到所有分片 + 应用层聚合 ❌ 慢</td></tr>
+<tr><td>跨分片 JOIN</td><td>禁止；改为应用层组装或冗余数据</td></tr>
+<tr><td>全局排序分页</td><td>各分片取 Top-N → 归并排序（不精确）或 ES</td></tr>
+<tr><td>聚合 COUNT/SUM</td><td>各分片分别聚合 → 汇总</td></tr>
+</table>
+</div>
+
+<h3>分布式 ID：Snowflake</h3>
+<div class="card">
+<pre><code><span class="cm">// 64 bit ID 结构</span>
+<span class="cm">// | 1bit符号 | 41bit时间戳 | 10bit机器ID | 12bit序列号 |</span>
+<span class="cm">// 每毫秒 4096 个 ID，可用 69 年</span>
+
+<span class="cm">// Go 简化示例</span>
+<span class="kw">type</span> Snowflake <span class="kw">struct</span> {
+    epoch    <span class="kw">int64</span>
+    nodeID   <span class="kw">int64</span>
+    sequence <span class="kw">int64</span>
+    mu       sync.Mutex
+}
+
+<span class="kw">func</span> (s *Snowflake) NextID() <span class="kw">int64</span> {
+    s.mu.Lock()
+    <span class="kw">defer</span> s.mu.Unlock()
+    now := time.Now().UnixMilli() - s.epoch
+    <span class="kw">if</span> now == s.lastTimestamp {
+        s.sequence = (s.sequence + <span class="nu">1</span>) & <span class="nu">0xFFF</span>
+    } <span class="kw">else</span> {
+        s.sequence = <span class="nu">0</span>
+    }
+    s.lastTimestamp = now
+    <span class="kw">return</span> (now &lt;&lt; <span class="nu">22</span>) | (s.nodeID &lt;&lt; <span class="nu">12</span>) | s.sequence
+}</code></pre>
+<p class="text-sm mt-2">替代方案：MySQL AUTO_INCREMENT（分片后冲突）、UUID（无序影响 B+ Tree 插入性能）、Redis INCR、数据库号段模式。</p>
+</div>
+
+<h3>迁移策略</h3>
+<div class="card">
+<ol style="padding-left:20px;line-height:2">
+<li><strong>双写</strong>：新旧库同时写入，验证一致性</li>
+<li><strong>数据同步</strong>：Canal / Debezium 监听 binlog 同步历史数据</li>
+<li><strong>灰度切读</strong>：按用户/业务线逐步切到新库读</li>
+<li><strong>切写 + 停双写</strong>：确认无差异后完全切换</li>
+<li><strong>清理</strong>：旧库保留备份一段时间后下线</li>
+</ol>
+</div>
+
+<h3>什么时候不该分库分表</h3>
+<div class="card card-green">
+<div class="callout callout-ok">
+<div class="callout-icon">🛑</div>
+<div>
+<strong>Premature Optimization 警告</strong>：以下情况先优化索引/SQL/硬件，不要急着分片：
+<ul style="padding-left:16px;margin-top:8px;line-height:1.8">
+<li>单表 &lt; 1000 万行，查询仍可通过索引优化</li>
+<li>团队没有分片中间件经验（ShardingSphere / Vitess）</li>
+<li>业务查询大量不带分片键（跨分片噩梦）</li>
+<li>Agent 分析结果表——写入量大但查询按 task_id/biz_line，单库 + 归档足够</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ==================== MySQL vs PostgreSQL ==================== -->
+<section id="mysql-vs-pg">
+<h2>MySQL vs PostgreSQL</h2>
+
+<div class="card card-accent">
+  <p>两者都是成熟的开源 RDBMS，但设计哲学不同：MySQL 偏<strong>简单高效 OLTP</strong>，PostgreSQL 偏<strong>功能丰富 + 扩展性</strong>。Agent 服务选型取决于是否需要向量搜索和复杂查询。</p>
+</div>
+
+<h3>功能对比</h3>
+<div class="card">
+<table>
+<tr><th>特性</th><th>MySQL (InnoDB)</th><th>PostgreSQL</th></tr>
+<tr><td>默认隔离级别</td><td>Repeatable Read</td><td>Read Committed</td></tr>
+<tr><td>JSON 支持</td><td>JSON 类型（函数较少）</td><td>JSONB + 丰富操作符 + GIN 索引 ⭐</td></tr>
+<tr><td>全文搜索</td><td>FULLTEXT（基础）</td><td>tsvector + tsquery（强大）⭐</td></tr>
+<tr><td>窗口函数</td><td>8.0+ 支持</td><td>原生支持，更成熟 ⭐</td></tr>
+<tr><td>CTE / 递归查询</td><td>8.0+ 支持</td><td>原生支持 ⭐</td></tr>
+<tr><td>复制</td><td>异步/半同步/Group Replication</td><td>流复制 + 逻辑复制 ⭐</td></tr>
+<tr><td>扩展生态</td><td>插件有限</td><td>pgvector, PostGIS, pg_cron ⭐</td></tr>
+<tr><td>运维成熟度</td><td>DBA 生态最丰富 ⭐</td><td>云厂商支持好，国内 DBA 相对少</td></tr>
+<tr><td>性能（纯 OLTP）</td><td>简单读写略优 ⭐</td><td>复杂查询更优</td></tr>
+<tr><td>向量搜索</td><td>需外部方案（Milvus/ES）</td><td>pgvector 原生 ⭐⭐⭐</td></tr>
+</table>
+</div>
+
+<h3>JSON 支持对比</h3>
+<div class="grid-2">
+<div class="card">
+<h3>MySQL JSON</h3>
+<pre><code><span class="kw">CREATE TABLE</span> configs (
+  id <span class="kw">BIGINT PRIMARY KEY</span>,
+  agent_config <span class="kw">JSON</span>
+);
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> configs
+<span class="kw">WHERE</span> JSON_EXTRACT(agent_config, <span class="st">'$.model'</span>)
+  = <span class="st">'"gpt-4o"'</span>;</code></pre>
+</div>
+<div class="card">
+<h3>PostgreSQL JSONB</h3>
+<pre><code><span class="kw">CREATE TABLE</span> configs (
+  id <span class="kw">BIGINT PRIMARY KEY</span>,
+  agent_config JSONB
+);
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> configs
+<span class="kw">WHERE</span> agent_config->><span class="st">'model'</span> = <span class="st">'gpt-4o'</span>;
+
+<span class="cm">-- GIN 索引加速 JSONB 查询</span>
+<span class="kw">CREATE INDEX</span> idx_config
+  <span class="kw">ON</span> configs <span class="kw">USING GIN</span> (agent_config);</code></pre>
+</div>
+</div>
+
+<h3>复制方案</h3>
+<div class="grid-2">
+<div class="card">
+<h3>MySQL 复制</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li><strong>主从异步复制</strong>：binlog → relay log，可能丢数据</li>
+<li><strong>半同步</strong>：至少一个从库 ACK 才返回</li>
+<li><strong>Group Replication</strong>：多主/Paxos，强一致</li>
+<li><strong>InnoDB Cluster</strong>：MySQL Shell 管理 GR + Router</li>
+</ul>
+</div>
+<div class="card">
+<h3>PostgreSQL 复制</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li><strong>流复制</strong>：WAL 物理复制，同步/异步</li>
+<li><strong>逻辑复制</strong>：表级订阅，跨版本升级友好</li>
+<li><strong>Patroni</strong>：自动 failover 高可用</li>
+<li><strong>Citus</strong>：原生分布式扩展</li>
+</ul>
+</div>
+</div>
+
+<h3>Agent 服务选型建议</h3>
+<div class="card card-green">
+<div class="grid-2">
+<div>
+<h3>选 PostgreSQL 当</h3>
+<ul style="padding-left:16px;line-height:2">
+<li>需要 <strong>RAG 向量检索</strong>（pgvector）</li>
+<li>Agent 配置/结果存复杂 JSONB</li>
+<li>需要全文搜索 + 结构化查询混合</li>
+<li>团队熟悉 PG 生态</li>
+</ul>
+</div>
+<div>
+<h3>选 MySQL 当</h3>
+<ul style="padding-left:16px;line-height:2">
+<li>纯 OLTP：任务状态、用户、会话</li>
+<li>公司有成熟 MySQL 运维体系</li>
+<li>向量搜索用独立 Milvus/ES</li>
+<li>追求最简单部署和 DBA 支持</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-info">
+<div class="callout-icon">🏗️</div>
+<div><strong>gdp-gravitysvr-alertAnalysis 现状</strong>：Go 服务用 GORM + MySQL 存 session/chat/evolution，向量检索若引入可评估 PG 或外挂向量库，不必为了 pgvector 整体迁移。</div>
+</div>
+</div>
+</section>
+
+<!-- ==================== Redis ==================== -->
+<section id="redis">
+<h2>Redis 数据结构与应用</h2>
+
+<div class="card card-accent">
+  <p>Redis 是内存 KV 存储，单机 10 万+ QPS。Agent 服务中用于<strong>缓存、限流、会话、任务队列、分布式锁</strong>——几乎每种后端架构都离不开 Redis。</p>
+</div>
+
+<h3>五种核心数据结构</h3>
+<div class="grid-2">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>String <span class="tag tag-blue">最基础</span></h3>
+<p class="text-sm"><strong>缓存</strong>：热点数据缓存，TTL 自动过期</p>
+<pre><code><span class="cm">SET biz:im:config "{...}" EX 3600</span>
+<span class="cm">GET biz:im:config</span>
+
+<span class="cm"># 限流（固定窗口）</span>
+<span class="cm">INCR rate:api:user123:2026091213</span>
+<span class="cm">EXPIRE rate:api:user123:2026091213 60</span>
+<span class="cm"># count > 100 → 拒绝</span></code></pre>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>Hash <span class="tag tag-green">字段级</span></h3>
+<p class="text-sm"><strong>Session 存储</strong>：Agent 会话上下文</p>
+<pre><code><span class="cm">HSET session:abc123</span>
+  user_id "u001"
+  biz_line "im"
+  agent_type "cursor"
+  last_active "1694510400"
+
+<span class="cm">HGETALL session:abc123</span>
+<span class="cm">EXPIRE session:abc123 86400</span></code></pre>
+</div>
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3>List <span class="tag tag-purple">有序队列</span></h3>
+<p class="text-sm"><strong>消息队列</strong>：简单 LPUSH/BRPOP</p>
+<pre><code><span class="cm">LPUSH task:queue '{"task_id":"t001"}'</span>
+<span class="cm">BRPOP task:queue 30  # 阻塞消费</span>
+
+<span class="cm"># 可靠队列：RPOPLPUSH 到 processing 列表</span>
+<span class="cm">RPOPLPUSH task:queue task:processing</span></code></pre>
+</div>
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3>Set <span class="tag tag-orange">去重集合</span></h3>
+<p class="text-sm"><strong>去重</strong>：已处理告警 ID、标签集合</p>
+<pre><code><span class="cm">SADD processed:alerts "alert-001"</span>
+<span class="cm">SISMEMBER processed:alerts "alert-001"</span>
+<span class="cm"># → 1（已处理，跳过）</span>
+
+<span class="cm">SCARD processed:alerts</span>
+<span class="cm"># 集合大小</span></code></pre>
+</div>
+</div>
+
+<div class="card" style="border-top:3px solid var(--red)">
+<h3>Sorted Set (ZSet) <span class="tag tag-red">有序 + 去重</span></h3>
+<div class="grid-2">
+<div>
+<p class="text-sm"><strong>排行榜</strong>：Agent 分析耗时排名</p>
+<pre><code><span class="cm">ZADD leaderboard 12.5 "task-001"</span>
+<span class="cm">ZADD leaderboard 8.3  "task-002"</span>
+<span class="cm">ZREVRANGE leaderboard 0 9 WITHSCORES</span></code></pre>
+</div>
+<div>
+<p class="text-sm"><strong>延迟队列</strong>：定时任务调度</p>
+<pre><code><span class="cm">ZADD delay:queue 1694514000 "task-001"</span>
+<span class="cm"># score = 执行时间戳</span>
+<span class="cm">ZRANGEBYSCORE delay:queue 0 {now}</span>
+<span class="cm"># 取出到期任务</span></code></pre>
+</div>
+</div>
+</div>
+
+<h3>TTL 策略</h3>
+<div class="card">
+<table>
+<tr><th>数据类型</th><th>TTL 建议</th><th>说明</th></tr>
+<tr><td>热点配置缓存</td><td>1-24 小时</td><td>变更时主动 DEL，TTL 作兜底</td></tr>
+<tr><td>Session</td><td>30 分钟 - 24 小时</td><td>滑动过期：每次访问 EXPIRE 续期</td></tr>
+<tr><td>限流计数器</td><td>窗口大小（60s/3600s）</td><td>自动过期，无需清理</td></tr>
+<tr><td>分析结果缓存</td><td>5-30 分钟</td><td>DB 是 source of truth，缓存可丢</td></tr>
+<tr><td>分布式锁</td><td>10-30 秒</td><td>必须设 TTL，防死锁</td></tr>
+</table>
+<div class="tip">避免大量 key 同时过期导致 CPU 尖刺：TTL 加随机偏移 <code>EX 3600 + random(0, 300)</code>。</div>
+</div>
+
+<h3>内存优化</h3>
+<div class="card">
+<ul style="padding-left:20px;line-height:2">
+<li><strong>ziplist / listpack</strong>：小 Hash/List/ZSet 自动紧凑编码（&lt;64 元素且 value &lt;64B）</li>
+<li><strong>控制 key 数量</strong>：100 万个小 key 比 1 个大 Hash 浪费更多内存（每个 key ~50-100B 元数据）</li>
+<li><strong>选择合适数据结构</strong>：能 Hash 就不 String（<code>HSET session:id field val</code> vs 多个 <code>SET session:id:field</code>）</li>
+<li><strong>maxmemory-policy</strong>：<code>allkeys-lru</code>（缓存场景）或 <code>volatile-lru</code>（混合持久化）</li>
+</ul>
+<pre><code><span class="cm"># redis.conf</span>
+maxmemory 2gb
+maxmemory-policy allkeys-lru
+hash-max-listpack-entries 128
+hash-max-listpack-value 64</code></pre>
+</div>
+
+<h3>持久化：RDB vs AOF</h3>
+<div class="vs">
+<div class="card">
+<h3>RDB 快照</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>定时 fork 子进程写磁盘</li>
+<li>文件紧凑，恢复快</li>
+<li>可能丢失最后一次快照后的数据</li>
+<li>适合：可重建的缓存</li>
+</ul>
+</div>
+<div class="vs-divider">vs</div>
+<div class="card">
+<h3>AOF 日志</h3>
+<ul style="padding-left:16px;line-height:1.8;font-size:.9rem">
+<li>每条写命令追加到文件</li>
+<li>everysec 模式最多丢 1 秒</li>
+<li>文件大，恢复慢（rewrite 压缩）</li>
+<li>适合：Session / 队列等不可丢数据</li>
+</ul>
+</div>
+</div>
+<div class="tip">生产推荐 <strong>RDB + AOF 混合持久化</strong>（Redis 4.0+）：AOF rewrite 时用 RDB 格式写入，兼顾恢复速度和数据安全。</div>
+
+<h3>Redis Cluster</h3>
+<div class="card card-green">
+<p>16384 个 hash slot 分布在多个 master 节点，key 路由：<code>CRC16(key) % 16384</code>。</p>
+<ul style="padding-left:20px;line-height:2">
+<li><strong>最少 3 主 3 从</strong>：每个 master 配 replica 做 failover</li>
+<li><strong>跨 slot 操作受限</strong>：MGET/MSET 的 key 必须在同一 slot；用 <code>{hash_tag}</code> 强制同 slot</li>
+<li><strong>扩容</strong>：reshard slot 到新节点，在线迁移</li>
+<li><strong>客户端</strong>：Go 用 go-redis ClusterClient；需处理 MOVED/ASK 重定向</li>
+</ul>
+<pre><code><span class="cm"># hash tag：只有 {} 内部分参与 hash</span>
+<span class="cm">SET user:{123}:profile "..."</span>
+<span class="cm">SET user:{123}:session "..."</span>
+<span class="cm"># 两个 key 在同一 slot，可事务操作</span></code></pre>
+</div>
+</section>
+
+<!-- ==================== 面试题 + 实战练习 ==================== -->
+<section id="practice">
+<h2>面试题 + 实战练习</h2>
+
+<div class="card card-accent">
+  <p>以下面试题覆盖本指南核心知识点。点击展开查看详细答案。</p>
+</div>
+
+<details class="card">
+<summary>B+ Tree 索引 vs Hash 索引，数据库为什么默认用 B+ Tree？</summary>
+<div class="mt-2">
+<p><strong>B+ Tree</strong>：</p>
+<ul style="padding-left:16px;line-height:1.8">
+<li>叶子节点有序链表 → 支持范围查询（BETWEEN、&gt;、ORDER BY）</li>
+<li>非叶子节点不存数据 → 单个节点容纳更多 key → 树高低 → 磁盘 IO 少</li>
+<li>稳定 O(log n) 查询、插入、删除</li>
+</ul>
+<p class="mt-2"><strong>Hash 索引</strong>：</p>
+<ul style="padding-left:16px;line-height:1.8">
+<li>等值查询 O(1)，但<strong>不支持范围查询和排序</strong></li>
+<li>Hash 冲突需链表解决，退化 O(n)</li>
+<li>只适用于 Memory 引擎或精确匹配场景（如 Redis 内部）</li>
+</ul>
+<p class="mt-2"><strong>结论</strong>：数据库查询模式以范围扫描 + 排序为主，B+ Tree 是更通用的选择。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>MySQL Repeatable Read 如何避免幻读？</summary>
+<div class="mt-2">
+<p>RR 通过 <strong>MVCC + Gap Lock/Next-Key Lock</strong> 组合防止幻读：</p>
+<ol style="padding-left:20px;line-height:2">
+<li><strong>快照读</strong>（普通 SELECT）：MVCC Read View 保证同一事务内多次读取结果一致</li>
+<li><strong>当前读</strong>（SELECT FOR UPDATE / INSERT / DELETE）：Next-Key Lock 锁定记录 + 间隙，阻止其他事务在范围内插入新行</li>
+</ol>
+<pre><code><span class="cm">-- 事务 A</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> alerts <span class="kw">WHERE</span> id > <span class="nu">100</span> <span class="kw">FOR UPDATE</span>;
+<span class="cm">-- Next-Key Lock 锁住 (100, +∞)</span>
+
+<span class="cm">-- 事务 B 无法 INSERT id=150 → 不会幻读</span></code></pre>
+<p class="mt-2">注意：纯快照读（不加 FOR UPDATE）在 RR 下仍可能"看到"其他事务新插入的行（一致性读不保证避免幻读），只有当前读 + 锁才完全防止。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>如何优化一条慢 SQL？完整排查流程是什么？</summary>
+<div class="mt-2">
+<ol style="padding-left:20px;line-height:2">
+<li><strong>定位</strong>：slow_query_log / APM 工具 / <code>SHOW PROCESSLIST</code> 找到慢 SQL</li>
+<li><strong>EXPLAIN</strong>：关注 type（避免 ALL）、key（是否走索引）、rows（扫描行数）、Extra（filesort/temporary）</li>
+<li><strong>分析原因</strong>：
+  <ul style="padding-left:16px">
+  <li>缺索引 → 加联合索引（遵循最左前缀）</li>
+  <li>索引失效 → 检查函数、隐式转换、前导通配 LIKE</li>
+  <li>回表多 → 改覆盖索引或减少 SELECT 列</li>
+  <li>数据量大 → 分页优化（延迟关联）、归档历史数据</li>
+  </ul>
+</li>
+<li><strong>验证</strong>：<code>EXPLAIN ANALYZE</code> 对比优化前后</li>
+<li><strong>上线</strong>：低峰期加索引（Online DDL），监控 QPS 和延迟</li>
+</ol>
+</div>
+</details>
+
+<details class="card">
+<summary>Redis vs Memcached，怎么选？</summary>
+<div class="mt-2">
+<table>
+<tr><th>维度</th><th>Redis</th><th>Memcached</th></tr>
+<tr><td>数据结构</td><td>String/Hash/List/Set/ZSet ⭐</td><td>仅 String</td></tr>
+<tr><td>持久化</td><td>RDB + AOF ⭐</td><td>不支持</td></tr>
+<tr><td>线程模型</td><td>单线程 + IO 多路复用（6.0+ 多 IO 线程）</td><td>多线程</td></tr>
+<tr><td>内存效率</td><td>略低（数据结构开销）</td><td>更高 ⭐</td></tr>
+<tr><td>集群</td><td>Redis Cluster ⭐</td><td>客户端分片</td></tr>
+<tr><td>发布订阅</td><td>支持 ⭐</td><td>不支持</td></tr>
+<tr><td>Lua 脚本</td><td>支持 ⭐</td><td>不支持</td></tr>
+</table>
+<p class="mt-2"><strong>选 Redis</strong>：99% 的场景。需要丰富数据结构、持久化、分布式锁、延迟队列。<br>
+<strong>选 Memcached</strong>：纯 KV 缓存、极致内存效率、多线程高并发简单场景。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>什么时候用 Redis，什么时候用 MySQL？</summary>
+<div class="mt-2">
+<table>
+<tr><th>场景</th><th>Redis</th><th>MySQL</th></tr>
+<tr><td>数据必须持久可靠</td><td>❌（可丢）</td><td>✅ ACID</td></tr>
+<tr><td>复杂查询/JOIN/聚合</td><td>❌</td><td>✅ SQL</td></tr>
+<tr><td>热点读 QPS &gt; 1 万</td><td>✅ 内存速度</td><td>❌ 磁盘瓶颈</td></tr>
+<tr><td>Session / 限流 / 锁</td><td>✅ 天然适合</td><td>❌ 太重</td></tr>
+<tr><td>数据量 &gt; 内存容量</td><td>❌ 成本高</td><td>✅ 磁盘存储</td></tr>
+<tr><td>事务一致性</td><td>Lua 有限支持</td><td>✅ 完整 ACID</td></tr>
+</table>
+<p class="mt-2"><strong>经典模式</strong>：MySQL 为 source of truth，Redis 做读缓存（Cache-Aside：读 miss 回源 DB 并写入 Redis，写 DB 后删 Redis）。</p>
+</div>
+</details>
+
+<div class="card card-green">
+<h3>实战练习：设计 Agent 分析结果存储 Schema</h3>
+<p><strong>需求</strong>：为 gdp-gravitysvr-alertAnalysis 设计分析结果表，要求：</p>
+<ol style="padding-left:20px;margin:10px 0;line-height:2">
+<li>支持按 task_id 精确查询（幂等）</li>
+<li>支持按 biz_line + status + 时间范围列表查询（分页）</li>
+<li>存储分析摘要（TEXT）和完整 HTML 报告（可能 &gt;1MB）</li>
+<li>记录 Agent 类型、模型、耗时、token 用量</li>
+<li>日增量 10 万条，保留 90 天</li>
+</ol>
+<details>
+<summary>参考答案</summary>
+<div class="mt-2">
+<pre><code><span class="cm">-- 主表：元数据 + 摘要（热数据）</span>
+<span class="kw">CREATE TABLE</span> analysis_results (
+  id            <span class="kw">BIGINT</span>       <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  task_id       <span class="kw">VARCHAR</span>(<span class="nu">64</span>)  <span class="kw">NOT NULL</span> <span class="kw">COMMENT</span> <span class="st">'幂等键'</span>,
+  biz_line      <span class="kw">VARCHAR</span>(<span class="nu">32</span>)  <span class="kw">NOT NULL</span>,
+  status        <span class="kw">ENUM</span>(<span class="st">'pending'</span>,<span class="st">'running'</span>,<span class="st">'completed'</span>,<span class="st">'failed'</span>) <span class="kw">NOT NULL DEFAULT</span> <span class="st">'pending'</span>,
+  agent_type    <span class="kw">VARCHAR</span>(<span class="nu">16</span>)  <span class="kw">NOT NULL</span> <span class="kw">COMMENT</span> <span class="st">'cursor/claude/codex'</span>,
+  model         <span class="kw">VARCHAR</span>(<span class="nu">64</span>)  <span class="kw">DEFAULT NULL</span>,
+  summary       <span class="kw">TEXT</span>         <span class="kw">COMMENT</span> <span class="st">'分析摘要（通知用）'</span>,
+  duration_ms   <span class="kw">INT</span>          <span class="kw">DEFAULT NULL</span>,
+  token_input   <span class="kw">INT</span>          <span class="kw">DEFAULT NULL</span>,
+  token_output  <span class="kw">INT</span>          <span class="kw">DEFAULT NULL</span>,
+  report_url    <span class="kw">VARCHAR</span>(<span class="nu">512</span>) <span class="kw">DEFAULT NULL</span> <span class="kw">COMMENT</span> <span class="st">'GCS 报告 URL'</span>,
+  error_msg     <span class="kw">VARCHAR</span>(<span class="nu">1024</span>) <span class="kw">DEFAULT NULL</span>,
+  created_at    <span class="kw">DATETIME</span>(<span class="nu">3</span>)  <span class="kw">NOT NULL DEFAULT CURRENT_TIMESTAMP</span>(<span class="nu">3</span>),
+  updated_at    <span class="kw">DATETIME</span>(<span class="nu">3</span>)  <span class="kw">NOT NULL DEFAULT CURRENT_TIMESTAMP</span>(<span class="nu">3</span>) <span class="kw">ON UPDATE CURRENT_TIMESTAMP</span>(<span class="nu">3</span>),
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">UNIQUE KEY</span> uk_task_id (task_id),
+  <span class="kw">KEY</span> idx_biz_status_time (biz_line, status, created_at)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="cm">-- 设计要点：</span>
+<span class="cm">-- 1. task_id UNIQUE → 幂等写入 INSERT ... ON DUPLICATE KEY UPDATE</span>
+<span class="cm">-- 2. idx(biz_line, status, created_at) → 覆盖列表查询 + ORDER BY</span>
+<span class="cm">-- 3. 大 HTML 报告存 GCS（report_url），不进 DB → 避免行过大影响 B+ Tree</span>
+<span class="cm">-- 4. summary TEXT 够用（通知摘要通常 &lt;4KB）</span>
+<span class="cm">-- 5. 90 天归档：定时任务 DELETE WHERE created_at &lt; NOW()-INTERVAL 90 DAY</span>
+<span class="cm">--    或 PARTITION BY RANGE (TO_DAYS(created_at)) 按月分区 DROP PARTITION</span></code></pre>
+<p class="mt-2"><strong>进阶优化</strong>：</p>
+<ul style="padding-left:16px;line-height:1.8">
+<li>Redis 缓存热点 biz_line 的 pending 任务数（<code>INCR biz:im:pending</code>）</li>
+<li>completed 结果缓存 5 分钟（<code>SET result:{task_id} ... EX 300</code>）</li>
+<li>若需全文检索历史分析，同步到 Elasticsearch 而非 MySQL LIKE</li>
+</ul>
+</div>
+</details>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>学习路径建议</strong>：先掌握索引 + EXPLAIN（Section 1-2）→ 理解事务锁（Section 3）→ 连接池生产配置（Section 4）→ 按需深入分库分表和 Redis。面试前重点复习 Section 8 的 Q&A。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['index','sql-optimization','transactions','connection-pool','sharding','mysql-vs-pg','redis','practice'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

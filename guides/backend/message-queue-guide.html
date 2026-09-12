@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>消息队列实战指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#e65100 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}
+.flow-diagram{font-family:'SF Mono',Menlo,monospace;font-size:.82rem;background:var(--code-bg);padding:16px;border-radius:8px;line-height:1.8;overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>消息队列实战指南</h1>
+  <p>面向后端 / AI Agent 工程师<br>从核心概念到 Kafka、Redis Streams、RabbitMQ 选型与生产实践</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#why">为什么需要</a>
+    <a href="#concepts">核心概念</a>
+    <a href="#kafka">Kafka</a>
+    <a href="#redis-streams">Redis Streams</a>
+    <a href="#rabbitmq">RabbitMQ</a>
+    <a href="#comparison">对比选型</a>
+    <a href="#production">生产实践</a>
+    <a href="#practice">面试与练习</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. 为什么需要消息队列 ==================== -->
+<section id="why">
+<h2>为什么需要消息队列</h2>
+
+<div class="card card-accent">
+  <p>消息队列（Message Queue, MQ）是分布式系统的<strong>异步通信中间件</strong>。它让生产者与消费者解耦，用「发消息 → 存队列 → 异步消费」替代「直接调用 → 同步等待」。</p>
+</div>
+
+<div class="grid-2">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3><span class="tag tag-blue">解耦</span></h3>
+<p class="text-sm">生产者和消费者互不感知对方的存在、语言、部署位置。告警网关只管发消息，分析服务只管消费——双方可以独立迭代、扩缩容。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3><span class="tag tag-green">异步处理</span></h3>
+<p class="text-sm">Webhook 收到告警后立刻返回 200，分析任务丢进队列后台执行。用户不用等 Agent 跑完 30 秒才收到响应。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3><span class="tag tag-orange">削峰填谷</span></h3>
+<p class="text-sm">故障期间告警量从 100/min 飙到 1000/min，MQ 缓冲消息，消费者按自身处理能力匀速消费，避免服务被打垮。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3><span class="tag tag-purple">事件驱动</span></h3>
+<p class="text-sm">一个事件（告警到达）可以触发多个下游：分析、通知、归档、指标上报——各消费者独立订阅，无需编排中心。</p>
+</div>
+</div>
+
+<h3>真实场景：告警分析服务</h3>
+<div class="card">
+<p>你的 <code>gdp-gravitysvr-alertAnalysis</code> 服务在故障期间收到 <strong>1000 条告警/分钟</strong>，但 Agent 分析一条需要 20–60 秒。如果同步处理：</p>
+<ul style="padding-left:20px;margin:10px 0;line-height:2">
+<li>HTTP 连接超时，上游重试 → 雪崩</li>
+<li>Agent 并发受限，新告警被丢弃</li>
+<li>无法优雅降级或优先级调度</li>
+</ul>
+<p class="mt-2">引入 MQ 后：Webhook 写入队列 → 立即返回 → Worker 池按消费能力拉取 → 积压时 HPA 自动扩容。</p>
+</div>
+
+<h3>同步 vs 异步架构</h3>
+<div class="vs">
+<div class="card" style="border-top:3px solid var(--red)">
+<h3>❌ 同步调用</h3>
+<div class="flow-diagram">
+告警网关 ──HTTP──▶ 分析服务 ──▶ Agent
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ 阻塞等待 30s+
+</div>
+<p class="text-sm mt-2"><strong>问题</strong>：耦合、超时、无法削峰、单点故障传播</p>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>✅ 异步 + MQ</h3>
+<div class="flow-diagram">
+告警网关 ──▶ MQ ──▶ Worker ──▶ Agent
+&nbsp;&nbsp;&nbsp;&nbsp;↑ 立即返回 200
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ 按能力消费
+</div>
+<p class="text-sm mt-2"><strong>优势</strong>：解耦、削峰、可扩展、失败可重试</p>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>Agent 服务特别注意</strong>：LLM 调用是 IO 密集型且耗时长，天然适合异步队列。但「入队」和「出队分析」之间要设计好消息格式、幂等键和状态回调。</div>
+</div>
+</section>
+
+<!-- ==================== 2. 核心概念 ==================== -->
+<section id="concepts">
+<h2>核心概念</h2>
+
+<div class="grid-3">
+<div class="card">
+<h3>Producer <span class="tag tag-blue">生产者</span></h3>
+<p class="text-sm">发送消息到队列/Topic 的应用。告警 Webhook 就是 Producer。</p>
+</div>
+<div class="card">
+<h3>Consumer <span class="tag tag-green">消费者</span></h3>
+<p class="text-sm">从队列拉取并处理消息的应用。Agent Worker 就是 Consumer。</p>
+</div>
+<div class="card">
+<h3>Broker <span class="tag tag-orange">代理</span></h3>
+<p class="text-sm">MQ 服务端，负责存储、路由、投递消息。Kafka Broker、Redis、RabbitMQ Server。</p>
+</div>
+</div>
+
+<h3>Topic / Queue / Partition</h3>
+<div class="card">
+<table>
+<tr><th>概念</th><th>说明</th><th>类比</th></tr>
+<tr><td><strong>Topic</strong></td><td>消息的逻辑分类（Kafka/Pulsar 术语）</td><td>「告警分析」频道</td></tr>
+<tr><td><strong>Queue</strong></td><td>消息的存储容器（RabbitMQ/Redis 术语）</td><td>待处理任务列表</td></tr>
+<tr><td><strong>Partition</strong></td><td>Topic 的物理分片，并行消费的基本单位</td><td>把队列切成 N 条并行通道</td></tr>
+<tr><td><strong>Consumer Group</strong></td><td>一组消费者协作消费，每条消息只被组内一个成员处理</td><td>Worker 池</td></tr>
+<tr><td><strong>Offset</strong></td><td>消费者在 Partition 中的读取位置（书签）</td><td>「读到第 1024 条了」</td></tr>
+<tr><td><strong>Acknowledgment</strong></td><td>消费者确认消息已处理完成</td><td>「这条我处理好了，可以删/标记」</td></tr>
+</table>
+</div>
+
+<h3>投递语义：At-most-once / At-least-once / Exactly-once</h3>
+<div class="grid-3">
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3>At-most-once</h3>
+<p class="text-sm"><strong>最多一次</strong>：发完就忘，可能丢消息。</p>
+<p class="text-sm mt-2">Kafka <code>acks=0</code>、Fire-and-forget 场景。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>At-least-once</h3>
+<p class="text-sm"><strong>至少一次</strong>：保证不丢，但可能重复。</p>
+<p class="text-sm mt-2">最常见。需<strong>幂等消费</strong>兜底。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>Exactly-once</h3>
+<p class="text-sm"><strong>精确一次</strong>：不丢不重。实现成本高。</p>
+<p class="text-sm mt-2">Kafka 事务 + 幂等 Producer；或业务层去重。</p>
+</div>
+</div>
+
+<div class="card">
+<h3>死信队列（Dead Letter Queue, DLQ）</h3>
+<p>消费失败超过 N 次重试后，消息被移入 DLQ，不再阻塞主队列。运维人员后续人工排查或补偿处理。</p>
+<pre><code><span class="cm">// 典型流程</span>
+主队列 ──消费失败──▶ 重试队列（延迟）──仍失败──▶ DLQ
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ 告警 + 人工介入</code></pre>
+</div>
+
+<div class="card">
+<h3>消息顺序保证</h3>
+<table>
+<tr><th>级别</th><th>保证范围</th><th>实现方式</th></tr>
+<tr><td>全局有序</td><td>整个 Topic 严格 FIFO</td><td>单 Partition（吞吐受限）</td></tr>
+<tr><td>Partition 内有序</td><td>同一 Partition 内有序</td><td>按 key 路由到同一 Partition</td></tr>
+<tr><td>无顺序</td><td>不保证</td><td>多 Partition 并行，性能最高</td></tr>
+</table>
+<div class="tip">告警分析场景：同一 <code>bizLine + alertId</code> 的消息需要有序（避免重复分析覆盖），用 alertId 做 Partition Key。</div>
+</div>
+</section>
+
+<!-- ==================== 3. Kafka 深入 ==================== -->
+<section id="kafka">
+<h2>Kafka 深入</h2>
+
+<div class="card card-accent">
+<p>Kafka 是<strong>分布式流平台</strong>，高吞吐、持久化、可回溯。适合日志采集、事件流、大规模告警管道。你的 Agent 服务如果日处理量 &gt; 10 万条消息，Kafka 是首选。</p>
+</div>
+
+<h3>架构组件</h3>
+<div class="card">
+<div class="flow-diagram">
+Producer ──▶ Broker Cluster ──▶ Consumer Group
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── Topic: alert-analysis
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── Partition 0 (Leader + Follower Replicas)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── Partition 1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── Partition 2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── ISR = In-Sync Replicas（与 Leader 保持同步的副本集）
+</div>
+<table class="mt-2">
+<tr><th>组件</th><th>作用</th></tr>
+<tr><td><strong>Broker</strong></td><td>存储 Partition 数据的服务节点</td></tr>
+<tr><td><strong>Partition</strong></td><td>有序、不可变的消息序列（Append-Only Log）</td></tr>
+<tr><td><strong>Replica</strong></td><td>Partition 的副本，Leader 处理读写，Follower 同步</td></tr>
+<tr><td><strong>ISR</strong></td><td>In-Sync Replicas，只有 ISR 中的副本才有资格当选 Leader</td></tr>
+<tr><td><strong>Consumer Group</strong></td><td>组内每个 Partition 同时只被一个 Consumer 消费</td></tr>
+</table>
+</div>
+
+<h3>为什么 Kafka 这么快？</h3>
+<div class="grid-3">
+<div class="card">
+<h3>顺序写磁盘</h3>
+<p class="text-sm">Partition 是 Append-Only Log，顺序 IO 接近内存速度（600MB/s+），随机写只有 ~100KB/s。</p>
+</div>
+<div class="card">
+<h3>Zero-Copy</h3>
+<p class="text-sm"><code>sendfile()</code> 系统调用，数据从磁盘 → 网卡不经过用户态，减少 2 次拷贝。</p>
+</div>
+<div class="card">
+<h3>批量 + 压缩</h3>
+<p class="text-sm">Producer 批量发送（<code>batch.size</code>），Broker 批量写入，支持 Snappy/LZ4/Zstd 压缩。</p>
+</div>
+</div>
+
+<h3>Producer：acks 配置</h3>
+<div class="card">
+<table>
+<tr><th>acks</th><th>行为</th><th>场景</th></tr>
+<tr><td><code>0</code></td><td>不等待确认，可能丢</td><td>日志采集、允许丢失</td></tr>
+<tr><td><code>1</code></td><td>Leader 写入即返回</td><td>一般业务（Leader 宕机可能丢）</td></tr>
+<tr><td><code>all / -1</code></td><td>所有 ISR 确认才返回</td><td>告警分析、金融（推荐）</td></tr>
+</table>
+</div>
+
+<h3>Consumer Group Rebalancing</h3>
+<div class="card">
+<p>当 Consumer 加入/离开 Group，或 Topic Partition 数量变化时，Kafka 触发 <strong>Rebalance</strong>——重新分配 Partition 给各 Consumer。</p>
+<p class="mt-2"><strong>影响</strong>：Rebalance 期间消费暂停（Stop-The-World），可能导致重复消费。生产环境注意：</p>
+<ul style="padding-left:20px;margin:10px 0;line-height:2">
+<li><code>session.timeout.ms</code> 不要设太短（避免频繁 Rebalance）</li>
+<li>优雅关闭：Consumer 先 <code>Close()</code> 再退出</li>
+<li>静态成员（<code>group.instance.id</code>）减少不必要的 Rebalance</li>
+</ul>
+</div>
+
+<h3>Retention 与 Compaction</h3>
+<div class="grid-2">
+<div class="card">
+<h3>Retention（保留策略）</h3>
+<p class="text-sm">按时间（<code>retention.ms</code>，默认 7 天）或大小（<code>retention.bytes</code>）删除旧消息。告警场景通常保留 3–7 天供回溯。</p>
+</div>
+<div class="card">
+<h3>Compaction（压缩）</h3>
+<p class="text-sm">同一 Key 只保留最新值。适合配置变更、状态快照，不适合告警事件流（每条都要保留）。</p>
+</div>
+</div>
+
+<h3>Go 代码示例</h3>
+<div class="card">
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="st">"context"</span>
+    <span class="st">"encoding/json"</span>
+    <span class="st">"log"</span>
+    <span class="st">"time"</span>
+
+    <span class="st">"github.com/segmentio/kafka-go"</span>
+)
+
+<span class="kw">type</span> <span class="fn">AlertMessage</span> <span class="kw">struct</span> {
+    AlertID  <span class="kw">string</span> <span class="st">`json:"alert_id"`</span>
+    BizLine  <span class="kw">string</span> <span class="st">`json:"biz_line"`</span>
+    Title    <span class="kw">string</span> <span class="st">`json:"title"`</span>
+    Level    <span class="kw">string</span> <span class="st">`json:"level"`</span>
+    Payload  <span class="kw">string</span> <span class="st">`json:"payload"`</span>
+}
+
+<span class="cm">// Producer：发送告警到 Kafka</span>
+<span class="kw">func</span> <span class="fn">produceAlert</span>(broker, topic <span class="kw">string</span>, alert AlertMessage) <span class="kw">error</span> {
+    w := &amp;kafka.Writer{
+        Addr:     kafka.TCP(broker),
+        Topic:    topic,
+        Balancer: &amp;kafka.Hash{}, <span class="cm">// 按 Key 路由到同一 Partition</span>
+        RequiredAcks: kafka.RequireAll,
+        Async:    <span class="kw">false</span>,
+    }
+    <span class="kw">defer</span> w.Close()
+
+    body, _ := json.Marshal(alert)
+    <span class="kw">return</span> w.WriteMessages(context.Background(), kafka.Message{
+        Key:   []byte(alert.AlertID),
+        Value: body,
+    })
+}
+
+<span class="cm">// Consumer：消费并分析告警</span>
+<span class="kw">func</span> <span class="fn">consumeAlerts</span>(broker, topic, groupID <span class="kw">string</span>) {
+    r := kafka.NewReader(kafka.ReaderConfig{
+        Brokers:  []<span class="kw">string</span>{broker},
+        Topic:    topic,
+        GroupID:  groupID,
+        MinBytes: <span class="nu">1</span>,
+        MaxBytes: <span class="nu">10e6</span>,
+        MaxWait:  <span class="nu">500</span> * time.Millisecond,
+    })
+    <span class="kw">defer</span> r.Close()
+
+    <span class="kw">for</span> {
+        msg, err := r.FetchMessage(context.Background())
+        <span class="kw">if</span> err != <span class="kw">nil</span> {
+            log.Printf(<span class="st">"fetch error: %v"</span>, err)
+            <span class="kw">continue</span>
+        }
+
+        <span class="kw">var</span> alert AlertMessage
+        <span class="kw">if</span> err := json.Unmarshal(msg.Value, &amp;alert); err != <span class="kw">nil</span> {
+            log.Printf(<span class="st">"unmarshal error: %v"</span>, err)
+            r.CommitMessages(context.Background(), msg) <span class="cm">// 脏数据直接提交</span>
+            <span class="kw">continue</span>
+        }
+
+        <span class="kw">if</span> err := analyzeAlert(alert); err != <span class="kw">nil</span> {
+            log.Printf(<span class="st">"analyze failed: %v, will retry"</span>, err)
+            <span class="kw">continue</span> <span class="cm">// 不 Commit → 下次重新消费</span>
+        }
+
+        r.CommitMessages(context.Background(), msg)
+    }
+}
+
+<span class="kw">func</span> <span class="fn">analyzeAlert</span>(alert AlertMessage) <span class="kw">error</span> {
+    <span class="cm">// 调用 Agent 分析...</span>
+    <span class="kw">return</span> <span class="kw">nil</span>
+}</code></pre>
+<div class="tip"><code>kafka-go</code> 是 Go 生态最流行的 Kafka 客户端。生产环境建议配置 <code>BatchSize</code>、<code>BatchTimeout</code> 和连接重试策略。</div>
+</div>
+</section>
+
+<!-- ==================== 4. Redis Streams ==================== -->
+<section id="redis-streams">
+<h2>Redis Streams</h2>
+
+<div class="card card-accent">
+<p>Redis Streams 是 Redis 5.0+ 引入的<strong>轻量级消息队列</strong>。无需额外部署 MQ 集群，适合中小规模、已有 Redis 基础设施的场景。吞吐低于 Kafka，但运维极简。</p>
+</div>
+
+<h3>核心命令</h3>
+<div class="card">
+<table>
+<tr><th>命令</th><th>作用</th><th>类比</th></tr>
+<tr><td><code>XADD</code></td><td>向 Stream 追加消息</td><td>Producer 发送</td></tr>
+<tr><td><code>XREAD</code></td><td>读取消息（无 Consumer Group）</td><td>简单订阅</td></tr>
+<tr><td><code>XREADGROUP</code></td><td>Consumer Group 模式读取</td><td>Worker 池消费</td></tr>
+<tr><td><code>XACK</code></td><td>确认消息已处理</td><td>Acknowledgment</td></tr>
+<tr><td><code>XPENDING</code></td><td>查看 Pending 列表</td><td>未确认消息监控</td></tr>
+<tr><td><code>XCLAIM</code></td><td>认领超时的 Pending 消息</td><td>故障转移</td></tr>
+</table>
+</div>
+
+<h3>Consumer Group 与 Pending Entries List</h3>
+<div class="card">
+<div class="flow-diagram">
+Stream: alert-stream
+&nbsp;&nbsp;├── 1001-0  msg1  [group:workers → consumer-A, pending]
+&nbsp;&nbsp;├── 1002-0  msg2  [group:workers → consumer-B, acked ✓]
+&nbsp;&nbsp;├── 1003-0  msg3  [group:workers → consumer-A, pending] ← 超时未 ACK
+&nbsp;&nbsp;└── 1004-0  msg4  [未分配]
+
+Pending List = 已投递但未 XACK 的消息
+&nbsp;&nbsp;→ consumer-A crash → XCLAIM 把 msg3 转给 consumer-C
+</div>
+<p class="mt-2"><strong>Pending Entries List（PEL）</strong>：记录每个 Consumer Group 中「已读取但未确认」的消息。Consumer 崩溃后，其他 Consumer 可通过 <code>XCLAIM</code> 接管。</p>
+</div>
+
+<h3>与 Kafka 对比</h3>
+<div class="grid-2">
+<div class="card card-green">
+<h3>✅ Redis Streams 优势</h3>
+<ul style="padding-left:20px;line-height:2">
+<li>零额外组件，Redis 已有就用</li>
+<li>延迟低（内存 + AOF/RDB 持久化）</li>
+<li>命令简单，上手快</li>
+<li>适合 &lt; 10 万条/天的场景</li>
+</ul>
+</div>
+<div class="card card-orange">
+<h3>⚠️ 局限性</h3>
+<ul style="padding-left:20px;line-height:2">
+<li>吞吐远低于 Kafka（~10 万 msg/s vs 百万级）</li>
+<li>内存成本（大积压时）</li>
+<li>无原生多副本高可用（依赖 Redis Cluster/Sentinel）</li>
+<li>消息回溯能力有限（MAXLEN 裁剪）</li>
+</ul>
+</div>
+</div>
+
+<h3>Python 代码示例</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> redis
+<span class="kw">import</span> json
+<span class="kw">import</span> time
+
+r = redis.Redis(host=<span class="st">'localhost'</span>, port=<span class="nu">6379</span>, decode_responses=<span class="kw">True</span>)
+
+STREAM = <span class="st">'alert-stream'</span>
+GROUP = <span class="st">'analysis-workers'</span>
+CONSUMER = <span class="st">'worker-1'</span>
+
+<span class="cm"># 初始化 Consumer Group（只需执行一次）</span>
+<span class="kw">try</span>:
+    r.xgroup_create(STREAM, GROUP, id=<span class="st">'0'</span>, mkstream=<span class="kw">True</span>)
+<span class="kw">except</span> redis.ResponseError <span class="kw">as</span> e:
+    <span class="kw">if</span> <span class="st">'BUSYGROUP'</span> <span class="kw">not in</span> <span class="fn">str</span>(e):
+        <span class="kw">raise</span>
+
+<span class="cm"># Producer：发送告警</span>
+<span class="kw">def</span> <span class="fn">produce_alert</span>(alert: <span class="kw">dict</span>) -> <span class="kw">str</span>:
+    msg_id = r.xadd(STREAM, {
+        <span class="st">'alert_id'</span>: alert[<span class="st">'alert_id'</span>],
+        <span class="st">'biz_line'</span>: alert[<span class="st">'biz_line'</span>],
+        <span class="st">'payload'</span>: json.dumps(alert),
+    }, maxlen=<span class="nu">100000</span>)  <span class="cm"># 保留最近 10 万条</span>
+    <span class="kw">return</span> msg_id
+
+<span class="cm"># Consumer：消费并分析</span>
+<span class="kw">def</span> <span class="fn">consume_alerts</span>():
+    <span class="kw">while True</span>:
+        messages = r.xreadgroup(
+            GROUP, CONSUMER,
+            {STREAM: <span class="st">'>'</span>},  <span class="cm"># '>' 表示只读新消息</span>
+            count=<span class="nu">10</span>,
+            block=<span class="nu">5000</span>,   <span class="cm"># 阻塞 5 秒</span>
+        )
+        <span class="kw">if not</span> messages:
+            <span class="kw">continue</span>
+
+        <span class="kw">for</span> stream_name, entries <span class="kw">in</span> messages:
+            <span class="kw">for</span> msg_id, fields <span class="kw">in</span> entries:
+                <span class="kw">try</span>:
+                    alert = json.loads(fields[<span class="st">'payload'</span>])
+                    analyze_alert(alert)
+                    r.xack(STREAM, GROUP, msg_id)
+                <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                    <span class="fn">print</span>(<span class="st">f"Failed </span>{msg_id}<span class="st">: </span>{e}<span class="st">, stays in pending"</span>)
+                    <span class="cm"># 不 XACK → 留在 PEL，后续 XCLAIM 或 XPENDING 处理</span>
+
+<span class="kw">def</span> <span class="fn">analyze_alert</span>(alert: <span class="kw">dict</span>):
+    <span class="cm"># 调用 Agent 分析...</span>
+    time.sleep(<span class="nu">1</span>)
+
+<span class="cm"># 监控 Pending 消息</span>
+<span class="kw">def</span> <span class="fn">check_pending</span>():
+    pending = r.xpending(STREAM, GROUP)
+    <span class="fn">print</span>(<span class="st">f"Pending: </span>{pending[<span class="st">'pending'</span>]}<span class="st"> messages"</span>)</code></pre>
+</div>
+</section>
+
+<!-- ==================== 5. RabbitMQ 基础 ==================== -->
+<section id="rabbitmq">
+<h2>RabbitMQ 基础</h2>
+
+<div class="card card-accent">
+<p>RabbitMQ 实现了 <strong>AMQP 协议</strong>，是传统的「智能 Broker」模型——路由逻辑在 Broker 端，Exchange 负责分发，Queue 负责存储。适合复杂路由、RPC、任务队列场景。</p>
+</div>
+
+<h3>AMQP 核心模型</h3>
+<div class="card">
+<div class="flow-diagram">
+Producer ──▶ Exchange ──routing──▶ Queue ──▶ Consumer
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── direct   (精确匹配 routing key)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── fanout   (广播到所有绑定 Queue)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── topic    (模式匹配 routing key)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── headers  (按消息头属性路由)
+</div>
+</div>
+
+<h3>Exchange 类型详解</h3>
+<div class="grid-2">
+<div class="card">
+<h3><code>direct</code> — 精确路由</h3>
+<p class="text-sm">Routing Key 完全匹配。如 <code>alert.critical</code> → critical 队列。</p>
+</div>
+<div class="card">
+<h3><code>fanout</code> — 广播</h3>
+<p class="text-sm">忽略 Routing Key，发送到所有绑定的 Queue。如告警同时触发分析和通知。</p>
+</div>
+<div class="card">
+<h3><code>topic</code> — 模式匹配</h3>
+<p class="text-sm"><code>alert.*</code> 匹配 <code>alert.critical</code>、<code>alert.warning</code>。<code>#</code> 匹配多级。</p>
+</div>
+<div class="card">
+<h3><code>headers</code> — 头路由</h3>
+<p class="text-sm">按消息 Headers 属性路由，几乎不用。复杂场景考虑。</p>
+</div>
+</div>
+
+<h3>Prefetch Count 与 Publisher Confirms</h3>
+<div class="grid-2">
+<div class="card">
+<h3>Prefetch Count（QoS）</h3>
+<p class="text-sm">限制 Consumer 未确认消息的最大数量。Agent 分析耗时长，设 <code>prefetch_count=1</code> 避免一条 Worker 囤积大量任务。</p>
+<pre><code>channel.basic_qos(prefetch_count=<span class="nu">1</span>)</code></pre>
+</div>
+<div class="card">
+<h3>Publisher Confirms</h3>
+<p class="text-sm">Broker 确认消息已持久化到 Queue。类似 Kafka <code>acks=1</code>。开启后 Producer 可感知发送失败并重试。</p>
+<pre><code>channel.confirm_delivery()</code></pre>
+</div>
+</div>
+
+<h3>Python 代码示例（pika）</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> pika
+<span class="kw">import</span> json
+
+<span class="cm"># ── Producer ──</span>
+<span class="kw">def</span> <span class="fn">publish_alert</span>(alert: <span class="kw">dict</span>, level: <span class="kw">str</span> = <span class="st">'warning'</span>):
+    conn = pika.BlockingConnection(
+        pika.ConnectionParameters(<span class="st">'localhost'</span>)
+    )
+    channel = conn.channel()
+    channel.confirm_delivery()
+
+    channel.exchange_declare(
+        exchange=<span class="st">'alerts'</span>,
+        exchange_type=<span class="st">'topic'</span>,
+        durable=<span class="kw">True</span>,
+    )
+
+    routing_key = <span class="st">f'alert.</span>{level}<span class="st">'</span>
+    body = json.dumps(alert)
+
+    <span class="kw">try</span>:
+        channel.basic_publish(
+            exchange=<span class="st">'alerts'</span>,
+            routing_key=routing_key,
+            body=body,
+            properties=pika.BasicProperties(
+                delivery_mode=<span class="nu">2</span>,  <span class="cm"># 持久化</span>
+                content_type=<span class="st">'application/json'</span>,
+                message_id=alert[<span class="st">'alert_id'</span>],
+            ),
+        )
+        <span class="fn">print</span>(<span class="st">f"Sent: </span>{routing_key}<span class="st">"</span>)
+    <span class="kw">except</span> pika.exceptions.UnroutableError:
+        <span class="fn">print</span>(<span class="st">"Message unroutable!"</span>)
+    <span class="kw">finally</span>:
+        conn.close()
+
+<span class="cm"># ── Consumer ──</span>
+<span class="kw">def</span> <span class="fn">consume_alerts</span>():
+    conn = pika.BlockingConnection(
+        pika.ConnectionParameters(<span class="st">'localhost'</span>)
+    )
+    channel = conn.channel()
+
+    channel.exchange_declare(exchange=<span class="st">'alerts'</span>, exchange_type=<span class="st">'topic'</span>, durable=<span class="kw">True</span>)
+    channel.queue_declare(queue=<span class="st">'analysis-queue'</span>, durable=<span class="kw">True</span>)
+    channel.queue_bind(
+        exchange=<span class="st">'alerts'</span>,
+        queue=<span class="st">'analysis-queue'</span>,
+        routing_key=<span class="st">'alert.#'</span>,  <span class="cm"># 匹配所有级别告警</span>
+    )
+
+    channel.basic_qos(prefetch_count=<span class="nu">1</span>)
+
+    <span class="kw">def</span> <span class="fn">on_message</span>(ch, method, properties, body):
+        alert = json.loads(body)
+        <span class="kw">try</span>:
+            analyze_alert(alert)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="fn">print</span>(<span class="st">f"Failed: </span>{e}<span class="st">"</span>)
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=<span class="kw">False</span>)
+            <span class="cm"># requeue=False → 进入 DLQ（需配置 dead-letter-exchange）</span>
+
+    channel.basic_consume(queue=<span class="st">'analysis-queue'</span>, on_message_callback=on_message)
+    <span class="fn">print</span>(<span class="st">'Waiting for alerts...'</span>)
+    channel.start_consuming()
+
+<span class="kw">def</span> <span class="fn">analyze_alert</span>(alert: <span class="kw">dict</span>):
+    <span class="cm"># 调用 Agent 分析...</span>
+    <span class="kw">pass</span></code></pre>
+<div class="tip">RabbitMQ 的 DLQ 通过给 Queue 设置 <code>x-dead-letter-exchange</code> 参数实现。NACK + <code>requeue=False</code> 时消息自动路由到 DLX。</div>
+</div>
+</section>
+
+<!-- ==================== 6. 对比选型 ==================== -->
+<section id="comparison">
+<h2>消息队列对比选型</h2>
+
+<div class="card">
+<h3>四大 MQ 对比</h3>
+<table>
+<tr>
+<th>维度</th>
+<th>Kafka</th>
+<th>RabbitMQ</th>
+<th>Redis Streams</th>
+<th>Pulsar</th>
+</tr>
+<tr>
+<td><strong>吞吐量</strong></td>
+<td>⭐⭐⭐⭐⭐ 百万级/s</td>
+<td>⭐⭐⭐ 万级/s</td>
+<td>⭐⭐⭐ 十万级/s</td>
+<td>⭐⭐⭐⭐⭐ 百万级/s</td>
+</tr>
+<tr>
+<td><strong>延迟</strong></td>
+<td>ms 级（批量优化后）</td>
+<td>μs–ms 级</td>
+<td>μs 级（内存）</td>
+<td>ms 级</td>
+</tr>
+<tr>
+<td><strong>顺序保证</strong></td>
+<td>Partition 内有序</td>
+<td>单 Queue FIFO</td>
+<td>Stream 内有序</td>
+<td>Partition 内有序</td>
+</tr>
+<tr>
+<td><strong>消息保留</strong></td>
+<td>按时间/大小，可回溯</td>
+<td>消费后删除（默认）</td>
+<td>MAXLEN 裁剪</td>
+<td>分层存储，长期保留</td>
+</tr>
+<tr>
+<td><strong>路由能力</strong></td>
+<td>Topic + Key</td>
+<td>Exchange 四种类型</td>
+<td>Consumer Group</td>
+<td>Topic + 订阅模式</td>
+</tr>
+<tr>
+<td><strong>生态成熟度</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>运维复杂度</strong></td>
+<td>高（ZooKeeper/KRaft）</td>
+<td>中</td>
+<td>低（已有 Redis）</td>
+<td>高</td>
+</tr>
+<tr>
+<td><strong>典型场景</strong></td>
+<td>日志、事件流、大数据</td>
+<td>任务队列、RPC、路由</td>
+<td>轻量队列、实时通知</td>
+<td>多租户、地理复制</td>
+</tr>
+</table>
+</div>
+
+<h3>选型决策树</h3>
+<div class="card">
+<div class="flow-diagram">
+消息量 &gt; 10 万/天？
+&nbsp;&nbsp;├── 是 → 需要消息回溯/重放？
+&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 是 → <strong>Kafka</strong>（或 Pulsar）
+&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 否 → 需要复杂路由（广播/主题匹配）？
+&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 是 → <strong>RabbitMQ</strong>
+&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 否 → <strong>Kafka</strong>
+&nbsp;&nbsp;└── 否 → 已有 Redis 基础设施？
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 是 → 消息量 &lt; 1 万/天？
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 是 → <strong>Redis Streams</strong> ✓
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 否 → 评估 Kafka vs Redis（看团队运维能力）
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 否 → 消息量 &lt; 1000/天 且需复杂路由？
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 是 → <strong>RabbitMQ</strong>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 否 → <strong>Kafka</strong>（为未来扩展预留）
+</div>
+</div>
+
+<h3>Agent 告警分析场景推荐</h3>
+<div class="card card-green">
+<table>
+<tr><th>阶段</th><th>推荐 MQ</th><th>理由</th></tr>
+<tr>
+<td><strong>PoC / 内部试用</strong></td>
+<td>Redis Streams</td>
+<td>零额外组件，Redis 已有；日处理 &lt; 1 万条足够</td>
+</tr>
+<tr>
+<td><strong>生产上线（单业务线）</strong></td>
+<td>Kafka</td>
+<td>持久化、可回溯、Consumer Group 扩缩容；与 Go 服务栈契合</td>
+</tr>
+<tr>
+<td><strong>多业务线 + 复杂路由</strong></td>
+<td>Kafka（按 bizLine 分 Topic）+ RabbitMQ（通知广播）</td>
+<td>分析走 Kafka 高吞吐；如流通知走 RabbitMQ fanout</td>
+</tr>
+<tr>
+<td><strong>超大规模 / 多机房</strong></td>
+<td>Pulsar 或 Kafka + MirrorMaker</td>
+<td>地理复制、租户隔离</td>
+</tr>
+</table>
+<div class="callout callout-ok mt-2">
+<div class="callout-icon">🎯</div>
+<div><strong>gdp-gravitysvr-alertAnalysis 建议</strong>：当前异步任务用内置 pending queue，生产环境迁移到 <strong>Kafka</strong>（Go 原生支持好、吞吐匹配 Agent 分析耗时特征）。Redis Streams 可作为降级方案。</div>
+</div>
+</div>
+</section>
+
+<!-- ==================== 7. 生产实践 ==================== -->
+<section id="production">
+<h2>生产实践</h2>
+
+<div class="card card-accent">
+<p>消息队列在生产环境的坑，90% 不在 MQ 本身，而在<strong>消费端设计</strong>。以下是后端 / Agent 工程师必须掌握的模式。</p>
+</div>
+
+<h3>幂等消费（Idempotent Consumer）</h3>
+<div class="card">
+<p>At-least-once 语义下消息可能重复投递。Consumer 必须保证重复处理同一消息不会产生副作用。</p>
+<pre><code><span class="kw">def</span> <span class="fn">process_alert</span>(alert_id: <span class="kw">str</span>, payload: <span class="kw">dict</span>):
+    <span class="cm"># 方案 1：DB 唯一约束</span>
+    <span class="kw">if</span> db.exists(<span class="st">f"processed:</span>{alert_id}<span class="st">"</span>):
+        <span class="kw">return</span>  <span class="cm"># 已处理，直接返回</span>
+
+    result = run_agent_analysis(payload)
+    db.set(<span class="st">f"processed:</span>{alert_id}<span class="st">"</span>, result, nx=<span class="kw">True</span>)
+
+    <span class="cm"># 方案 2：Redis SETNX + TTL</span>
+    <span class="cm"># if not redis.set(f"dedup:{alert_id}", "1", nx=True, ex=86400): return</span></code></pre>
+</div>
+
+<h3>消息去重</h3>
+<div class="grid-2">
+<div class="card">
+<h3>Producer 端</h3>
+<p class="text-sm">Kafka 幂等 Producer（<code>enable.idempotence=true</code>）防止网络重试导致重复。设置 <code>message_id</code> 作为业务去重键。</p>
+</div>
+<div class="card">
+<h3>Consumer 端</h3>
+<p class="text-sm">维护已处理 ID 集合（Redis Set / Bloom Filter）。窗口期去重：只保留最近 N 小时的 ID。</p>
+</div>
+</div>
+
+<h3>指数退避重试</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> time
+
+<span class="kw">def</span> <span class="fn">process_with_retry</span>(msg, max_retries=<span class="nu">5</span>):
+    <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(max_retries):
+        <span class="kw">try</span>:
+            <span class="kw">return</span> analyze_alert(msg)
+        <span class="kw">except</span> TransientError <span class="kw">as</span> e:
+            delay = min(<span class="nu">2</span> ** attempt, <span class="nu">60</span>)  <span class="cm"># 1, 2, 4, 8, 16... max 60s</span>
+            <span class="fn">print</span>(<span class="st">f"Retry </span>{attempt + <span class="nu">1</span>}<span class="st"> after </span>{delay}<span class="st">s: </span>{e}<span class="st">"</span>)
+            time.sleep(delay)
+        <span class="kw">except</span> PermanentError <span class="kw">as</span> e:
+            send_to_dlq(msg, reason=<span class="fn">str</span>(e))
+            <span class="kw">return</span>
+    send_to_dlq(msg, reason=<span class="st">"max retries exceeded"</span>)</code></pre>
+<div class="tip">区分<strong>瞬态错误</strong>（网络超时、429 限流 → 重试）和<strong>永久错误</strong>（格式错误、业务拒绝 → 直接 DLQ）。Agent 调用 LLM 的 429/503 属于瞬态错误。</div>
+</div>
+
+<h3>Dead Letter Queue 处理</h3>
+<div class="card">
+<pre><code><span class="cm">// DLQ 消费：人工审核 + 补偿</span>
+<span class="kw">func</span> <span class="fn">processDLQ</span>() {
+    <span class="kw">for</span> msg := <span class="kw">range</span> dlqReader {
+        <span class="cm">// 1. 记录到 DB 供运维查看</span>
+        db.SaveFailedMessage(msg)
+
+        <span class="cm">// 2. 发送告警通知</span>
+        notify.Send(<span class="st">"DLQ message: "</span> + msg.Key)
+
+        <span class="cm">// 3. 可选：修复后重新投递到主 Topic</span>
+        <span class="cm">// mainWriter.WriteMessages(ctx, msg)</span>
+    }
+}</code></pre>
+</div>
+
+<h3>监控指标</h3>
+<div class="card">
+<table>
+<tr><th>指标</th><th>告警阈值</th><th>含义</th></tr>
+<tr><td><strong>Consumer Lag</strong></td><td>&gt; 1000 = P1，&gt; 10000 = P0</td><td>积压消息数，扩容信号</td></tr>
+<tr><td><strong>Throughput</strong></td><td>突降 50%</td><td>Producer/Consumer 异常</td></tr>
+<tr><td><strong>Processing Time P99</strong></td><td>&gt; 120s</td><td>Agent 分析变慢</td></tr>
+<tr><td><strong>DLQ Rate</strong></td><td>&gt; 1%</td><td>消费逻辑或上游数据问题</td></tr>
+<tr><td><strong>Rebalance Frequency</strong></td><td>&gt; 1次/小时</td><td>Consumer 不稳定</td></tr>
+<tr><td><strong>Pending (Redis)</strong></td><td>&gt; 100 条</td><td>Consumer 故障或处理慢</td></tr>
+</table>
+</div>
+
+<h3>Graceful Shutdown</h3>
+<div class="card">
+<pre><code><span class="kw">func</span> <span class="fn">main</span>() {
+    ctx, cancel := context.WithCancel(context.Background())
+    sigCh := <span class="fn">make</span>(<span class="kw">chan</span> os.Signal, <span class="nu">1</span>)
+    signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+
+    <span class="kw">go</span> <span class="fn">consumeLoop</span>(ctx)
+
+    &lt;-sigCh
+    <span class="fn">log</span>.Print(<span class="st">"Shutting down gracefully..."</span>)
+    cancel()  <span class="cm">// 停止拉取新消息</span>
+
+    <span class="cm">// 等待当前消息处理完成（最多 30s）</span>
+    shutdownCtx, _ := context.WithTimeout(context.Background(), <span class="nu">30</span>*time.Second)
+    &lt;-waitForInflight(shutdownCtx)
+
+    reader.Close()  <span class="cm">// 触发 Consumer Group Rebalance</span>
+}</code></pre>
+<div class="tip">K8s 滚动发布时，旧 Pod 收到 SIGTERM。如果不 Graceful Shutdown，正在分析的 Agent 任务会被中断，消息未 Commit 会重复消费。</div>
+</div>
+
+<h3>Message Schema Evolution</h3>
+<div class="grid-2">
+<div class="card">
+<h3>向后兼容（Backward Compatible）</h3>
+<p class="text-sm">新 Schema 能读旧消息。规则：只加字段（有默认值），不删不改字段名。</p>
+<pre><code><span class="cm">// v1</span>
+{<span class="st">"alert_id"</span>: <span class="st">"..."</span>, <span class="st">"title"</span>: <span class="st">"..."</span>}
+
+<span class="cm">// v2 — 加了 priority，旧 Consumer 忽略即可</span>
+{<span class="st">"alert_id"</span>: <span class="st">"..."</span>, <span class="st">"title"</span>: <span class="st">"..."</span>, <span class="st">"priority"</span>: <span class="nu">1</span>}</code></pre>
+</div>
+<div class="card">
+<h3>向前兼容（Forward Compatible）</h3>
+<p class="text-sm">旧 Schema 能读新消息。规则：新字段必须是 optional，旧 Consumer 忽略未知字段。</p>
+<p class="text-sm mt-2">推荐工具：<strong>Protobuf</strong>（字段编号）、<strong>Avro + Schema Registry</strong>（Kafka 生态标准）。JSON 靠约定 + 版本号字段。</p>
+</div>
+</div>
+</section>
+
+<!-- ==================== 8. 面试题 + 实战练习 ==================== -->
+<section id="practice">
+<h2>面试题 + 实战练习</h2>
+
+<details class="card">
+<summary>Kafka Partition Rebalancing 是怎么触发的？如何避免频繁 Rebalance？</summary>
+<div class="mt-2">
+<p><strong>触发条件</strong>：</p>
+<ul style="padding-left:20px;line-height:2">
+<li>Consumer Group 成员变化（加入/离开/Crash）</li>
+<li>订阅的 Topic Partition 数量变化</li>
+<li>Consumer 心跳超时（<code>session.timeout.ms</code> 内未发送 heartbeat）</li>
+</ul>
+<p class="mt-2"><strong>Rebalance 过程</strong>：所有 Consumer 停止消费 → Coordinator 重新分配 Partition → 各 Consumer 恢复消费。期间消费暂停，可能重复消费。</p>
+<p class="mt-2"><strong>避免频繁 Rebalance</strong>：</p>
+<ul style="padding-left:20px;line-height:2">
+<li>增大 <code>session.timeout.ms</code>（默认 45s → 60s）</li>
+<li>使用静态成员 <code>group.instance.id</code></li>
+<li>Graceful Shutdown：先 Close Consumer 再退出进程</li>
+<li>处理逻辑中避免长时间阻塞（&gt; <code>max.poll.interval.ms</code>）</li>
+<li>Agent 分析耗时长 → 减少 <code>max.poll.records</code> 或使用独立线程池处理</li>
+</ul>
+</div>
+</details>
+
+<details class="card">
+<summary>Exactly-once 语义如何实现？</summary>
+<div class="mt-2">
+<p><strong>三个层面</strong>：</p>
+<table>
+<tr><th>层面</th><th>方案</th></tr>
+<tr><td>Producer → Broker</td><td>Kafka 幂等 Producer（PID + Sequence Number 去重）</td></tr>
+<tr><td>Broker → Consumer</td><td>Consumer 手动 Commit Offset（处理完再 Commit）</td></tr>
+<tr><td>Consumer → 下游</td><td>事务性写入（Kafka 事务）或业务层幂等</td></tr>
+</table>
+<p class="mt-2"><strong>Kafka 端到端 Exactly-once</strong>（<code>read_process_write</code> 场景）：</p>
+<pre><code><span class="cm">// 开启事务：消费 + 处理 + 生产 在一个事务中</span>
+producer.BeginTxn()
+records := consumer.Poll()
+processed := process(records)
+producer.Send(processed)
+consumer.CommitSync()  <span class="cm">// offset 作为事务的一部分</span>
+producer.CommitTxn()</code></pre>
+<p class="mt-2"><strong>实际建议</strong>：Agent 服务用 At-least-once + 幂等消费更务实。Exactly-once 实现复杂，性能有损耗。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>如何保证消息顺序？</summary>
+<div class="mt-2">
+<p><strong>原则</strong>：顺序保证的最小粒度是 Partition（Kafka）或 Queue（RabbitMQ）。</p>
+<p class="mt-2"><strong>方案</strong>：</p>
+<ol style="padding-left:20px;line-height:2">
+<li><strong>单 Partition</strong>：全局有序，但吞吐受限（单 Consumer）</li>
+<li><strong>Key 路由</strong>：同一 <code>alert_id</code> 的消息路由到同一 Partition → Partition 内有序</li>
+<li><strong>业务层排序</strong>：消息带序号，Consumer 端缓冲重排（复杂，不推荐）</li>
+</ol>
+<p class="mt-2"><strong>Agent 场景</strong>：同一告警的「创建 → 更新 → 关闭」事件必须有序。用 <code>alert_id</code> 做 Partition Key，确保同一告警的事件进入同一 Partition。</p>
+<div class="tip">注意：Consumer 多线程并行处理会破坏顺序。如果 Key 路由到同一 Partition，该 Partition 只能被一个 Consumer 线程消费。</div>
+</div>
+</details>
+
+<details class="card">
+<summary>Consumer Lag 持续增大怎么排查？</summary>
+<div class="mt-2">
+<p><strong>排查步骤</strong>：</p>
+<ol style="padding-left:20px;line-height:2">
+<li><strong>看 Producer 速率</strong>：是否突发流量？（故障期间告警暴增）</li>
+<li><strong>看 Consumer 处理耗时</strong>：P99 是否异常？（Agent 调用 LLM 变慢？）</li>
+<li><strong>看 Consumer 数量</strong>：是否足够？（Partition 数 ≥ Consumer 数才能满负载）</li>
+<li><strong>看 Rebalance</strong>：是否频繁 Rebalance 导致消费暂停？</li>
+<li><strong>看错误率</strong>：重试风暴？（失败 → 重试 → 更慢 → 更多积压）</li>
+</ol>
+<p class="mt-2"><strong>应急措施</strong>：</p>
+<ul style="padding-left:20px;line-height:2">
+<li>HPA 扩容 Consumer Pod</li>
+<li>临时跳过非关键告警（按 level 过滤）</li>
+<li>增加 Partition 数（需重新规划 Key 分布）</li>
+<li>降级：切换到小模型加速分析</li>
+</ul>
+</div>
+</details>
+
+<div class="card card-green">
+<h3>实战练习：设计 Agent 分析管道的消息流</h3>
+<p><strong>题目</strong>：为 <code>gdp-gravitysvr-alertAnalysis</code> 设计完整的消息流架构，要求：</p>
+<ol style="padding-left:20px;margin:10px 0;line-height:2">
+<li>告警 Webhook 入队后立即返回，不阻塞</li>
+<li>支持按业务线（bizLine）隔离和优先级调度</li>
+<li>Agent 分析失败可重试，超过 3 次进 DLQ</li>
+<li>分析完成后发送如流通知（独立通道）</li>
+<li>支持 Graceful Shutdown 和 Consumer Lag 监控</li>
+<li>画出消息流架构图并说明选型理由</li>
+</ol>
+
+<details>
+<summary>参考方案</summary>
+<div class="mt-2">
+<div class="flow-diagram">
+┌─────────────┐     ┌──────────────────────────────────┐
+│ 告警 Webhook │────▶│ Kafka Topic: alert.{bizLine}      │
+│ (RULIU/API) │     │ Partition Key = alert_id          │
+└─────────────┘     │ acks=all, 幂等 Producer           │
+                    └──────────┬───────────────────────┘
+                               │
+                    ┌──────────▼───────────────────────┐
+                    │ Consumer Group: analysis-workers  │
+                    │ ├── Worker-1 (Partition 0,1)    │
+                    │ ├── Worker-2 (Partition 2,3)    │
+                    │ └── Worker-N ...                │
+                    │                                  │
+                    │ 处理流程:                         │
+                    │ 1. 幂等检查 (Redis SETNX)         │
+                    │ 2. 加载 bizLine 配置 (GCS)        │
+                    │ 3. 调用 Agent 分析                │
+                    │ 4. 上传结果到 GCS                 │
+                    │ 5. Commit Offset                  │
+                    │                                  │
+                    │ 失败 → 指数退避重试 (3次)         │
+                    │ 仍失败 → DLQ Topic               │
+                    └──────────┬───────────────────────┘
+                               │ 分析完成事件
+                    ┌──────────▼───────────────────────┐
+                    │ Kafka Topic: notify.completed     │
+                    └──────────┬───────────────────────┘
+                               │
+                    ┌──────────▼───────────────────────┐
+                    │ Notify Consumer                   │
+                    │ → 发送如流通知                     │
+                    │ → 更新 Session DB                 │
+                    └──────────────────────────────────┘
+</div>
+
+<p class="mt-2"><strong>选型理由</strong>：</p>
+<ul style="padding-left:20px;line-height:2">
+<li><strong>Kafka</strong>：告警量可达千级/分钟，需持久化和回溯；Go 生态成熟</li>
+<li><strong>按 bizLine 分 Topic</strong>：隔离不同业务线的配置和 Agent 类型</li>
+<li><strong>alert_id 做 Partition Key</strong>：同一告警的事件有序</li>
+<li><strong>通知独立 Topic</strong>：分析和通知解耦，通知失败不影响分析</li>
+<li><strong>Redis SETNX 幂等</strong>：At-least-once 下防止重复分析</li>
+</ul>
+
+<p class="mt-2"><strong>关键配置</strong>：</p>
+<pre><code><span class="cm">// Kafka Producer</span>
+RequiredAcks: kafka.RequireAll
+Balancer:     &amp;kafka.Hash{}  <span class="cm">// alert_id → Partition</span>
+
+<span class="cm">// Kafka Consumer</span>
+GroupID:          <span class="st">"analysis-workers"</span>
+MaxWait:          <span class="nu">500</span> * time.Millisecond
+SessionTimeout:   <span class="nu">60</span> * time.Second
+MaxPollRecords:   <span class="nu">1</span>           <span class="cm">// Agent 分析耗时长，一次拉一条</span>
+
+<span class="cm">// 监控告警</span>
+ConsumerLag > <span class="nu">1000</span>  → P1
+ConsumerLag > <span class="nu">10000</span> → P0 + 自动扩容
+DLQRate > <span class="nu">1</span>%        → 通知 OnCall</code></pre>
+</div>
+</details>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">📚</div>
+<div><strong>延伸阅读</strong>：Kafka 官方文档 Design 章节（理解 Log 结构）、Redis Streams 官方教程、RabbitMQ Tutorials 1–6。结合本项目的 <code>modules/background/</code> pending queue 实现对照学习。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['why','concepts','kafka','redis-streams','rabbitmq','comparison','production','practice'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

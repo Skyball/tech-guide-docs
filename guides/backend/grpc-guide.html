@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gRPC 与 Protocol Buffers 实战指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#1976d2 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>gRPC 与 Protocol Buffers 实战指南</h1>
+  <p>面向后端 / AI Agent 工程师的高性能 RPC 通信指南<br>从 Proto 定义到 Go 服务端、Python 客户端与生产级调试</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#intro">gRPC 是什么</a>
+    <a href="#protobuf">Protobuf 基础</a>
+    <a href="#modes">四种通信模式</a>
+    <a href="#go-impl">Go 实现</a>
+    <a href="#python-client">Python 客户端</a>
+    <a href="#advanced">高级特性</a>
+    <a href="#performance">性能与调试</a>
+    <a href="#practice">面试与实战</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. gRPC 是什么 ==================== -->
+<section id="intro">
+<h2>gRPC 是什么</h2>
+
+<div class="card card-accent">
+  <p><strong>RPC（Remote Procedure Call）</strong>：像调用本地函数一样调用远程服务。客户端发起调用 → 网络传输 → 服务端执行 → 返回结果。gRPC 是 Google 开源的高性能 RPC 框架，基于 HTTP/2 和 Protocol Buffers。</p>
+</div>
+
+<h3>为什么选择 gRPC</h3>
+<div class="grid-2">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>HTTP/2 多路复用 <span class="tag tag-blue">性能</span></h3>
+<p>单 TCP 连接上并行多个请求，头部压缩（HPACK），消除队头阻塞。微服务间高频调用场景延迟更低。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>二进制协议 <span class="tag tag-green">效率</span></h3>
+<p>Protobuf 序列化比 JSON 更小更快（通常 3–10 倍），解析开销低，适合内部服务通信。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3>代码生成 <span class="tag tag-purple">类型安全</span></h3>
+<p>从 <code>.proto</code> 自动生成 Go/Python/Java 客户端和服务端桩代码，编译期类型检查，减少接口不一致。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3>四种流式模式 <span class="tag tag-orange">实时</span></h3>
+<p>支持 Server/Client/Bidirectional Streaming，天然适合 LLM Token 流式输出、日志推送、实时分析。</p>
+</div>
+</div>
+
+<h3>gRPC vs REST 对比</h3>
+<div class="card">
+<table>
+<tr><th>维度</th><th>gRPC</th><th>REST</th></tr>
+<tr><td>协议</td><td>HTTP/2</td><td>HTTP/1.1 或 HTTP/2</td></tr>
+<tr><td>序列化</td><td>Protobuf（二进制）</td><td>JSON / XML（文本）</td></tr>
+<tr><td>接口定义</td><td><code>.proto</code> 文件 + 代码生成</td><td>OpenAPI / 手写文档</td></tr>
+<tr><td>流式传输</td><td>原生支持四种模式</td><td>SSE / WebSocket（需额外实现）</td></tr>
+<tr><td>浏览器支持</td><td>需 gRPC-Web 代理</td><td>原生支持</td></tr>
+<tr><td>可读性</td><td>二进制，需工具解码</td><td>JSON 人类可读</td></tr>
+<tr><td>生态工具</td><td>grpcurl、Evans、反射</td><td>curl、Postman、Swagger UI</td></tr>
+</table>
+</div>
+
+<div class="vs">
+<div class="card card-green">
+<h3>适合 gRPC</h3>
+<ul style="padding-left:18px;margin-top:8px">
+<li>微服务间内部通信</li>
+<li>高性能、低延迟场景</li>
+<li>流式数据（LLM 输出、日志流）</li>
+<li>多语言团队，强类型契约</li>
+<li>移动端 / IoT 带宽敏感场景</li>
+</ul>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card card-orange">
+<h3>适合 REST</h3>
+<ul style="padding-left:18px;margin-top:8px">
+<li>公开 API、第三方集成</li>
+<li>浏览器直接调用</li>
+<li>快速原型、简单 CRUD</li>
+<li>团队熟悉 HTTP + JSON</li>
+<li>需要人类可读调试</li>
+</ul>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>AI Agent 场景</strong>：Go 后端提供 gRPC 分析服务（高性能），Python Agent 编排层通过 gRPC 客户端调用；对外暴露 REST 时用 <strong>gRPC-Gateway</strong> 做协议转换。</div>
+</div>
+</section>
+
+<!-- ==================== 2. Protocol Buffers 基础 ==================== -->
+<section id="protobuf">
+<h2>Protocol Buffers 基础</h2>
+
+<div class="card card-accent">
+  <p>Protocol Buffers（Protobuf）是 gRPC 的<strong>接口定义语言（IDL）</strong>和<strong>序列化格式</strong>。先写 <code>.proto</code> 描述数据结构和服务，再用 <code>protoc</code> 生成各语言代码。</p>
+</div>
+
+<h3>.proto 文件基本结构</h3>
+<div class="card">
+<pre><code><span class="cm">// alert.proto</span>
+<span class="kw">syntax</span> = <span class="st">"proto3"</span>;                    <span class="cm">// 使用 Proto3（推荐）</span>
+
+<span class="kw">package</span> alert.v1;                      <span class="cm">// 命名空间，防冲突</span>
+<span class="kw">option</span> go_package = <span class="st">"alert/v1;alertv1"</span>; <span class="cm">// Go 包路径</span>
+
+<span class="cm">// 消息类型 —— 类似 struct</span>
+<span class="kw">message</span> AlertRequest {
+  <span class="kw">string</span> biz_line = <span class="nu">1</span>;               <span class="cm">// 字段编号，不是默认值！</span>
+  <span class="kw">string</span> alert_id  = <span class="nu">2</span>;
+  <span class="kw">string</span> payload   = <span class="nu">3</span>;
+}
+
+<span class="kw">message</span> AlertResponse {
+  <span class="kw">string</span> analysis_id = <span class="nu">1</span>;
+  <span class="kw">string</span> summary     = <span class="nu">2</span>;
+  AlertStatus status = <span class="nu">3</span>;
+}
+
+<span class="cm">// 服务定义 —— RPC 方法集合</span>
+<span class="kw">service</span> AlertAnalysisService {
+  <span class="kw">rpc</span> Analyze(AlertRequest) <span class="kw">returns</span> (AlertResponse);
+  <span class="kw">rpc</span> AnalyzeStream(AlertRequest) <span class="kw">returns</span> (stream AnalysisChunk);
+}</code></pre>
+</div>
+
+<h3>字段类型一览</h3>
+<div class="grid-2">
+<div class="card">
+<h3>标量类型</h3>
+<table>
+<tr><th>Proto 类型</th><th>Go 类型</th><th>说明</th></tr>
+<tr><td><code>int32 / int64</code></td><td>int32 / int64</td><td>整数</td></tr>
+<tr><td><code>float / double</code></td><td>float32 / float64</td><td>浮点</td></tr>
+<tr><td><code>bool</code></td><td>bool</td><td>布尔</td></tr>
+<tr><td><code>string</code></td><td>string</td><td>UTF-8 字符串</td></tr>
+<tr><td><code>bytes</code></td><td>[]byte</td><td>二进制数据</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>复合类型</h3>
+<pre><code><span class="cm">// 枚举</span>
+<span class="kw">enum</span> AlertStatus {
+  STATUS_UNSPECIFIED = <span class="nu">0</span>;  <span class="cm">// 必须有 0 值</span>
+  PENDING   = <span class="nu">1</span>;
+  RUNNING   = <span class="nu">2</span>;
+  COMPLETED = <span class="nu">3</span>;
+}
+
+<span class="cm">// repeated —— 列表</span>
+<span class="kw">repeated</span> <span class="kw">string</span> tags = <span class="nu">4</span>;
+
+<span class="cm">// map —— 字典</span>
+<span class="kw">map</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt; metadata = <span class="nu">5</span>;
+
+<span class="cm">// oneof —— 互斥字段</span>
+<span class="kw">oneof</span> source {
+  <span class="kw">string</span> webhook_url = <span class="nu">6</span>;
+  <span class="kw">string</span> api_key     = <span class="nu">7</span>;
+}</code></pre>
+</div>
+</div>
+
+<h3>字段编号规则（重要）</h3>
+<div class="card card-orange">
+<ul style="padding-left:18px;line-height:2">
+<li><strong>1–15</strong>：占 1 字节编码，留给高频字段</li>
+<li><strong>16–2047</strong>：占 2 字节</li>
+<li><strong>19000–19999</strong>：Protobuf 保留，禁止使用</li>
+<li>字段编号一旦发布<strong>不可更改</strong>，只能废弃（reserved）</li>
+<li>删除字段时必须 <code>reserved</code> 编号和名称，防止误复用</li>
+</ul>
+<pre><code><span class="kw">message</span> OldMessage {
+  <span class="kw">reserved</span> <span class="nu">2</span>, <span class="nu">15</span>, <span class="nu">9</span> <span class="kw">to</span> <span class="nu">11</span>;       <span class="cm">// 保留编号</span>
+  <span class="kw">reserved</span> <span class="st">"foo"</span>, <span class="st">"bar"</span>;          <span class="cm">// 保留字段名</span>
+  <span class="kw">string</span> name = <span class="nu">1</span>;
+}</code></pre>
+</div>
+
+<h3>Proto3 vs Proto2</h3>
+<div class="card">
+<table>
+<tr><th>特性</th><th>Proto2</th><th>Proto3（推荐）</th></tr>
+<tr><td>required 字段</td><td>支持</td><td>移除（全部 implicit optional）</td></tr>
+<tr><td>默认值</td><td>可自定义</td><td>零值（0, "", false）</td></tr>
+<tr><td>枚举第一个值</td><td>无强制要求</td><td>必须是 0（UNSPECIFIED）</td></tr>
+<tr><td>JSON 映射</td><td>较弱</td><td>官方 JSON 映射规范</td></tr>
+</table>
+<div class="tip">新项目一律使用 <code>syntax = "proto3"</code>。Proto2 仅维护遗留系统。</div>
+</div>
+
+<h3>代码生成工作流</h3>
+<div class="card">
+<pre><code><span class="cm"># 1. 安装 protoc 编译器和插件</span>
+<span class="cm"># macOS: brew install protobuf</span>
+<span class="cm"># Go 插件:</span>
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+<span class="cm"># 2. 生成 Go 代码</span>
+protoc --go_out=. --go-grpc_out=. \
+  --go_opt=paths=source_relative \
+  --go-grpc_opt=paths=source_relative \
+  api/alert/v1/alert.proto
+
+<span class="cm"># 生成文件:</span>
+<span class="cm"># alert.pb.go       —— 消息结构体</span>
+<span class="cm"># alert_grpc.pb.go  —— 服务接口和客户端</span></code></pre>
+</div>
+</section>
+
+<!-- ==================== 3. 四种通信模式 ==================== -->
+<section id="modes">
+<h2>gRPC 四种通信模式</h2>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>1. Unary RPC <span class="tag tag-blue">一问一答</span></h3>
+<p>客户端发一个请求，服务端返回一个响应。最常见的模式，等价于普通函数调用。</p>
+<pre><code><span class="cm">// proto</span>
+<span class="kw">rpc</span> GetAlert(GetAlertRequest)
+    <span class="kw">returns</span> (AlertResponse);
+
+<span class="cm">// Go Server</span>
+<span class="kw">func</span> (s *server) <span class="fn">GetAlert</span>(
+    ctx context.Context,
+    req *pb.GetAlertRequest,
+) (*pb.AlertResponse, <span class="kw">error</span>) {
+    alert, err := s.repo.Find(req.Id)
+    <span class="kw">if</span> err != <span class="kw">nil</span> {
+        <span class="kw">return</span> <span class="kw">nil</span>, status.Error(
+            codes.NotFound, <span class="st">"alert not found"</span>)
+    }
+    <span class="kw">return</span> toProto(alert), <span class="kw">nil</span>
+}
+
+<span class="cm">// Go Client</span>
+resp, err := client.GetAlert(ctx,
+    &amp;pb.GetAlertRequest{Id: <span class="st">"alert-123"</span>})</code></pre>
+</div>
+
+<div class="card card-green">
+<h3>2. Server Streaming <span class="tag tag-green">服务端推送</span></h3>
+<p>客户端发一个请求，服务端返回<strong>多个</strong>响应流。适合 LLM Token 流、日志推送、大结果分页。</p>
+<pre><code><span class="cm">// proto</span>
+<span class="kw">rpc</span> AnalyzeStream(AlertRequest)
+    <span class="kw">returns</span> (stream AnalysisChunk);
+
+<span class="cm">// Go Server</span>
+<span class="kw">func</span> (s *server) <span class="fn">AnalyzeStream</span>(
+    req *pb.AlertRequest,
+    stream pb.AlertAnalysisService_AnalyzeStreamServer,
+) <span class="kw">error</span> {
+    <span class="kw">for</span> chunk := <span class="kw">range</span> s.agent.Run(req) {
+        <span class="kw">if</span> err := stream.Send(&amp;pb.AnalysisChunk{
+            Token: chunk.Text,
+            Done:  chunk.Finished,
+        }); err != <span class="kw">nil</span> {
+            <span class="kw">return</span> err
+        }
+    }
+    <span class="kw">return</span> <span class="kw">nil</span>
+}
+
+<span class="cm">// Go Client —— 消费流</span>
+stream, _ := client.AnalyzeStream(ctx, req)
+<span class="kw">for</span> {
+    chunk, err := stream.Recv()
+    <span class="kw">if</span> err == io.EOF { <span class="kw">break</span> }
+    fmt.Print(chunk.Token)
+}</code></pre>
+</div>
+
+<div class="card card-orange">
+<h3>3. Client Streaming <span class="tag tag-orange">客户端上传</span></h3>
+<p>客户端发送多个请求，服务端返回一个汇总响应。适合批量上传、聚合写入。</p>
+<pre><code><span class="cm">// proto</span>
+<span class="kw">rpc</span> UploadMetrics(stream MetricPoint)
+    <span class="kw">returns</span> (UploadSummary);
+
+<span class="cm">// Go Server</span>
+<span class="kw">func</span> (s *server) <span class="fn">UploadMetrics</span>(
+    stream pb.MetricsService_UploadMetricsServer,
+) <span class="kw">error</span> {
+    count := <span class="nu">0</span>
+    <span class="kw">for</span> {
+        pt, err := stream.Recv()
+        <span class="kw">if</span> err == io.EOF {
+            <span class="kw">return</span> stream.SendAndClose(
+                &amp;pb.UploadSummary{Count: int32(count)})
+        }
+        s.store.Save(pt)
+        count++
+    }
+}</code></pre>
+</div>
+
+<div class="card card-purple" style="border-left:4px solid var(--purple)">
+<h3>4. Bidirectional Streaming <span class="tag tag-purple">双向流</span></h3>
+<p>双方独立发送消息流。适合实时对话、协作编辑、双向数据管道。</p>
+<pre><code><span class="cm">// proto</span>
+<span class="kw">rpc</span> Chat(stream ChatMessage)
+    <span class="kw">returns</span> (stream ChatMessage);
+
+<span class="cm">// Go Server</span>
+<span class="kw">func</span> (s *server) <span class="fn">Chat</span>(
+    stream pb.ChatService_ChatServer,
+) <span class="kw">error</span> {
+    <span class="kw">for</span> {
+        msg, err := stream.Recv()
+        <span class="kw">if</span> err == io.EOF { <span class="kw">return</span> <span class="kw">nil</span> }
+        reply := s.process(msg)
+        <span class="kw">if</span> err := stream.Send(reply); err != <span class="kw">nil</span> {
+            <span class="kw">return</span> err
+        }
+    }
+}</code></pre>
+</div>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🤖</div>
+<div><strong>Agent 最佳实践</strong>：LLM 分析结果用 <strong>Server Streaming</strong>（<code>AnalyzeStream</code>）逐 Token 推送，客户端实时渲染。Unary 仅用于短结果或状态查询。本项目的 Stream 服务（:8092 NDJSON）与 gRPC Server Streaming 语义类似。</div>
+</div>
+</section>
+
+<!-- ==================== 4. Go 实现 gRPC 服务 ==================== -->
+<section id="go-impl">
+<h2>Go 实现 gRPC 服务</h2>
+
+<div class="card card-accent">
+<p>完整流程四步：<strong>定义 Proto → 生成代码 → 实现 Server → 编写 Client</strong>。以下以告警分析服务为例。</p>
+</div>
+
+<h3>Step 1：定义 Proto</h3>
+<div class="card">
+<pre><code><span class="cm">// api/analyze/v1/analyze.proto</span>
+<span class="kw">syntax</span> = <span class="st">"proto3"</span>;
+<span class="kw">package</span> analyze.v1;
+<span class="kw">option</span> go_package = <span class="st">"analyze/v1;analyzev1"</span>;
+
+<span class="kw">service</span> AnalyzeService {
+  <span class="kw">rpc</span> Analyze(AnalyzeRequest) <span class="kw">returns</span> (AnalyzeResponse);
+  <span class="kw">rpc</span> AnalyzeStream(AnalyzeRequest) <span class="kw">returns</span> (stream StreamChunk);
+}
+
+<span class="kw">message</span> AnalyzeRequest {
+  <span class="kw">string</span> biz_line = <span class="nu">1</span>;
+  <span class="kw">string</span> alert_body = <span class="nu">2</span>;
+  <span class="kw">map</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt; context = <span class="nu">3</span>;
+}
+
+<span class="kw">message</span> AnalyzeResponse {
+  <span class="kw">string</span> result_id = <span class="nu">1</span>;
+  <span class="kw">string</span> summary = <span class="nu">2</span>;
+}
+
+<span class="kw">message</span> StreamChunk {
+  <span class="kw">string</span> content = <span class="nu">1</span>;
+  <span class="kw">bool</span> is_final = <span class="nu">2</span>;
+}</code></pre>
+</div>
+
+<h3>Step 2：生成 Go 代码</h3>
+<div class="card">
+<pre><code>protoc --go_out=. --go-grpc_out=. \
+  --go_opt=paths=source_relative \
+  --go-grpc_opt=paths=source_relative \
+  api/analyze/v1/analyze.proto</code></pre>
+</div>
+
+<h3>Step 3：实现 Server</h3>
+<div class="card">
+<pre><code><span class="kw">type</span> analyzeServer <span class="kw">struct</span> {
+    pb.UnimplementedAnalyzeServiceServer <span class="cm">// 必须嵌入，保证向前兼容</span>
+    svc *analyzeservice.Service
+}
+
+<span class="kw">func</span> (s *analyzeServer) <span class="fn">Analyze</span>(
+    ctx context.Context,
+    req *pb.AnalyzeRequest,
+) (*pb.AnalyzeResponse, <span class="kw">error</span>) {
+    result, err := s.svc.RunAnalysis(ctx, req.BizLine, req.AlertBody)
+    <span class="kw">if</span> err != <span class="kw">nil</span> {
+        <span class="kw">return</span> <span class="kw">nil</span>, status.Errorf(codes.Internal,
+            <span class="st">"analysis failed: %v"</span>, err)
+    }
+    <span class="kw">return</span> &amp;pb.AnalyzeResponse{
+        ResultId: result.ID,
+        Summary:  result.Summary,
+    }, <span class="kw">nil</span>
+}
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    lis, _ := net.Listen(<span class="st">"tcp"</span>, <span class="st">":50051"</span>)
+    s := grpc.NewServer(
+        grpc.UnaryInterceptor(unaryLoggingInterceptor),
+    )
+    pb.RegisterAnalyzeServiceServer(s, &amp;analyzeServer{svc: svc})
+    s.Serve(lis)
+}</code></pre>
+</div>
+
+<h3>Step 4：实现 Client</h3>
+<div class="card">
+<pre><code>conn, err := grpc.Dial(<span class="st">"localhost:50051"</span>,
+    grpc.WithTransportCredentials(insecure.NewCredentials()),
+    grpc.WithBlock(),
+)
+<span class="kw">defer</span> conn.Close()
+
+client := pb.NewAnalyzeServiceClient(conn)
+ctx, cancel := context.WithTimeout(context.Background(), <span class="nu">30</span>*time.Second)
+<span class="kw">defer</span> cancel()
+
+resp, err := client.Analyze(ctx, &amp;pb.AnalyzeRequest{
+    BizLine:   <span class="st">"im"</span>,
+    AlertBody: alertJSON,
+})</code></pre>
+</div>
+
+<h3>错误处理与 Status Codes</h3>
+<div class="card">
+<table>
+<tr><th>gRPC Code</th><th>HTTP 等价</th><th>使用场景</th></tr>
+<tr><td><code>OK</code></td><td>200</td><td>成功</td></tr>
+<tr><td><code>InvalidArgument</code></td><td>400</td><td>参数校验失败</td></tr>
+<tr><td><code>NotFound</code></td><td>404</td><td>资源不存在</td></tr>
+<tr><td><code>AlreadyExists</code></td><td>409</td><td>重复创建</td></tr>
+<tr><td><code>DeadlineExceeded</code></td><td>504</td><td>超时</td></tr>
+<tr><td><code>Unavailable</code></td><td>503</td><td>服务不可用，可重试</td></tr>
+<tr><td><code>Internal</code></td><td>500</td><td>内部错误</td></tr>
+</table>
+<pre><code><span class="cm">// 服务端返回</span>
+<span class="kw">return</span> <span class="kw">nil</span>, status.Error(codes.InvalidArgument, <span class="st">"biz_line required"</span>)
+
+<span class="cm">// 客户端解析</span>
+st, ok := status.FromError(err)
+<span class="kw">if</span> ok &amp;&amp; st.Code() == codes.NotFound {
+    <span class="cm">// 处理 404</span>
+}</code></pre>
+</div>
+
+<h3>Metadata（类似 HTTP Headers）</h3>
+<div class="card">
+<pre><code><span class="cm">// 客户端发送 metadata</span>
+md := metadata.Pairs(<span class="st">"x-request-id"</span>, reqID, <span class="st">"authorization"</span>, token)
+ctx := metadata.NewOutgoingContext(context.Background(), md)
+resp, err := client.Analyze(ctx, req)
+
+<span class="cm">// 服务端读取</span>
+<span class="kw">func</span> (s *server) <span class="fn">Analyze</span>(ctx context.Context, req *pb.AnalyzeRequest) (...) {
+    md, ok := metadata.FromIncomingContext(ctx)
+    reqID := md.Get(<span class="st">"x-request-id"</span>)
+    ...
+}</code></pre>
+</div>
+
+<h3>Interceptors（中间件）</h3>
+<div class="card">
+<pre><code><span class="kw">func</span> <span class="fn">unaryLoggingInterceptor</span>(
+    ctx context.Context,
+    req <span class="kw">interface</span>{},
+    info *grpc.UnaryServerInfo,
+    handler grpc.UnaryHandler,
+) (<span class="kw">interface</span>{}, <span class="kw">error</span>) {
+    start := time.Now()
+    resp, err := handler(ctx, req)
+    log.Printf(<span class="st">"%s took %v err=%v"</span>, info.FullMethod, time.Since(start), err)
+    <span class="kw">return</span> resp, err
+}
+
+<span class="cm">// 链式注册多个 interceptor</span>
+s := grpc.NewServer(
+    grpc.ChainUnaryInterceptor(
+        loggingInterceptor,
+        authInterceptor,
+        recoveryInterceptor,
+    ),
+)</code></pre>
+<div class="tip">Interceptor 分 Unary 和 Stream 两种，分别对应两种 RPC 类型。Recovery interceptor 防止 panic 导致进程崩溃。</div>
+</div>
+
+<h3>连接管理</h3>
+<div class="card">
+<ul style="padding-left:18px;line-height:2">
+<li><strong>长连接复用</strong>：一个 <code>*grpc.ClientConn</code> 应全局复用，不要每次 RPC 新建</li>
+<li><strong>优雅关闭</strong>：<code>conn.Close()</code> 等待进行中的 RPC 完成</li>
+<li><strong>Keep-Alive</strong>：配置 <code>grpc.WithKeepaliveParams</code> 检测死连接</li>
+<li><strong>重连</strong>：gRPC 客户端内置指数退避重连，<code>Unavailable</code> 时可安全重试</li>
+</ul>
+</div>
+</section>
+
+<!-- ==================== 5. Python gRPC 客户端 ==================== -->
+<section id="python-client">
+<h2>Python gRPC 客户端</h2>
+
+<div class="card card-accent">
+  <p>Python Agent 编排层（LangGraph / 自定义 Agent）通过 gRPC 调用 Go 后端服务，获得类型安全的高性能通信。Python 做客户端为主，服务端通常用 Go。</p>
+</div>
+
+<h3>环境安装</h3>
+<div class="card">
+<pre><code>pip install grpcio grpcio-tools
+
+<span class="cm"># 从 .proto 生成 Python 代码</span>
+python -m grpc_tools.protoc \
+  -I./api \
+  --python_out=./generated \
+  --grpc_python_out=./generated \
+  api/analyze/v1/analyze.proto
+
+<span class="cm"># 生成:</span>
+<span class="cm"># generated/analyze/v1/analyze_pb2.py       —— 消息类</span>
+<span class="cm"># generated/analyze/v1/analyze_pb2_grpc.py  —— 客户端 Stub</span></code></pre>
+</div>
+
+<h3>同步客户端调用 Go 服务</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> grpc
+<span class="kw">from</span> generated.analyze.v1 <span class="kw">import</span> analyze_pb2, analyze_pb2_grpc
+
+<span class="kw">def</span> <span class="fn">analyze_alert</span>(biz_line: <span class="kw">str</span>, alert_body: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="cm"># 连接 Go gRPC 服务（长连接应全局复用）</span>
+    channel = grpc.insecure_channel(<span class="st">"localhost:50051"</span>)
+    stub = analyze_pb2_grpc.AnalyzeServiceStub(channel)
+
+    request = analyze_pb2.AnalyzeRequest(
+        biz_line=biz_line,
+        alert_body=alert_body,
+        context={<span class="st">"source"</span>: <span class="st">"agent"</span>},
+    )
+
+    <span class="kw">try</span>:
+        response = stub.Analyze(request, timeout=<span class="nu">30</span>)
+        <span class="kw">return</span> response.summary
+    <span class="kw">except</span> grpc.RpcError <span class="kw">as</span> e:
+        <span class="kw">if</span> e.code() == grpc.StatusCode.NOT_FOUND:
+            <span class="kw">raise</span> ValueError(<span class="st">"alert not found"</span>) <span class="kw">from</span> e
+        <span class="kw">raise</span>
+    <span class="kw">finally</span>:
+        channel.close()</code></pre>
+</div>
+
+<h3>消费 Server Streaming（LLM 输出）</h3>
+<div class="card">
+<pre><code><span class="kw">def</span> <span class="fn">stream_analysis</span>(biz_line: <span class="kw">str</span>, alert_body: <span class="kw">str</span>):
+    <span class="st">"""逐 chunk 消费 Go 服务的流式分析结果。"""</span>
+    channel = grpc.insecure_channel(<span class="st">"localhost:50051"</span>)
+    stub = analyze_pb2_grpc.AnalyzeServiceStub(channel)
+
+    request = analyze_pb2.AnalyzeRequest(
+        biz_line=biz_line, alert_body=alert_body
+    )
+
+    <span class="kw">for</span> chunk <span class="kw">in</span> stub.AnalyzeStream(request, timeout=<span class="nu">120</span>):
+        <span class="kw">yield</span> chunk.content
+        <span class="kw">if</span> chunk.is_final:
+            <span class="kw">break</span>
+
+<span class="cm"># Agent 中使用</span>
+full_text = <span class="st">""</span>
+<span class="kw">for</span> token <span class="kw">in</span> stream_analysis(<span class="st">"im"</span>, alert_json):
+    full_text += token
+    <span class="fn">print</span>(token, end=<span class="st">""</span>, flush=<span class="kw">True</span>)</code></pre>
+</div>
+
+<h3>异步客户端（grpc.aio）</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> grpc.aio
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">async_analyze</span>(biz_line: <span class="kw">str</span>, alert_body: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    <span class="kw">async</span> <span class="kw">with</span> grpc.aio.insecure_channel(<span class="st">"localhost:50051"</span>) <span class="kw">as</span> channel:
+        stub = analyze_pb2_grpc.AnalyzeServiceStub(channel)
+        request = analyze_pb2.AnalyzeRequest(
+            biz_line=biz_line, alert_body=alert_body
+        )
+        response = <span class="kw">await</span> stub.Analyze(request, timeout=<span class="nu">30</span>)
+        <span class="kw">return</span> response.summary
+
+<span class="cm"># 与 asyncio Agent 集成</span>
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">agent_tool_call</span>(state):
+    summary = <span class="kw">await</span> async_analyze(state[<span class="st">"biz_line"</span>], state[<span class="st">"alert"</span>])
+    <span class="kw">return</span> {<span class="st">"analysis"</span>: summary}</code></pre>
+<div class="tip">异步 gRPC 客户端与 LangGraph / FastAPI 的 async 生态无缝集成。Channel 应在应用生命周期内复用，不要每次 tool call 新建。</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">🔗</div>
+<div><strong>Agent 编排模式</strong>：Python Agent 作为编排层，通过 gRPC 调用 Go 后端的分析、检索、指标查询等服务。Go 负责高性能 IO 和业务逻辑，Python 负责 LLM 推理和流程控制。</div>
+</div>
+</section>
+
+<!-- ==================== 6. 高级特性 ==================== -->
+<section id="advanced">
+<h2>高级特性</h2>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>Deadline / Timeout 传播</h3>
+<p>超时从调用链上游向下游自动传播，避免级联阻塞。</p>
+<pre><code><span class="cm">// 客户端设置 5 秒 deadline</span>
+ctx, cancel := context.WithTimeout(
+    context.Background(), <span class="nu">5</span>*time.Second)
+<span class="kw">defer</span> cancel()
+resp, err := client.Analyze(ctx, req)
+<span class="cm">// 超时 → codes.DeadlineExceeded</span>
+
+<span class="cm">// 服务端检查</span>
+<span class="kw">if</span> ctx.Err() == context.DeadlineExceeded {
+    <span class="kw">return</span> <span class="kw">nil</span>, status.Error(
+        codes.DeadlineExceeded, <span class="st">"timeout"</span>)
+}</code></pre>
+</div>
+
+<div class="card card-green">
+<h3>Health Checking</h3>
+<p>标准健康检查协议，K8s liveness/readiness 探针直接使用。</p>
+<pre><code><span class="kw">import</span> <span class="st">"google.golang.org/grpc/health"</span>
+<span class="kw">import</span> healthpb <span class="st">"google.golang.org/grpc/health/grpc_health_v1"</span>
+
+healthServer := health.NewServer()
+healthpb.RegisterHealthServer(s, healthServer)
+healthServer.SetServingStatus(
+    <span class="st">"analyze.v1.AnalyzeService"</span>,
+    healthpb.HealthCheckResponse_SERVING)</code></pre>
+</div>
+
+<div class="card card-orange">
+<h3>Reflection（服务反射）</h3>
+<p>运行时暴露服务描述，grpcurl / Evans 无需 .proto 文件即可调试。</p>
+<pre><code><span class="kw">import</span> <span class="st">"google.golang.org/grpc/reflection"</span>
+
+reflection.Register(s)
+<span class="cm">// 然后: grpcurl -plaintext localhost:50051 list</span></code></pre>
+</div>
+
+<div class="card card-purple" style="border-left:4px solid var(--purple)">
+<h3>TLS / mTLS</h3>
+<p>生产环境必须启用 TLS。微服务间用 mTLS 双向认证。</p>
+<pre><code>creds, _ := credentials.NewClientTLSFromFile(
+    <span class="st">"ca.pem"</span>, <span class="st">"localhost"</span>)
+conn, _ := grpc.Dial(<span class="st">"localhost:50051"</span>,
+    grpc.WithTransportCredentials(creds))</code></pre>
+</div>
+</div>
+
+<h3>负载均衡</h3>
+<div class="card">
+<table>
+<tr><th>策略</th><th>原理</th><th>适用场景</th></tr>
+<tr><td>Client-side LB</td><td>客户端从 resolver 获取多个地址，自行选择</td><td>K8s Headless Service + DNS</td></tr>
+<tr><td>Proxy LB（Envoy/Linkerd）</td><td>Sidecar 代理做负载均衡</td><td>Service Mesh 架构</td></tr>
+<tr><td>Lookaside LB</td><td>独立 LB 服务分配后端地址</td><td>大规模集群</td></tr>
+</table>
+<pre><code><span class="cm">// K8s 环境：DNS resolver 自动发现 Pod</span>
+conn, _ := grpc.Dial(
+    <span class="st">"dns:///analyze-service.default.svc:50051"</span>,
+    grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+)</code></pre>
+</div>
+
+<h3>gRPC-Gateway（REST → gRPC 代理）</h3>
+<div class="card">
+<p>通过 HTTP annotation 将 gRPC 服务暴露为 REST API，浏览器和第三方可直接调用。</p>
+<pre><code><span class="kw">import</span> <span class="st">"google/api/annotations.proto"</span>;
+
+<span class="kw">service</span> AnalyzeService {
+  <span class="kw">rpc</span> Analyze(AnalyzeRequest) <span class="kw">returns</span> (AnalyzeResponse) {
+    <span class="kw">option</span> (google.api.http) = {
+      post: <span class="st">"/v1/analyze"</span>
+      body: <span class="st">"*"</span>
+    };
+  }
+}
+
+<span class="cm">// 生成 gateway 代码</span>
+protoc -I . --grpc-gateway_out=. \
+  --grpc-gateway_opt=paths=source_relative \
+  api/analyze/v1/analyze.proto</code></pre>
+<div class="tip">gRPC-Gateway 适合「内部 gRPC + 对外 REST」双协议场景。JSON 请求自动映射为 Protobuf 消息。</div>
+</div>
+</section>
+
+<!-- ==================== 7. 性能优化与调试 ==================== -->
+<section id="performance">
+<h2>性能优化与调试</h2>
+
+<h3>连接与传输优化</h3>
+<div class="grid-2">
+<div class="card">
+<h3>连接池 &amp; Keep-Alive</h3>
+<pre><code><span class="cm">// 客户端：全局复用一个 ClientConn</span>
+<span class="kw">var</span> conn *grpc.ClientConn <span class="cm">// init once</span>
+
+<span class="cm">// Keep-Alive 配置</span>
+kaParams := keepalive.ClientParameters{
+    Time:                <span class="nu">10</span> * time.Second,
+    Timeout:             <span class="nu">3</span> * time.Second,
+    PermitWithoutStream: <span class="kw">true</span>,
+}
+conn, _ = grpc.Dial(addr,
+    grpc.WithKeepaliveParams(kaParams))</code></pre>
+</div>
+<div class="card">
+<h3>消息大小 &amp; 压缩</h3>
+<pre><code><span class="cm">// 默认最大消息 4MB，大 payload 需调整</span>
+s := grpc.NewServer(
+    grpc.MaxRecvMsgSize(<span class="nu">16</span> * <span class="nu">1024</span> * <span class="nu">1024</span>),
+    grpc.MaxSendMsgSize(<span class="nu">16</span> * <span class="nu">1024</span> * <span class="nu">1024</span>),
+)
+
+<span class="cm">// 启用 gzip 压缩（大消息场景）</span>
+conn, _ = grpc.Dial(addr,
+    grpc.WithDefaultCallOptions(
+        grpc.UseCompressor(<span class="st">"gzip"</span>)))</code></pre>
+</div>
+</div>
+
+<h3>调试工具</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>grpcurl</h3>
+<p>命令行 gRPC 客户端，支持反射。类似 curl 之于 HTTP。</p>
+<pre><code><span class="cm"># 列出服务（需开启 reflection）</span>
+grpcurl -plaintext localhost:50051 list
+
+<span class="cm"># 查看方法签名</span>
+grpcurl -plaintext localhost:50051 \
+  describe analyze.v1.AnalyzeService
+
+<span class="cm"># 调用 Unary RPC</span>
+grpcurl -plaintext -d \
+  '{"biz_line":"im","alert_body":"{}"}' \
+  localhost:50051 \
+  analyze.v1.AnalyzeService/Analyze</code></pre>
+</div>
+<div class="card card-green">
+<h3>Evans CLI</h3>
+<p>交互式 gRPC 客户端，REPL 模式，支持自动补全。</p>
+<pre><code><span class="cm"># 交互模式</span>
+evans --host localhost --port 50051 repl
+
+<span class="cm"># REPL 内:</span>
+<span class="cm"># show service</span>
+<span class="cm"># call Analyze --biz_line im --alert_body "{}"</span>
+
+<span class="cm"># 或使用 proto 文件</span>
+evans -r api/ analyze.v1.AnalyzeService</code></pre>
+</div>
+</div>
+
+<h3>可观测性：OpenTelemetry</h3>
+<div class="card">
+<pre><code><span class="cm">// Go：通过 interceptor 自动注入 trace</span>
+<span class="kw">import</span> <span class="st">"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"</span>
+
+s := grpc.NewServer(
+    grpc.StatsHandler(otelgrpc.NewServerHandler()),
+)
+conn, _ := grpc.Dial(addr,
+    grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+)
+
+<span class="cm">// 每个 RPC 自动产生 span：</span>
+<span class="cm">// - 方法名、耗时、状态码</span>
+<span class="cm">// - metadata 中的 trace-id 跨服务传播</span></code></pre>
+<div class="tip">生产环境必备：Logging + Metrics（Prometheus）+ Tracing（Jaeger/Tempo）三件套。gRPC interceptor 是最低成本的接入点。</div>
+</div>
+
+<h3>常见问题排查</h3>
+<div class="card">
+<table>
+<tr><th>现象</th><th>可能原因</th><th>排查方法</th></tr>
+<tr><td><code>Unavailable</code></td><td>服务未启动 / 网络不通</td><td>grpcurl list 测试连通性</td></tr>
+<tr><td><code>DeadlineExceeded</code></td><td>超时设置过短 / 服务端慢</td><td>检查 context deadline 和服务端日志</td></tr>
+<tr><td><code>ResourceExhausted</code></td><td>消息超过大小限制</td><td>调整 MaxRecvMsgSize</td></tr>
+<tr><td><code>connection reset</code></td><td>Keep-Alive 不匹配</td><td>对齐客户端/服务端 keepalive 配置</td></tr>
+<tr><td>proto 不匹配</td><td>客户端/服务端版本不一致</td><td>确保同一 .proto 生成代码</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== 8. 面试题 + 实战练习 ==================== -->
+<section id="practice">
+<h2>面试题 + 实战练习</h2>
+
+<details class="card">
+<summary>gRPC vs REST 的核心权衡是什么？</summary>
+<div class="mt-2">
+<p><strong>gRPC 优势</strong>：性能（二进制 + HTTP/2 多路复用）、强类型契约（proto 代码生成）、原生流式支持、跨语言一致性。</p>
+<p class="mt-2"><strong>REST 优势</strong>：人类可读（JSON）、浏览器原生支持、生态成熟（Swagger/curl）、学习成本低、防火墙友好（纯 HTTP）。</p>
+<p class="mt-2"><strong>选型原则</strong>：内部微服务 → gRPC；对外公开 API → REST；两者兼顾 → gRPC + gRPC-Gateway。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>HTTP/2 多路复用是什么？为什么 gRPC 需要它？</summary>
+<div class="mt-2">
+<p>HTTP/1.1 每个请求需要一个 TCP 连接（或串行复用），存在<strong>队头阻塞</strong>：前一个请求慢会阻塞后续请求。</p>
+<p class="mt-2">HTTP/2 在<strong>单个 TCP 连接</strong>上通过 Stream ID 并行多个请求/响应，且头部 HPACK 压缩减少冗余。gRPC 基于 HTTP/2，微服务间高频 RPC 调用时延迟显著降低，连接开销更小。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>Protobuf 向后兼容规则有哪些？</summary>
+<div class="mt-2">
+<ol style="padding-left:20px;line-height:2">
+<li><strong>不要改字段编号</strong>：编号是二进制编码的标识符</li>
+<li><strong>不要改字段类型</strong>：int32 → string 会导致解析错误</li>
+<li><strong>新增字段用新编号</strong>：旧客户端自动忽略未知字段</li>
+<li><strong>删除字段用 reserved</strong>：防止编号被误复用</li>
+<li><strong>枚举只增不删</strong>：旧客户端收到新枚举值视为未知</li>
+<li><strong>不要改 oneof/repeated 语义</strong></li>
+</ol>
+<p class="mt-2">核心原则：<strong>只加不改不删</strong>（删除必须 reserved）。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>gRPC 四种通信模式分别适合什么场景？</summary>
+<div class="mt-2">
+<table>
+<tr><th>模式</th><th>场景</th><th>示例</th></tr>
+<tr><td>Unary</td><td>简单请求-响应</td><td>查询告警详情、创建任务</td></tr>
+<tr><td>Server Streaming</td><td>服务端持续推送</td><td>LLM Token 流、日志 tail、股票行情</td></tr>
+<tr><td>Client Streaming</td><td>客户端批量上传</td><td>批量写入指标、文件分块上传</td></tr>
+<tr><td>Bidirectional</td><td>双向实时通信</td><td>聊天、实时协作、传感器双向管道</td></tr>
+</table>
+</div>
+</details>
+
+<details class="card">
+<summary>gRPC 的错误码和 HTTP 状态码如何对应？</summary>
+<div class="mt-2">
+<p>gRPC 使用自己的 Status Code 体系（16 个标准码），通过 gRPC-Gateway 映射到 HTTP 状态码。例如 <code>NotFound → 404</code>、<code>InvalidArgument → 400</code>、<code>DeadlineExceeded → 504</code>。</p>
+<p class="mt-2">客户端应始终检查 <code>status.FromError(err).Code()</code>，而非字符串匹配 error message。</p>
+</div>
+</details>
+
+<div class="card card-green">
+<h3>实战练习：设计 Agent 分析服务的 Proto</h3>
+<p><strong>题目</strong>：为告警分析 Agent 服务设计完整的 <code>.proto</code> 文件，要求：</p>
+<ol style="padding-left:20px;margin:10px 0;line-height:2">
+<li>支持 Unary 分析（提交告警，返回分析 ID + 摘要）</li>
+<li>支持 Server Streaming（流式返回分析过程：思考步骤 + Token + 最终结果）</li>
+<li>包含告警级别枚举、metadata map、可选的 session_id（oneof 或 optional）</li>
+<li>定义 Health Check 兼容的标准服务</li>
+</ol>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">syntax</span> = <span class="st">"proto3"</span>;
+<span class="kw">package</span> agent.v1;
+<span class="kw">option</span> go_package = <span class="st">"agent/v1;agentv1"</span>;
+
+<span class="kw">enum</span> AlertLevel {
+  ALERT_LEVEL_UNSPECIFIED = <span class="nu">0</span>;
+  INFO     = <span class="nu">1</span>;
+  WARNING  = <span class="nu">2</span>;
+  CRITICAL = <span class="nu">3</span>;
+}
+
+<span class="kw">enum</span> StreamEventType {
+  EVENT_TYPE_UNSPECIFIED = <span class="nu">0</span>;
+  THINKING  = <span class="nu">1</span>;  <span class="cm">// Agent 思考步骤</span>
+  TOKEN     = <span class="nu">2</span>;  <span class="cm">// LLM 输出 token</span>
+  TOOL_CALL = <span class="nu">3</span>;  <span class="cm">// 工具调用</span>
+  FINAL     = <span class="nu">4</span>;  <span class="cm">// 最终结果</span>
+  ERROR     = <span class="nu">5</span>;
+}
+
+<span class="kw">message</span> AnalyzeRequest {
+  <span class="kw">string</span> biz_line   = <span class="nu">1</span>;
+  <span class="kw">string</span> alert_body = <span class="nu">2</span>;
+  AlertLevel level    = <span class="nu">3</span>;
+  <span class="kw">map</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt; metadata = <span class="nu">4</span>;
+  <span class="kw">optional</span> <span class="kw">string</span> session_id = <span class="nu">5</span>;  <span class="cm">// 续接会话</span>
+}
+
+<span class="kw">message</span> AnalyzeResponse {
+  <span class="kw">string</span> analysis_id = <span class="nu">1</span>;
+  <span class="kw">string</span> summary     = <span class="nu">2</span>;
+  AlertLevel level   = <span class="nu">3</span>;
+}
+
+<span class="kw">message</span> StreamEvent {
+  StreamEventType type    = <span class="nu">1</span>;
+  <span class="kw">string</span> content          = <span class="nu">2</span>;
+  <span class="kw">int32</span> sequence          = <span class="nu">3</span>;
+  <span class="kw">bool</span> is_final           = <span class="nu">4</span>;
+  <span class="kw">map</span>&lt;<span class="kw">string</span>, <span class="kw">string</span>&gt; extra = <span class="nu">5</span>;
+}
+
+<span class="kw">service</span> AgentAnalysisService {
+  <span class="cm">// Unary：快速分析</span>
+  <span class="kw">rpc</span> Analyze(AnalyzeRequest) <span class="kw">returns</span> (AnalyzeResponse);
+
+  <span class="cm">// Server Streaming：流式分析（LLM 输出）</span>
+  <span class="kw">rpc</span> AnalyzeStream(AnalyzeRequest) <span class="kw">returns</span> (stream StreamEvent);
+
+  <span class="cm">// 查询历史分析</span>
+  <span class="kw">rpc</span> GetAnalysis(GetAnalysisRequest) <span class="kw">returns</span> (AnalyzeResponse);
+}
+
+<span class="kw">message</span> GetAnalysisRequest {
+  <span class="kw">string</span> analysis_id = <span class="nu">1</span>;
+}</code></pre>
+</details>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>学习路径建议</strong>：先掌握 Proto 语法和 Unary RPC → 实现 Go Server/Client → 用 Python 客户端调用 → 加入 Server Streaming → 生产化（TLS、Health Check、OpenTelemetry）。每步用 grpcurl 验证后再进入下一步。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['intro','protobuf','modes','go-impl','python-client','advanced','performance','practice'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

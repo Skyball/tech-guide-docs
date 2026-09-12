@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM 评估与成本优化指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#f59e0b 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}
+.pyramid{display:flex;flex-direction:column;align-items:center;gap:0;margin:20px 0}
+.pyramid-level{padding:14px 24px;text-align:center;border-radius:8px;font-weight:600;width:100%;max-width:480px;margin:2px 0}
+.pyramid-top{background:var(--green-light);color:var(--green);max-width:280px}
+.pyramid-mid{background:var(--accent-light);color:var(--accent);max-width:360px}
+.pyramid-base{background:var(--orange-light);color:var(--orange);max-width:480px}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>LLM 评估与成本优化指南</h1>
+  <p>面向 AI Agent 工程师的可视化学习手册<br>从离线指标到 A/B 测试，从 Token 计费到成本优化策略</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#why">为什么评估</a>
+    <a href="#metrics">离线指标</a>
+    <a href="#ab-test">A/B 测试</a>
+    <a href="#dataset">数据集构建</a>
+    <a href="#versioning">Prompt 版本</a>
+    <a href="#cost-calc">成本计算</a>
+    <a href="#optimization">成本优化</a>
+    <a href="#practice">面试实战</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. 评估为什么重要 ==================== -->
+<section id="why">
+<h2>评估为什么重要</h2>
+
+<div class="card card-accent">
+  <p><strong>No metrics, no improvement.</strong> — 没有度量，就没有改进。Agent 的输出质量本质上是主观的：同一个回答，不同用户可能给出截然相反的评价。评估体系是将「感觉不错」转化为「可量化、可复现、可对比」的唯一路径。</p>
+</div>
+
+<h3>评估金字塔</h3>
+<div class="card">
+  <div class="pyramid">
+    <div class="pyramid-level pyramid-top">🏭 生产监控 — 实时质量追踪、异常告警、用户反馈闭环</div>
+    <div class="pyramid-level pyramid-mid">🔬 在线 A/B 测试 — 真实流量下的效果对比</div>
+    <div class="pyramid-level pyramid-base">📊 离线评估 — Golden Dataset + 自动化指标</div>
+  </div>
+  <p class="text-sm text-center">从底层到顶层：成本递增，但离真实用户越近。三层缺一不可。</p>
+</div>
+
+<div class="grid-2">
+<div class="card card-green">
+  <h3>✅ 正确做法</h3>
+  <ul style="padding-left:20px;margin-top:8px">
+    <li>建立 Golden Dataset，每次改 Prompt 都跑回归</li>
+    <li>离线指标 + 在线 A/B 双重验证</li>
+    <li>生产环境持续监控幻觉率、拒答率</li>
+    <li>将评估纳入 CI/CD 流水线</li>
+  </ul>
+</div>
+<div class="card card-orange">
+  <h3>❌ 常见反模式</h3>
+  <ul style="padding-left:20px;margin-top:8px">
+    <li><strong>只用 Demo 验证</strong> — 3 个例子跑通就上线</li>
+    <li><strong>靠感觉调 Prompt</strong> — 「我觉得这次回答更好」</li>
+    <li><strong>只看离线指标</strong> — 忽略用户真实满意度</li>
+    <li><strong>评估一次就忘</strong> — 没有持续监控和迭代</li>
+  </ul>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>Agent 工程师的核心能力</strong>：不是写出最炫的 Prompt，而是建立「改 → 测 → 比 → 上线」的闭环。评估体系是这个闭环的基础设施。</div>
+</div>
+</section>
+
+<!-- ==================== 2. 离线评估指标 ==================== -->
+<section id="metrics">
+<h2>离线评估指标</h2>
+
+<div class="card">
+  <h3>核心指标一览</h3>
+  <table>
+    <tr><th>指标</th><th>英文</th><th>衡量什么</th><th>适用场景</th></tr>
+    <tr><td><strong>相关性</strong></td><td>Relevance</td><td>回答是否与问题相关</td><td>通用 QA、搜索增强</td></tr>
+    <tr><td><strong>忠实度</strong></td><td>Faithfulness</td><td>回答是否忠于检索到的上下文（无幻觉）</td><td>RAG 系统</td></tr>
+    <tr><td><strong>答案正确性</strong></td><td>Answer Correctness</td><td>回答是否事实正确</td><td>知识问答、代码生成</td></tr>
+    <tr><td><strong>上下文精确率</strong></td><td>Context Precision</td><td>检索到的文档中有多少真正相关</td><td>检索质量评估</td></tr>
+    <tr><td><strong>上下文召回率</strong></td><td>Context Recall</td><td>相关文档中有多少被检索到</td><td>检索质量评估</td></tr>
+  </table>
+</div>
+
+<h3>RAGAS 框架</h3>
+<div class="card card-accent">
+  <p><a href="https://docs.ragas.io">RAGAS</a>（Retrieval Augmented Generation Assessment）是目前最流行的 RAG 评估框架，提供上述所有指标的自动化计算，支持 LLM-as-Judge 模式。</p>
+  <div class="grid-3 mt-2">
+    <div><span class="tag tag-blue">faithfulness</span><br><span class="text-sm">生成内容是否被 context 支持</span></div>
+    <div><span class="tag tag-green">answer_relevancy</span><br><span class="text-sm">回答与问题的相关程度</span></div>
+    <div><span class="tag tag-purple">context_recall</span><br><span class="text-sm">ground truth 是否被检索覆盖</span></div>
+  </div>
+</div>
+
+<h3>LLM-as-Judge</h3>
+<div class="card">
+  <p>用大模型（如 GPT-4o）评估小模型的输出。成本低、可扩展，但需注意：</p>
+  <ul style="padding-left:20px;margin-top:8px">
+    <li>Judge 模型应<strong>强于</strong>被评估模型</li>
+    <li>使用结构化 Rubric（评分标准），避免开放式「好不好」</li>
+    <li>定期与人工评估校准（Human Alignment）</li>
+    <li>注意 Position Bias — 交换 A/B 顺序再评一次</li>
+  </ul>
+</div>
+
+<h3>人工评估协议</h3>
+<div class="card">
+  <table>
+    <tr><th>维度</th><th>1 分</th><th>3 分</th><th>5 分</th></tr>
+    <tr><td>准确性</td><td>明显错误/幻觉</td><td>基本正确，有小瑕疵</td><td>完全准确</td></tr>
+    <tr><td>完整性</td><td>遗漏关键信息</td><td>覆盖主要要点</td><td>全面详尽</td></tr>
+    <tr><td>可读性</td><td>混乱难懂</td><td>结构清晰</td><td>简洁专业</td></tr>
+    <tr><td>安全性</td><td>包含有害内容</td><td>无有害但边界模糊</td><td>完全安全合规</td></tr>
+  </table>
+  <div class="tip">Scoring Rubric 设计原则：每个分数档位有<strong>具体示例</strong>，标注员培训后先跑 20 条校准，Cohen's Kappa ≥ 0.6 才正式标注。</div>
+</div>
+
+<h3>代码示例：RAGAS 评估流水线</h3>
+<div class="card">
+<pre><code><span class="kw">from</span> datasets <span class="kw">import</span> Dataset
+<span class="kw">from</span> ragas <span class="kw">import</span> evaluate
+<span class="kw">from</span> ragas.metrics <span class="kw">import</span> (
+    faithfulness,
+    answer_relevancy,
+    context_precision,
+    context_recall,
+)
+
+<span class="cm"># Golden Dataset 格式</span>
+eval_data = {
+    <span class="st">"question"</span>: [<span class="st">"告警 CPU 使用率超过 90% 怎么处理？"</span>],
+    <span class="st">"answer"</span>: [<span class="st">"建议先检查 top 进程，确认是否为正常流量峰值..."</span>],
+    <span class="st">"contexts"</span>: [[<span class="st">"CPU 告警 SOP: 1. 查看 top 进程 2. 检查流量..."</span>]],
+    <span class="st">"ground_truth"</span>: [<span class="st">"查看 top 进程，检查是否为正常流量，必要时扩容"</span>],
+}
+
+dataset = Dataset.from_dict(eval_data)
+
+<span class="cm"># 运行评估（使用 GPT-4o 作为 Judge）</span>
+result = evaluate(
+    dataset,
+    metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+    llm=<span class="st">"gpt-4o"</span>,
+)
+
+<span class="fn">print</span>(result)
+<span class="cm"># {'faithfulness': 0.92, 'answer_relevancy': 0.88, ...}</span>
+
+<span class="cm"># 设置阈值，低于阈值则 CI 失败</span>
+THRESHOLDS = {<span class="st">"faithfulness"</span>: <span class="nu">0.85</span>, <span class="st">"answer_relevancy"</span>: <span class="nu">0.80</span>}
+<span class="kw">for</span> metric, threshold <span class="kw">in</span> THRESHOLDS.items():
+    score = result[metric]
+    <span class="kw">assert</span> score >= threshold, <span class="st">f"</span>{metric}<span class="st">=</span>{score}<span class="st"> &lt; </span>{threshold}<span class="st">"</span></code></pre>
+</div>
+</section>
+
+<!-- ==================== 3. 在线评估：A/B 测试 ==================== -->
+<section id="ab-test">
+<h2>在线评估：A/B 测试</h2>
+
+<div class="card card-accent">
+  <p>离线指标高 ≠ 用户满意。离线评估无法捕捉：<strong>延迟感知</strong>、<strong>交互体验</strong>、<strong>长尾 query</strong>、<strong>用户意图多样性</strong>。A/B 测试是在真实流量中验证改动的金标准。</p>
+</div>
+
+<h3>A/B 测试设计要素</h3>
+<div class="grid-2">
+<div class="card">
+  <h3>流量分割</h3>
+  <ul style="padding-left:20px">
+    <li>按 <strong>user_id</strong> 哈希分桶（保证同一用户始终在同一组）</li>
+    <li>典型比例：90/10 或 95/5（新方案占小流量）</li>
+    <li>避免按 session 分桶（同一用户可能跨组）</li>
+  </ul>
+</div>
+<div class="card">
+  <h3>核心指标选择</h3>
+  <ul style="padding-left:20px">
+    <li><span class="tag tag-green">Primary</span> 任务完成率、用户满意度（👍/👎）</li>
+    <li><span class="tag tag-blue">Secondary</span> 平均对话轮数、拒答率</li>
+    <li><span class="tag tag-orange">Guardrail</span> 延迟 P99、单次成本、错误率</li>
+  </ul>
+</div>
+</div>
+
+<h3>统计显著性与实验时长</h3>
+<div class="card">
+<pre><code><span class="cm"># 样本量估算（简化公式）</span>
+<span class="cm"># n = 16 * σ² / δ²</span>
+<span class="cm"># σ = 指标标准差, δ = 期望检测的最小差异 (MDE)</span>
+
+<span class="kw">import</span> math
+
+<span class="kw">def</span> <span class="fn">sample_size</span>(baseline_rate, mde, alpha=<span class="nu">0.05</span>, power=<span class="nu">0.8</span>):
+    <span class="st">"""二项分布指标（如任务完成率）的样本量估算"""</span>
+    p = baseline_rate
+    delta = mde
+    z_alpha = <span class="nu">1.96</span>   <span class="cm"># α=0.05 双侧</span>
+    z_beta = <span class="nu">0.84</span>    <span class="cm"># power=0.80</span>
+    n = ((z_alpha + z_beta) ** <span class="nu">2</span> * p * (<span class="nu">1</span> - p)) / (delta ** <span class="nu">2</span>)
+    <span class="kw">return</span> math.ceil(n)
+
+<span class="cm"># 例：基线完成率 70%，想检测 3% 的提升</span>
+n = sample_size(baseline_rate=<span class="nu">0.70</span>, mde=<span class="nu">0.03</span>)
+<span class="fn">print</span>(<span class="st">f"每组需要 </span>{n}<span class="st"> 个样本"</span>)  <span class="cm"># ≈ 1818</span>
+
+<span class="cm"># 实验时长 = 样本量 / 日活用户数</span>
+<span class="cm"># 若日活 5000，每组需 1818 → 约 1 天（但建议至少 7-14 天）</span></code></pre>
+</div>
+
+<h3>常见陷阱</h3>
+<div class="grid-2">
+<div class="card card-orange">
+  <h3>⚠️ Novelty Effect</h3>
+  <p class="text-sm">用户对新 UI/新回答风格的新鲜感导致短期指标虚高。对策：实验至少跑 2 周，观察指标是否收敛。</p>
+</div>
+<div class="card card-orange">
+  <h3>⚠️ Carryover Effect</h3>
+  <p class="text-sm">用户在不同版本间切换导致行为污染。对策：按 user_id 固定分桶，实验期间禁止切换。</p>
+</div>
+</div>
+
+<h3>Feature Flag 管理 Prompt 版本</h3>
+<div class="card">
+<pre><code><span class="cm"># prompts/registry.yaml</span>
+<span class="cm"># versions:</span>
+<span class="cm">#   alert_analysis_v3:</span>
+<span class="cm">#     weight: 90</span>
+<span class="cm">#     prompt_file: prompts/alert_v3.txt</span>
+<span class="cm">#   alert_analysis_v4:</span>
+<span class="cm">#     weight: 10</span>
+<span class="cm">#     prompt_file: prompts/alert_v4.txt</span>
+
+<span class="kw">import</span> hashlib
+
+<span class="kw">def</span> <span class="fn">get_prompt_version</span>(user_id: <span class="kw">str</span>, versions: <span class="kw">dict</span>) -> <span class="kw">str</span>:
+    bucket = <span class="fn">int</span>(hashlib.md5(user_id.encode()).hexdigest(), <span class="nu">16</span>) % <span class="nu">100</span>
+    cumulative = <span class="nu">0</span>
+    <span class="kw">for</span> name, cfg <span class="kw">in</span> versions.items():
+        cumulative += cfg[<span class="st">"weight"</span>]
+        <span class="kw">if</span> bucket < cumulative:
+            <span class="kw">return</span> name, cfg[<span class="st">"prompt_file"</span>]
+    <span class="kw">return</span> <span class="fn">list</span>(versions.items())[-<span class="nu">1</span>]</code></pre>
+</div>
+</section>
+
+<!-- ==================== 4. 评估数据集构建 ==================== -->
+<section id="dataset">
+<h2>评估数据集构建</h2>
+
+<div class="card card-accent">
+  <p>Golden Dataset 是评估体系的基石。质量 > 数量：200 条高质量标注数据，远胜 2000 条低质量合成数据。</p>
+</div>
+
+<h3>数据集构建流程</h3>
+<div class="card">
+  <table>
+    <tr><th>阶段</th><th>方法</th><th>产出</th></tr>
+    <tr><td>1. 种子收集</td><td>从生产日志采样真实 query</td><td>500+ 原始 query</td></tr>
+    <tr><td>2. 边界扩充</td><td>人工设计 edge case + LLM 合成</td><td>+200 edge cases</td></tr>
+    <tr><td>3. 标注</td><td>双人标注 + 仲裁</td><td>ground truth answer</td></tr>
+    <tr><td>4. 质检</td><td>Cohen's Kappa ≥ 0.6</td><td>通过/返工</td></tr>
+    <tr><td>5. 版本化</td><td>Git tag + DVC/数据仓库</td><td>eval-v1.2.0</td></tr>
+  </table>
+</div>
+
+<h3>合成数据生成</h3>
+<div class="card">
+<pre><code><span class="cm"># 用 LLM 从文档自动生成 QA 对</span>
+SYNTH_PROMPT = <span class="st">"""
+基于以下文档段落，生成 3 个测试问题及标准答案。
+要求：
+- 1 个简单事实题（答案可直接从文档找到）
+- 1 个需要推理的综合题
+- 1 个边界题（文档信息不足时应拒答）
+
+文档：{context}
+
+输出 JSON 格式：[{"question": "...", "answer": "...", "type": "..."}]
+"""</span>
+
+<span class="kw">async def</span> <span class="fn">generate_test_cases</span>(context: <span class="kw">str</span>, llm) -> <span class="kw">list</span>:
+    response = <span class="kw">await</span> llm.ainvoke(SYNTH_PROMPT.format(context=context))
+    <span class="kw">return</span> json.loads(response.content)</code></pre>
+<div class="tip">合成数据必须经人工抽检（建议 10-20%），LLM 生成的「标准答案」本身可能有错。</div>
+</div>
+
+<h3>Edge Case 收集清单</h3>
+<div class="grid-2">
+<div class="card">
+  <ul style="padding-left:20px">
+    <li>空输入 / 纯 emoji / 超长输入</li>
+    <li>多语言混合 query</li>
+    <li>Prompt Injection 攻击</li>
+    <li>检索不到相关文档的 query</li>
+  </ul>
+</div>
+<div class="card">
+  <ul style="padding-left:20px">
+    <li>需要多步推理的复杂问题</li>
+    <li>时效性信息（「今天天气」）</li>
+    <li>歧义 query（多种理解）</li>
+    <li>敏感/违规内容请求</li>
+  </ul>
+</div>
+</div>
+
+<h3>标注一致性与 Cohen's Kappa</h3>
+<div class="card">
+<pre><code><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> cohen_kappa_score
+
+<span class="cm"># 两位标注员对 50 条数据的评分（1-5 分）</span>
+annotator_a = [<span class="nu">4</span>, <span class="nu">3</span>, <span class="nu">5</span>, <span class="nu">2</span>, <span class="nu">4</span>, ...]
+annotator_b = [<span class="nu">4</span>, <span class="nu">3</span>, <span class="nu">4</span>, <span class="nu">2</span>, <span class="nu">5</span>, ...]
+
+kappa = cohen_kappa_score(annotator_a, annotator_b)
+<span class="fn">print</span>(<span class="st">f"Cohen's Kappa: </span>{kappa:.3f}<span class="st">"</span>)
+<span class="cm"># &lt; 0.4: 差  |  0.4-0.6: 一般  |  ≥ 0.6: 良好  |  ≥ 0.8: 优秀</span></code></pre>
+</div>
+</section>
+
+<!-- ==================== 5. Prompt 版本管理与回归测试 ==================== -->
+<section id="versioning">
+<h2>Prompt 版本管理与回归测试</h2>
+
+<div class="card card-accent">
+  <p><strong>Prompt as Code</strong> — Prompt 是代码，不是配置文件。它需要版本控制、Code Review、自动化测试，与业务代码同等对待。</p>
+</div>
+
+<h3>版本管理最佳实践</h3>
+<div class="card">
+  <table>
+    <tr><th>实践</th><th>说明</th><th>工具</th></tr>
+    <tr><td>文件化管理</td><td>每个 Prompt 独立 .txt/.yaml 文件</td><td>Git</td></tr>
+    <tr><td>语义化版本</td><td>alert_analysis_v3.2.1</td><td>Git tag</td></tr>
+    <tr><td>变更日志</td><td>每次修改记录原因和预期影响</td><td>CHANGELOG.md</td></tr>
+    <tr><td>环境隔离</td><td>dev/staging/prod 不同 Prompt 版本</td><td>Feature Flag</td></tr>
+  </table>
+</div>
+
+<h3>回归测试套件</h3>
+<div class="card">
+<pre><code><span class="cm"># tests/test_prompt_regression.py</span>
+<span class="kw">import</span> pytest
+<span class="kw">from</span> ragas <span class="kw">import</span> evaluate
+
+PROMPT_VERSION = <span class="st">"alert_analysis_v3"</span>
+GOLDEN_DATASET = <span class="st">"eval/golden_v1.2.jsonl"</span>
+THRESHOLDS = {<span class="st">"faithfulness"</span>: <span class="nu">0.85</span>, <span class="st">"answer_relevancy"</span>: <span class="nu">0.80</span>}
+
+@pytest.mark.parametrize(<span class="st">"metric,threshold"</span>, THRESHOLDS.items())
+<span class="kw">def</span> <span class="fn">test_prompt_quality</span>(metric, threshold):
+    <span class="st">"""每次 PR 修改 Prompt 时自动运行"""</span>
+    dataset = load_golden_dataset(GOLDEN_DATASET)
+    results = run_agent_on_dataset(dataset, prompt=PROMPT_VERSION)
+    eval_scores = evaluate(results, metrics=[metric])
+
+    <span class="kw">assert</span> eval_scores[metric] >= threshold, (
+        <span class="st">f"Prompt </span>{PROMPT_VERSION}<span class="st"> regression: </span>{metric}<span class="st">=</span>{eval_scores[metric]:.3f}<span class="st"> "</span>
+        <span class="st">f"&lt; threshold </span>{threshold}<span class="st">"</span>
+    )</code></pre>
+</div>
+
+<h3>CI/CD for Prompts</h3>
+<div class="card">
+<pre><code><span class="cm"># .github/workflows/prompt-eval.yml</span>
+<span class="cm"># on:</span>
+<span class="cm">#   pull_request:</span>
+<span class="cm">#     paths:</span>
+<span class="cm">#       - 'prompts/**'</span>
+<span class="cm"># jobs:</span>
+<span class="cm">#   eval:</span>
+<span class="cm">#     runs-on: ubuntu-latest</span>
+<span class="cm">#     steps:</span>
+<span class="cm">#       - uses: actions/checkout@v4</span>
+<span class="cm">#       - run: pip install ragas pytest</span>
+<span class="cm">#       - run: pytest tests/test_prompt_regression.py --tb=short</span>
+<span class="cm">#       - run: python scripts/prompt_diff_report.py  # 生成 diff 报告</span></code></pre>
+</div>
+
+<h3>Prompt Diff 可视化</h3>
+<div class="vs">
+<div class="card" style="border-top:3px solid var(--red)">
+<h3>v3.1（旧版）</h3>
+<pre><code>你是一个告警分析助手。
+请分析以下告警并给出建议。
+告警内容：{alert}</code></pre>
+</div>
+<div class="vs-divider">→</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>v3.2（新版）</h3>
+<pre><code>你是资深 SRE，专门分析 {biz_line} 业务线告警。
+
+分析步骤：
+1. 判断告警级别和紧急程度
+2. 检索相关 Runbook
+3. 给出具体处置步骤（不超过 5 步）
+
+告警内容：{alert}
+相关文档：{context}</code></pre>
+</div>
+</div>
+<div class="tip">每次 Prompt 变更应附带：变更原因、预期影响、离线评估对比（v3.1 vs v3.2 分数变化）。</div>
+</section>
+
+<!-- ==================== 6. Token 成本计算 ==================== -->
+<section id="cost-calc">
+<h2>Token 成本计算</h2>
+
+<div class="card card-accent">
+  <p>成本优化始于<strong>精确计量</strong>。不了解 Token 消耗结构，就无法找到优化杠杆。</p>
+</div>
+
+<h3>主流模型定价表（2026 参考价，USD / 1M tokens）</h3>
+<div class="card">
+  <table>
+    <tr><th>模型</th><th>Input</th><th>Output</th><th>Context Window</th><th>适用场景</th></tr>
+    <tr><td><strong>GPT-4o</strong></td><td>$2.50</td><td>$10.00</td><td>128K</td><td>复杂推理、Judge</td></tr>
+    <tr><td><strong>GPT-4o-mini</strong></td><td>$0.15</td><td>$0.60</td><td>128K</td><td>简单分类、路由</td></tr>
+    <tr><td><strong>Claude Sonnet 4</strong></td><td>$3.00</td><td>$15.00</td><td>200K</td><td>长文档分析</td></tr>
+    <tr><td><strong>Claude Haiku</strong></td><td>$0.25</td><td>$1.25</td><td>200K</td><td>快速响应、批量</td></tr>
+    <tr><td><strong>Gemini 2.0 Flash</strong></td><td>$0.10</td><td>$0.40</td><td>1M</td><td>超长上下文</td></tr>
+  </table>
+  <p class="text-sm mt-2">⚠️ 价格随供应商调整，请以官方定价页为准。Output token 通常比 Input 贵 3-5 倍。</p>
+</div>
+
+<h3>成本估算公式</h3>
+<div class="card">
+<pre><code><span class="cm"># 单次请求成本</span>
+cost = (input_tokens / <span class="nu">1_000_000</span>) * input_price + (output_tokens / <span class="nu">1_000_000</span>) * output_price
+
+<span class="cm"># Agent 会话成本（多次 LLM 调用）</span>
+session_cost = sum(call_cost <span class="kw">for</span> call <span class="kw">in</span> llm_calls)
+
+<span class="cm"># 月度成本</span>
+monthly_cost = daily_sessions * avg_session_cost * <span class="nu">30</span></code></pre>
+</div>
+
+<h3>实战案例：5 次 Tool Call 的 Agent 会话</h3>
+<div class="card">
+  <table>
+    <tr><th>步骤</th><th>Input Tokens</th><th>Output Tokens</th><th>模型</th><th>成本</th></tr>
+    <tr><td>System Prompt + User Query</td><td>2,000</td><td>—</td><td>GPT-4o</td><td>$0.005</td></tr>
+    <tr><td>LLM 决策 → Tool Call #1</td><td>2,500</td><td>150</td><td>GPT-4o</td><td>$0.008</td></tr>
+    <tr><td>Tool Result → LLM #2</td><td>4,000</td><td>200</td><td>GPT-4o</td><td>$0.012</td></tr>
+    <tr><td>Tool Call #2-#5（类似）</td><td>16,000</td><td>800</td><td>GPT-4o</td><td>$0.048</td></tr>
+    <tr><td>Final Answer 生成</td><td>8,000</td><td>1,500</td><td>GPT-4o</td><td>$0.035</td></tr>
+    <tr><td><strong>合计</strong></td><td><strong>32,500</strong></td><td><strong>2,650</strong></td><td></td><td><strong>≈ $0.108</strong></td></tr>
+  </table>
+  <div class="callout callout-info mt-2">
+    <div class="callout-icon">📊</div>
+    <div>
+      <strong>月度投影</strong>：若日处理 1,000 次会话 → 日成本 $108 → <strong>月成本 ≈ $3,240</strong><br>
+      Input token 占 92% 成本（因 Agent 每次 Tool Call 都重传完整上下文）。这是成本优化的主要杠杆。
+    </div>
+  </div>
+</div>
+
+<div class="card">
+<pre><code><span class="kw">def</span> <span class="fn">estimate_agent_cost</span>(llm_calls: <span class="kw">list</span>[<span class="kw">dict</span>], pricing: <span class="kw">dict</span>) -> <span class="kw">float</span>:
+    <span class="st">"""估算 Agent 会话总成本"""</span>
+    total = <span class="nu">0.0</span>
+    <span class="kw">for</span> call <span class="kw">in</span> llm_calls:
+        model = call[<span class="st">"model"</span>]
+        p = pricing[model]
+        total += (call[<span class="st">"input_tokens"</span>] / <span class="nu">1e6</span>) * p[<span class="st">"input"</span>]
+        total += (call[<span class="st">"output_tokens"</span>] / <span class="nu">1e6</span>) * p[<span class="st">"output"</span>]
+    <span class="kw">return</span> total
+
+PRICING = {<span class="st">"gpt-4o"</span>: {<span class="st">"input"</span>: <span class="nu">2.50</span>, <span class="st">"output"</span>: <span class="nu">10.00</span>}}
+calls = [
+    {<span class="st">"model"</span>: <span class="st">"gpt-4o"</span>, <span class="st">"input_tokens"</span>: <span class="nu">2500</span>, <span class="st">"output_tokens"</span>: <span class="nu">150</span>},
+    {<span class="st">"model"</span>: <span class="st">"gpt-4o"</span>, <span class="st">"input_tokens"</span>: <span class="nu">4000</span>, <span class="st">"output_tokens"</span>: <span class="nu">200</span>},
+    <span class="cm"># ... 更多 calls</span>
+]
+<span class="fn">print</span>(<span class="st">f"Session cost: $</span>{estimate_agent_cost(calls, PRICING):.4f}<span class="st">"</span>)</code></pre>
+</div>
+</section>
+
+<!-- ==================== 7. 成本优化策略 ==================== -->
+<section id="optimization">
+<h2>成本优化策略</h2>
+
+<div class="card card-accent">
+  <p>目标不是用最便宜的模型，而是在<strong>保证质量的前提下</strong>将成本降低 50%+。以下策略按 ROI 排序。</p>
+</div>
+
+<h3>策略 1：Model Routing（模型路由）</h3>
+<div class="card">
+  <p>简单问题用小模型，复杂问题用大模型。典型架构：Haiku/GPT-4o-mini 做分类路由 → Sonnet/GPT-4o 做复杂推理。</p>
+<pre><code><span class="kw">async def</span> <span class="fn">routed_completion</span>(query: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    complexity = <span class="kw">await</span> classify_query(query, model=<span class="st">"gpt-4o-mini"</span>)  <span class="cm"># ~$0.0001</span>
+
+    <span class="kw">if</span> complexity == <span class="st">"simple"</span>:
+        <span class="kw">return</span> <span class="kw">await</span> llm_complete(query, model=<span class="st">"gpt-4o-mini"</span>)   <span class="cm"># ~$0.001</span>
+    <span class="kw">elif</span> complexity == <span class="st">"medium"</span>:
+        <span class="kw">return</span> <span class="kw">await</span> llm_complete(query, model=<span class="st">"gpt-4o"</span>)        <span class="cm"># ~$0.01</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="kw">await</span> agent_loop(query, model=<span class="st">"gpt-4o"</span>)           <span class="cm"># ~$0.10</span>
+<span class="cm"># 若 70% query 是 simple → 平均成本降低 60%+</span></code></pre>
+</div>
+
+<h3>策略 2：Prompt Compression（Prompt 压缩）</h3>
+<div class="card">
+<pre><code><span class="cm"># ❌ 冗余：每次 Tool Call 都重传完整 System Prompt（2000 tokens）</span>
+<span class="cm"># ✅ 优化：System Prompt 精简 + 动态注入</span>
+
+SYSTEM_PROMPT = <span class="st">"SRE 助手。分析告警，给出 ≤5 步处置建议。"</span>  <span class="cm"># 20 tokens vs 500 tokens</span>
+
+<span class="cm"># 只在需要时注入 Runbook（而非每次都塞全部文档）</span>
+<span class="kw">if</span> needs_runbook(alert_type):
+    context = retrieve_relevant_docs(alert_type, top_k=<span class="nu">3</span>)  <span class="cm"># 精准检索 3 条</span>
+<span class="kw">else</span>:
+    context = <span class="st">""</span></code></pre>
+</div>
+
+<h3>策略 3：Semantic Caching（语义缓存）</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> functools <span class="kw">import</span> lru_cache
+
+<span class="kw">class</span> <span class="fn">SemanticCache</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, threshold=<span class="nu">0.92</span>):
+        self.entries = []  <span class="cm"># [(embedding, query, response)]</span>
+        self.threshold = threshold
+
+    <span class="kw">async def</span> <span class="fn">get_or_compute</span>(self, query: <span class="kw">str</span>, compute_fn) -> <span class="kw">str</span>:
+        emb = <span class="kw">await</span> embed(query)
+        <span class="kw">for</span> cached_emb, cached_q, cached_resp <span class="kw">in</span> self.entries:
+            sim = np.dot(emb, cached_emb) / (np.linalg.norm(emb) * np.linalg.norm(cached_emb))
+            <span class="kw">if</span> sim >= self.threshold:
+                <span class="kw">return</span> cached_resp  <span class="cm"># 缓存命中，成本 = $0</span>
+        response = <span class="kw">await</span> compute_fn(query)
+        self.entries.append((emb, query, response))
+        <span class="kw">return</span> response
+<span class="cm"># FAQ 类场景缓存命中率 30-50% → 等效成本降低 30-50%</span></code></pre>
+</div>
+
+<h3>策略 4：Context Window 优化</h3>
+<div class="card">
+<pre><code><span class="cm"># 对话历史压缩：保留最近 N 轮 + 早期摘要</span>
+<span class="kw">async def</span> <span class="fn">compress_history</span>(messages: <span class="kw">list</span>, max_tokens=<span class="nu">4000</span>) -> <span class="kw">list</span>:
+    <span class="kw">if</span> count_tokens(messages) <= max_tokens:
+        <span class="kw">return</span> messages
+
+    recent = messages[-<span class="nu">6</span>:]  <span class="cm"># 保留最近 3 轮</span>
+    older = messages[:-<span class="nu">6</span>]
+    summary = <span class="kw">await</span> llm_summarize(older, model=<span class="st">"gpt-4o-mini"</span>)
+    <span class="kw">return</span> [{<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: <span class="st">f"历史摘要: </span>{summary}<span class="st">"</span>}] + recent</code></pre>
+</div>
+
+<h3>策略 5-7：Batch / Fine-tuning / 其他</h3>
+<div class="grid-3">
+<div class="card">
+  <h3>Batch Processing</h3>
+  <p class="text-sm">非实时任务用 Batch API（OpenAI Batch 半价）。适合：离线评估、数据标注、报告生成。</p>
+</div>
+<div class="card">
+  <h3>Fine-tuning</h3>
+  <p class="text-sm">高频固定格式任务（如告警分类）微调小模型，推理成本降 90%，延迟降 80%。</p>
+</div>
+<div class="card">
+  <h3>Output Token 控制</h3>
+  <p class="text-sm">设 max_tokens、要求简洁输出格式（JSON vs 散文），Output 单价是 Input 的 3-5 倍。</p>
+</div>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>优化优先级</strong>：Semantic Cache（零成本命中）→ Model Routing（60% 降本）→ Context 压缩（Agent 场景关键）→ Prompt 精简 → Fine-tuning（长期 ROI）。先度量，再优化，每次只改一个变量。</div>
+</div>
+</section>
+
+<!-- ==================== 8. 面试题 + 实战练习 ==================== -->
+<section id="practice">
+<h2>面试题 + 实战练习</h2>
+
+<h3>常见面试题</h3>
+
+<div class="card">
+<details>
+<summary>Q1：如何评估 RAG 系统的质量？</summary>
+<p class="mt-2"><strong>参考答案：</strong></p>
+<p>分三层评估：</p>
+<ol style="padding-left:20px;margin-top:8px">
+  <li><strong>检索层</strong>：Context Precision（检索结果有多准）、Context Recall（该检索的是否都检索到）。用 RAGAS 或 BEIR benchmark。</li>
+  <li><strong>生成层</strong>：Faithfulness（是否幻觉）、Answer Relevancy（是否答非所问）。LLM-as-Judge + 人工抽检。</li>
+  <li><strong>端到端</strong>：Answer Correctness（与 ground truth 对比）。Golden Dataset 回归测试。</li>
+</ol>
+<p class="mt-2">关键：建立 Golden Dataset（200+ 条），每次改检索策略或 Prompt 都跑全量回归。设置 faithfulness ≥ 0.85 为 CI 门禁。</p>
+</details>
+</div>
+
+<div class="card">
+<details>
+<summary>Q2：如何设计 Prompt 的 A/B 测试？</summary>
+<p class="mt-2"><strong>参考答案：</strong></p>
+<ol style="padding-left:20px;margin-top:8px">
+  <li><strong>假设</strong>：明确「改 X → 预期 Y 指标提升 Z%」</li>
+  <li><strong>分桶</strong>：按 user_id 哈希，90/10 分流，Feature Flag 控制 Prompt 版本</li>
+  <li><strong>指标</strong>：Primary = 任务完成率；Guardrail = P99 延迟、单次成本、faithfulness</li>
+  <li><strong>样本量</strong>：用 MDE 公式计算，通常每组 1000-2000 样本</li>
+  <li><strong>时长</strong>：至少 7-14 天，避免 Novelty Effect</li>
+  <li><strong>决策</strong>：Primary 指标显著提升 + Guardrail 无退化 → 全量发布</li>
+</ol>
+</details>
+</div>
+
+<div class="card">
+<details>
+<summary>Q3：如何将 Agent 的 Token 成本降低 50%？</summary>
+<p class="mt-2"><strong>参考答案：</strong></p>
+<p>Agent 成本大头是 Input Token（每次 Tool Call 重传上下文）。组合拳：</p>
+<ol style="padding-left:20px;margin-top:8px">
+  <li><strong>Model Routing</strong>：70% 简单 query 走 mini 模型（成本降 90%）</li>
+  <li><strong>Context 压缩</strong>：Tool Result 只保留摘要，历史对话滚动摘要（Input 减 50%）</li>
+  <li><strong>Semantic Cache</strong>：FAQ 类 30% 命中率（等效降 30%）</li>
+  <li><strong>减少 Tool Call 次数</strong>：合并工具、预检索（5 次 → 3 次 = 降 40%）</li>
+  <li><strong>Prompt 精简</strong>：System Prompt 从 2000 → 200 tokens</li>
+</ol>
+<p class="mt-2">综合效果：0.6 × 0.5 × 0.7 × 0.6 ≈ <strong>12.6%</strong> 原始成本，即降约 87%。实际保守估计 50-60% 降本可达。</p>
+</details>
+</div>
+
+<h3>实战练习</h3>
+
+<div class="card card-green">
+<h3>练习 1：设计告警分析 Agent 的评估方案</h3>
+<p>你的团队刚上线一个告警分析 Agent（输入告警 JSON → 输出处置建议）。请设计完整的评估方案，包括：离线指标选择、Golden Dataset 构建计划、A/B 测试设计、成本监控。</p>
+<details>
+<summary>参考答案</summary>
+<p class="mt-2"><strong>离线指标：</strong></p>
+<ul style="padding-left:20px">
+  <li>Faithfulness ≥ 0.90（处置建议必须基于 Runbook，不能幻觉）</li>
+  <li>Answer Relevancy ≥ 0.85（建议与告警类型相关）</li>
+  <li>自定义：步骤完整性（是否包含「确认 → 止损 → 根因 → 修复」四步）</li>
+</ul>
+<p class="mt-2"><strong>Golden Dataset：</strong></p>
+<ul style="padding-left:20px">
+  <li>从生产日志采样 300 条真实告警</li>
+  <li>人工编写 50 条 edge case（OOM、网络分区、级联故障）</li>
+  <li>SRE 团队双人标注 ground truth 处置方案</li>
+  <li>Cohen's Kappa ≥ 0.7 后定版为 eval-v1.0</li>
+</ul>
+<p class="mt-2"><strong>A/B 测试：</strong></p>
+<ul style="padding-left:20px">
+  <li>Primary：SRE 采纳率（👍 反馈 / 总分析数）</li>
+  <li>Guardrail：P99 延迟 &lt; 30s，faithfulness 不下降</li>
+  <li>95/5 分流，跑 14 天，日活 ~200 告警 → 每组 ~1400 样本</li>
+</ul>
+<p class="mt-2"><strong>成本监控：</strong></p>
+<ul style="padding-left:20px">
+  <li>每次分析记录 input/output tokens，Dashboard 展示日均成本</li>
+  <li>告警 > $0.15/次 时触发 Review（正常应 ~$0.08-0.12）</li>
+</ul>
+</details>
+</div>
+
+<div class="card card-green">
+<h3>练习 2：成本优化方案设计</h3>
+<p>当前 Agent 每次分析平均消耗 35K input tokens + 2.5K output tokens（GPT-4o），日处理 800 次，月成本约 $2,600。请设计优化方案将月成本降至 $1,300 以下，且 faithfulness 不低于 0.85。</p>
+<details>
+<summary>参考答案</summary>
+<p class="mt-2"><strong>现状分析：</strong></p>
+<ul style="padding-left:20px">
+  <li>单次成本 ≈ $0.108，Input 占 92%</li>
+  <li>35K input 中：System Prompt ~2K，Runbook 全文 ~15K，Tool Results ~12K，历史 ~6K</li>
+</ul>
+<p class="mt-2"><strong>优化方案：</strong></p>
+<table>
+  <tr><th>措施</th><th>Input 节省</th><th>质量影响</th></tr>
+  <tr><td>Runbook 改 RAG 检索 top-3 片段（15K→3K）</td><td>-12K</td><td>无（更精准）</td></tr>
+  <tr><td>Tool Result 摘要压缩（12K→4K）</td><td>-8K</td><td>轻微，监控 faithfulness</td></tr>
+  <tr><td>简单告警路由到 GPT-4o-mini（40% 流量）</td><td>成本 -85% for 40%</td><td>仅简单告警，复杂仍用 4o</td></tr>
+  <tr><td>Semantic Cache（15% 命中率）</td><td>-15% 总请求</td><td>无（完全相同 query）</td></tr>
+</table>
+<p class="mt-2"><strong>预期效果：</strong></p>
+<ul style="padding-left:20px">
+  <li>优化后 Input：35K → ~12K（-66%）</li>
+  <li>40% 流量走 mini：等效再降 30%</li>
+  <li>Cache 15%：等效再降 15%</li>
+  <li>综合：$2,600 × 0.34 × 0.70 × 0.85 ≈ <strong>$530/月</strong>（远低于 $1,300 目标）</li>
+  <li>faithfulness：RAG 检索更精准，预期 ≥ 0.88</li>
+</ul>
+</details>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>学习路径建议</strong>：先在自己的 Agent 项目上建立 Golden Dataset（20 条即可起步）→ 接入 RAGAS 跑通离线评估 → 加 CI 回归门禁 → 再考虑 A/B 测试和成本优化。评估和成本是一体两面：没有评估的优化是盲目的，没有成本意识的评估是不可持续的。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['why','metrics','ab-test','dataset','versioning','cost-calc','optimization','practice'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

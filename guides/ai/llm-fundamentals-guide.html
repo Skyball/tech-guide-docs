@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM 基础原理指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#6366f1 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>LLM 基础原理指南</h1>
+  <p>面向 AI Agent 工程师的大语言模型核心知识<br>从 Transformer 到 Token 经济学，构建系统认知</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#transformer">Transformer</a>
+    <a href="#attention">Attention</a>
+    <a href="#tokenization">分词</a>
+    <a href="#decoding">解码策略</a>
+    <a href="#context">上下文窗口</a>
+    <a href="#models">架构对比</a>
+    <a href="#training">训练流程</a>
+    <a href="#embedding">Embedding</a>
+    <a href="#economics">Token 经济学</a>
+    <a href="#faq">面试高频</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. Transformer 架构全貌 ==================== -->
+<section id="transformer">
+<h2>Transformer 架构全貌</h2>
+
+<div class="card card-accent">
+  <p>2017 年 Google 论文 <strong>"Attention is All You Need"</strong> 提出 Transformer，彻底改变了 NLP 领域。它抛弃了 RNN/LSTM 的序列递归结构，完全依赖 <strong>Self-Attention</strong> 机制，成为 GPT、BERT、T5 等所有现代 LLM 的基石。</p>
+</div>
+
+<h3>为什么 Transformer 取代了 RNN/LSTM？</h3>
+<div class="vs">
+<div class="card">
+  <h3>RNN / LSTM <span class="tag tag-red">旧范式</span></h3>
+  <ul class="text-sm">
+    <li>按时间步 <strong>串行</strong> 处理，无法并行训练</li>
+    <li>长距离依赖通过隐状态传递，容易 <strong>梯度消失</strong></li>
+    <li>序列越长，信息衰减越严重</li>
+  </ul>
+</div>
+<div class="vs-divider">→</div>
+<div class="card">
+  <h3>Transformer <span class="tag tag-green">新范式</span></h3>
+  <ul class="text-sm">
+    <li>所有 token 位置 <strong>并行</strong> 计算 Attention</li>
+    <li>任意两个位置直接交互，<strong>路径长度 O(1)</strong></li>
+    <li>GPU 友好，训练效率大幅提升</li>
+  </ul>
+</div>
+</div>
+
+<h3>Encoder-Decoder 整体结构</h3>
+<div class="card">
+<pre><code><span class="cm"># Transformer 架构（简化示意）</span>
+<span class="cm"># 原始论文用于机器翻译：Encoder 理解源语言，Decoder 生成目标语言</span>
+
+<span class="st">输入序列</span> → [Embedding + Positional Encoding]
+                ↓
+         ┌─── Encoder ×N ───┐
+         │  Multi-Head Attn  │
+         │  Add &amp; Norm       │
+         │  Feed Forward     │
+         │  Add &amp; Norm       │
+         └───────────────────┘
+                ↓ (Cross-Attention)
+         ┌─── Decoder ×N ───┐
+         │  Masked Self-Attn │
+         │  Cross-Attention  │  ← 关注 Encoder 输出
+         │  Feed Forward     │
+         └───────────────────┘
+                ↓
+         Linear → Softmax → 输出概率</code></pre>
+</div>
+
+<h3>Self-Attention 逐步拆解</h3>
+<div class="card">
+<ol class="text-sm">
+  <li><strong>输入</strong>：每个 token 被映射为 Query(Q)、Key(K)、Value(V) 三个向量</li>
+  <li><strong>计算相关性</strong>：Q 与所有 K 做点积，得到 attention score</li>
+  <li><strong>归一化</strong>：除以 √d<sub>k</sub> 后做 Softmax，得到权重分布</li>
+  <li><strong>加权求和</strong>：用权重对 V 加权，得到该位置的输出表示</li>
+</ol>
+<p class="mt-2 text-sm">直觉类比：每个 token 在问「我应该关注句子中的哪些其他 token？」——Attention 权重就是答案。</p>
+</div>
+
+<h3>Multi-Head Attention（多头注意力）</h3>
+<div class="card">
+<p>单头 Attention 只能捕捉一种关系模式。Multi-Head 将 Q/K/V 拆成 <strong>h 个头</strong>，各自独立计算 Attention，最后拼接：</p>
+<pre><code><span class="cm"># 不同 head 可能学到不同模式：</span>
+Head 1: 语法依存关系（主语 → 谓语）
+Head 2: 指代消解（"它" → "服务器"）
+Head 3: 位置邻近关系
+Head 4: 语义相似性
+
+MultiHead(Q,K,V) = Concat(head₁, ..., headₕ) · W<sup>O</sup></code></pre>
+<p class="text-sm mt-2">典型配置：GPT-3 使用 96 个 head，每个 head 维度 128。</p>
+</div>
+
+<h3>Positional Encoding（位置编码）</h3>
+<div class="card card-green">
+<p>Attention 本身<strong>不包含位置信息</strong>——"猫追狗"和"狗追猫"在纯 Attention 下等价。因此必须注入位置信息：</p>
+<pre><code><span class="cm"># 原始 Transformer：正弦/余弦位置编码</span>
+PE(pos, 2i)   = sin(pos / 10000<sup>2i/d</sup>)
+PE(pos, 2i+1) = cos(pos / 10000<sup>2i/d</sup>)
+
+<span class="cm"># 最终输入 = Token Embedding + Positional Encoding</span>
+input = Embedding(token) + PE(position)</code></pre>
+<p class="text-sm mt-2">现代模型（GPT、LLaMA）多用 <strong>RoPE</strong> 或 <strong>ALiBi</strong>，详见「上下文窗口」章节。</p>
+</div>
+
+<h3>Layer Normalization + 残差连接</h3>
+<div class="grid-2">
+<div class="card">
+<h3>残差连接 (Residual)</h3>
+<pre><code>output = LayerNorm(x + Sublayer(x))</code></pre>
+<p class="text-sm">让梯度可以直接流过，解决深层网络训练困难的问题。Transformer 通常 12~96 层。</p>
+</div>
+<div class="card">
+<h3>Layer Norm</h3>
+<p class="text-sm">对每个 token 的向量做归一化（而非 Batch Norm），稳定训练。Post-Norm（原始）vs Pre-Norm（现代 LLM 更常用）。</p>
+</div>
+</div>
+
+<div class="tip">🤖 <strong>Agent 开发提示</strong>：理解 Transformer 结构有助于调试 Agent 行为——上下文过长时 Attention 分散、Layer 越深抽象程度越高。选模型时关注层数、head 数、hidden size 这些架构参数。</div>
+</section>
+
+<!-- ==================== 2. Attention 机制详解 ==================== -->
+<section id="attention">
+<h2>Attention 机制详解</h2>
+
+<div class="card card-accent">
+  <p>Attention 是 Transformer 的核心。理解 Q/K/V 三要素，就理解了 LLM 如何「阅读」和「关联」文本中的信息。</p>
+</div>
+
+<h3>Q/K/V 直觉类比：图书馆检索</h3>
+<div class="card">
+<table>
+<tr><th>概念</th><th>图书馆类比</th><th>数学含义</th></tr>
+<tr><td><strong>Query (Q)</strong></td><td>你的问题："关于分布式系统的书在哪？"</td><td>当前 token 想要查询什么信息</td></tr>
+<tr><td><strong>Key (K)</strong></td><td>每本书的标题/索引标签</td><td>每个 token 提供的「可被匹配」的特征</td></tr>
+<tr><td><strong>Value (V)</strong></td><td>书的实际内容</td><td>每个 token 携带的实际语义信息</td></tr>
+</table>
+<p class="mt-2 text-sm">检索过程：用 Q 与所有 K 计算相似度 → 得到权重 → 按权重从 V 中「借阅」信息。</p>
+</div>
+
+<h3>Attention Score 计算公式</h3>
+<div class="card">
+<pre><code>Attention(Q, K, V) = softmax( QK<sup>T</sup> / √d<sub>k</sub> ) · V
+
+<span class="cm"># 逐步拆解：</span>
+scores = Q @ K.T          <span class="cm"># 点积，shape: (seq_len, seq_len)</span>
+scores = scores / √d_k    <span class="cm"># 缩放，防止点积值过大</span>
+weights = softmax(scores) <span class="cm"># 归一化为概率分布，每行和为 1</span>
+output = weights @ V      <span class="cm"># 加权求和 Value</span></code></pre>
+</div>
+
+<h3>为什么要除以 √d<sub>k</sub>？</h3>
+<div class="card card-orange">
+<p>当维度 d<sub>k</sub> 较大时，Q·K 点积的方差约为 d<sub>k</sub>，数值会很大。Softmax 在大数值下梯度趋近于 0（<strong>梯度消失</strong>），训练不稳定。</p>
+<p class="mt-2">除以 √d<sub>k</sub> 将方差归一化到 1，使 Softmax 输入保持在合理范围。这是工程细节，但面试常考。</p>
+</div>
+
+<h3>Masked Attention（因果掩码）</h3>
+<div class="card">
+<p>在 <strong>Decoder（GPT 类模型）</strong> 生成时，每个 token 只能看到它之前的 token，不能「偷看未来」：</p>
+<pre><code><span class="cm"># Causal Mask：上三角矩阵设为 -∞</span>
+<span class="cm"># 位置 3 只能 attend 到位置 0,1,2</span>
+
+     t₀   t₁   t₂   t₃
+t₀ [  ✓    ✗    ✗    ✗  ]
+t₁ [  ✓    ✓    ✗    ✗  ]
+t₂ [  ✓    ✓    ✓    ✗  ]
+t₃ [  ✓    ✓    ✓    ✓  ]
+
+<span class="cm"># 实现：scores[i,j] = -inf if j > i</span></code></pre>
+<p class="text-sm mt-2">这保证了 <strong>自回归生成</strong> 的正确性——模型在预测第 n 个 token 时，不会利用第 n+1 个及之后的信息。</p>
+</div>
+
+<h3>Self-Attention vs Cross-Attention</h3>
+<div class="grid-2">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>Self-Attention <span class="tag tag-blue">自注意力</span></h3>
+<p class="text-sm">Q、K、V 都来自<strong>同一个序列</strong>。每个 token 关注同一序列中的其他 token。</p>
+<p class="text-sm mt-2">用途：GPT 理解上下文；BERT 双向编码。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3>Cross-Attention <span class="tag tag-purple">交叉注意力</span></h3>
+<p class="text-sm">Q 来自 Decoder，K/V 来自 <strong>Encoder 输出</strong>（不同序列）。</p>
+<p class="text-sm mt-2">用途：T5 翻译时 Decoder 关注源语言；多模态模型中文本关注图像特征。</p>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>Agent 场景</strong>：RAG 检索到的文档片段，在 Cross-Attention 架构（如 T5）中会作为 Encoder 输入；在纯 Decoder 模型（GPT）中则直接拼接到 Prompt 里，通过 Self-Attention 关联。</div>
+</div>
+</section>
+
+<!-- ==================== 3. Tokenization 分词 ==================== -->
+<section id="tokenization">
+<h2>Tokenization 分词</h2>
+
+<div class="card card-accent">
+  <p>LLM 不直接处理文字，而是处理 <strong>Token</strong>——整数 ID 序列。分词方式直接影响成本、上下文利用率和多语言支持能力。</p>
+</div>
+
+<h3>核心认知：Token ≠ Word</h3>
+<div class="card">
+<table>
+<tr><th>输入</th><th>Token 切分示例</th><th>说明</th></tr>
+<tr><td><code>unhappiness</code></td><td>["un", "happiness"]</td><td>英文常见词根拆分</td></tr>
+<tr><td><code>ChatGPT</code></td><td>["Chat", "G", "PT"]</td><td>专有名词被拆开</td></tr>
+<tr><td><code>你好世界</code></td><td>["你", "好", "世界"] 或 ["你好", "世界"]</td><td>取决于训练语料</td></tr>
+<tr><td><code>def foo():</code></td><td>["def", " foo", "():</code>"]</td><td>代码有特殊切分模式</td></tr>
+<tr><td><code>🎉🎊</code></td><td>可能 1~2 个 token</td><td>emoji 通常占独立 token</td></tr>
+</table>
+</div>
+
+<h3>BPE 算法逐步演示</h3>
+<div class="card">
+<p><strong>Byte Pair Encoding</strong>：从字符级开始，迭代合并最高频的相邻字符对。</p>
+<pre><code><span class="cm"># 初始词汇表（字符级）</span>
+语料: "low lower newest widest"
+词汇: {l, o, w, e, r, n, s, t, i, d}
+
+<span class="cm"># 迭代 1：最高频对 "e"+"s" → "es" (3次)</span>
+词汇: {..., es}
+
+<span class="cm"># 迭代 2：最高频对 "es"+"t" → "est" (3次)</span>
+词汇: {..., est}
+
+<span class="cm"># 迭代 3：最高频对 "l"+"o" → "lo" (2次)</span>
+词汇: {..., lo}
+
+<span class="cm"># ...重复直到词汇表达到目标大小（如 50K）</span>
+
+<span class="cm"># 最终编码 "lowest" → ["lo", "west"] 或 ["low", "est"]</span></code></pre>
+</div>
+
+<h3>三种主流分词方案对比</h3>
+<div class="card">
+<table>
+<tr><th>方案</th><th>代表模型</th><th>特点</th></tr>
+<tr><td><strong>BPE</strong></td><td>GPT-2/3/4, LLaMA</td><td>基于字节对合并，简单高效，英文为主</td></tr>
+<tr><td><strong>WordPiece</strong></td><td>BERT, DistilBERT</td><td>类似 BPE，用似然而非频率选择合并对；## 前缀标记子词</td></tr>
+<tr><td><strong>SentencePiece</strong></td><td>T5, LLaMA-2, Gemini</td><td>语言无关，直接处理 Unicode；无需预分词空格</td></tr>
+</table>
+</div>
+
+<h3>Token 数量估算经验法则</h3>
+<div class="grid-3">
+<div class="card text-center">
+<div class="bold" style="font-size:1.5rem">~4 字符</div>
+<div class="text-sm">1 英文 token</div>
+</div>
+<div class="card text-center">
+<div class="bold" style="font-size:1.5rem">~1.5 字符</div>
+<div class="text-sm">1 中文 token</div>
+</div>
+<div class="card text-center">
+<div class="bold" style="font-size:1.5rem">~750 词</div>
+<div class="text-sm">≈ 1000 tokens（英文）</div>
+</div>
+</div>
+
+<h3>tiktoken 实战</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> tiktoken
+
+<span class="cm"># 获取 GPT-4 使用的编码器</span>
+enc = tiktoken.encoding_for_model(<span class="st">"gpt-4o"</span>)
+
+text = <span class="st">"告警分析：Redis 连接池耗尽，当前活跃连接 200/200"</span>
+tokens = enc.encode(text)
+<span class="fn">print</span>(<span class="st">f"Token 数: </span>{<span class="fn">len</span>(tokens)}<span class="st">"</span>)          <span class="cm"># 约 20-25</span>
+<span class="fn">print</span>(<span class="st">f"Token IDs: </span>{tokens[:<span class="nu">10</span>]}<span class="st">..."</span>)
+<span class="fn">print</span>(<span class="st">f"解码: </span>{enc.decode(tokens[:<span class="nu">5</span>])}<span class="st">"</span>)
+
+<span class="cm"># Agent 开发：发送前估算 token 成本</span>
+<span class="kw">def</span> <span class="fn">estimate_tokens</span>(text: <span class="kw">str</span>, model: <span class="kw">str</span> = <span class="st">"gpt-4o"</span>) -> <span class="kw">int</span>:
+    <span class="kw">return</span> <span class="fn">len</span>(tiktoken.encoding_for_model(model).encode(text))</code></pre>
+</div>
+
+<div class="tip">🤖 <strong>Agent 开发提示</strong>：中文 Prompt 的 token 效率低于英文（同样语义中文 token 数约为英文 2 倍）。设计 System Prompt 时优先精简；日志/代码片段考虑预压缩后再注入上下文。</div>
+</section>
+
+<!-- ==================== 4. 生成过程：解码策略 ==================== -->
+<section id="decoding">
+<h2>生成过程：解码策略</h2>
+
+<div class="card card-accent">
+  <p>LLM 生成文本的本质是<strong>逐 token 预测</strong>——每次输出一个 token 的概率分布，采样一个 token 追加到序列，再预测下一个。解码策略决定了「如何从分布中选 token」。</p>
+</div>
+
+<h3>自回归生成循环</h3>
+<div class="card">
+<pre><code><span class="cm"># 伪代码：自回归生成</span>
+prompt_tokens = tokenize(<span class="st">"分析以下告警：CPU 使用率 95%"</span>)
+generated = prompt_tokens.copy()
+
+<span class="kw">while</span> <span class="kw">not</span> is_stop(generated):
+    logits = model(generated)           <span class="cm"># 模型输出每个 token 的原始分数</span>
+    probs = apply_decoding(logits)      <span class="cm"># 应用 temperature / top_p 等</span>
+    next_token = sample(probs)          <span class="cm"># 从分布中采样</span>
+    generated.append(next_token)
+
+response = detokenize(generated[<span class="fn">len</span>(prompt_tokens):])</code></pre>
+</div>
+
+<h3>Temperature（温度）</h3>
+<div class="card">
+<p>控制概率分布的「尖锐程度」。原始 logits 为 z，温度为 T：</p>
+<pre><code>p<sub>i</sub> = exp(z<sub>i</sub> / T) / Σ exp(z<sub>j</sub> / T)
+
+T → 0   : 分布极尖，几乎总是选最高概率 token（确定性）
+T = 1   : 原始分布，不做修改
+T → ∞   : 分布趋于均匀，输出随机</code></pre>
+<div class="grid-2 mt-2">
+<div class="card text-sm">
+<strong>T = 0</strong>：贪婪解码，适合代码生成、数据提取、结构化输出
+</div>
+<div class="card text-sm">
+<strong>T = 0.7~1.0</strong>：适度随机，适合对话、创意写作
+</div>
+</div>
+</div>
+
+<h3>Top-K 与 Top-P（Nucleus）采样</h3>
+<div class="grid-2">
+<div class="card">
+<h3>Top-K</h3>
+<p class="text-sm">只保留概率最高的 K 个 token，其余置零后重新归一化。</p>
+<pre><code><span class="cm"># K=50：只从 top 50 候选中选</span>
+<span class="cm"># 问题：分布平坦时 K=50 仍太宽；尖锐时 K=50 可能多余</span></code></pre>
+</div>
+<div class="card">
+<h3>Top-P (Nucleus)</h3>
+<p class="text-sm">按概率从高到低累加，取累积概率 ≥ P 的最小 token 集合。</p>
+<pre><code><span class="cm"># P=0.9：保留覆盖 90% 概率质量的 token</span>
+<span class="cm"># 自适应：尖锐分布 → 少 token；平坦 → 多 token</span></code></pre>
+</div>
+</div>
+
+<h3>Beam Search</h3>
+<div class="card card-orange">
+<p>维护 B 条最优候选路径，每步扩展所有候选，保留总分最高的 B 条。适合<strong>翻译、摘要</strong>等需要全局最优的任务，但：</p>
+<ul class="text-sm">
+  <li>输出多样性低，容易重复</li>
+  <li>计算成本是贪婪解码的 B 倍</li>
+  <li>现代 Chat 模型很少使用，Top-P 更常用</li>
+</ul>
+</div>
+
+<h3>Temperature + Top-P 如何协同</h3>
+<div class="card">
+<pre><code><span class="cm"># 典型处理顺序：</span>
+logits → ÷ temperature → softmax → top_p 截断 → 采样
+
+<span class="cm"># 低 temperature 使分布尖锐 → top_p 截断后候选更少 → 更确定</span>
+<span class="cm"># 高 temperature 使分布平坦 → top_p 保留更多候选 → 更随机</span></code></pre>
+</div>
+
+<h3>不同任务的参数推荐</h3>
+<div class="card">
+<table>
+<tr><th>任务类型</th><th>Temperature</th><th>Top-P</th><th>说明</th></tr>
+<tr><td>代码生成</td><td>0 ~ 0.2</td><td>—</td><td>确定性优先，语法必须正确</td></tr>
+<tr><td>告警分析 / QA</td><td>0 ~ 0.3</td><td>0.9</td><td>事实准确，少量措辞变化可接受</td></tr>
+<tr><td>Agent 工具调用</td><td>0</td><td>—</td><td>JSON/函数参数必须精确</td></tr>
+<tr><td>创意写作</td><td>0.8 ~ 1.2</td><td>0.95</td><td>多样性优先</td></tr>
+<tr><td>头脑风暴</td><td>1.0 ~ 1.5</td><td>0.95</td><td>高随机性，探索更多可能</td></tr>
+</table>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>Agent 最佳实践</strong>：工具调用、结构化输出用 <code>temperature=0</code> + JSON mode；用户对话用 <code>temperature=0.7</code>；后台批处理分析用 <code>temperature=0.2, top_p=0.9</code>。永远不要用高 temperature 做需要精确格式的输出。</div>
+</div>
+</section>
+
+<!-- ==================== 5. 上下文窗口与位置编码 ==================== -->
+<section id="context">
+<h2>上下文窗口与位置编码</h2>
+
+<div class="card card-accent">
+  <p>上下文窗口（Context Window）决定了模型一次能「看到」多少 token。这是 Agent 系统设计中最重要的约束之一。</p>
+</div>
+
+<h3>常见上下文窗口大小</h3>
+<div class="card">
+<table>
+<tr><th>模型</th><th>上下文窗口</th><th>约等于</th></tr>
+<tr><td>GPT-3.5</td><td>4K / 16K</td><td>~3K / ~12K 英文词</td></tr>
+<tr><td>GPT-4o</td><td>128K</td><td>~96K 英文词 / ~200 页文档</td></tr>
+<tr><td>Claude 3.5</td><td>200K</td><td>~150K 英文词</td></tr>
+<tr><td>Gemini 1.5 Pro</td><td>1M ~ 2M</td><td>~750K 英文词 / 整本书</td></tr>
+<tr><td>LLaMA 3 8B</td><td>8K (原生) / 128K (扩展)</td><td>取决于 RoPE 扩展</td></tr>
+</table>
+</div>
+
+<h3>超出上下文会发生什么？</h3>
+<div class="card card-orange">
+<ul>
+  <li><strong>硬截断</strong>：API 直接拒绝或截掉超出部分（最常见）</li>
+  <li><strong>静默截断</strong>：截掉开头或结尾，模型不知道丢失了信息 → <strong>回答质量骤降</strong></li>
+  <li><strong>Lost in the Middle</strong>：即使没截断，模型对上下文<strong>中间部分</strong>的召回率显著低于首尾</li>
+</ul>
+</div>
+
+<h3>为什么更长上下文 = 更高成本？</h3>
+<div class="card">
+<pre><code><span class="cm"># Self-Attention 计算复杂度</span>
+Time:  O(n² · d)    <span class="cm"># n = 序列长度, d = 隐藏维度</span>
+Space: O(n²)         <span class="cm"># Attention 矩阵存储</span>
+
+<span class="cm"># 上下文从 4K → 128K（32倍）</span>
+<span class="cm"># 计算量增长 32² = 1024 倍！</span>
+
+<span class="cm"># 这就是为什么长上下文 API 按 token 定价且价格更高</span></code></pre>
+</div>
+
+<h3>RoPE（Rotary Position Embedding）基础</h3>
+<div class="card card-green">
+<p>现代 LLM（LLaMA、GPT-NeoX、Qwen）普遍使用 RoPE 替代原始正弦位置编码：</p>
+<ul class="text-sm">
+  <li>通过<strong>旋转矩阵</strong>将位置信息编码到 Q/K 中</li>
+  <li>Attention score 自然包含<strong>相对位置</strong>信息</li>
+  <li>支持<strong>外推</strong>：训练 4K 的模型可通过插值扩展到 32K/128K</li>
+  <li>长距离衰减：距离越远，Attention 权重自然降低</li>
+</ul>
+<pre><code><span class="cm"># RoPE 直觉：把 Q/K 向量在复平面上旋转 θ·position 角度</span>
+<span class="cm"># 两个位置的相对角度 = 相对距离的函数</span>
+<span class="cm"># → Attention(Q_m, K_n) 只依赖 (m - n)，即相对位置</span></code></pre>
+</div>
+
+<h3>上下文压缩策略</h3>
+<div class="grid-2">
+<div class="card">
+<h3>检索增强 (RAG)</h3>
+<p class="text-sm">不塞全部文档，只检索相关片段注入 Prompt。Agent 开发最常用方案。</p>
+</div>
+<div class="card">
+<h3>摘要压缩</h3>
+<p class="text-sm">用 LLM 对历史对话/长文档做摘要，保留关键信息。适合多轮对话 Agent。</p>
+</div>
+<div class="card">
+<h3>滑动窗口</h3>
+<p class="text-sm">只保留最近 N 轮对话，丢弃更早历史。简单但可能丢失重要上下文。</p>
+</div>
+<div class="card">
+<h3>结构化提取</h3>
+<p class="text-sm">从长文本中提取结构化字段（JSON），只传必要字段给模型。</p>
+</div>
+</div>
+
+<div class="tip">🤖 <strong>Agent 开发提示</strong>：设计 Agent 时永远假设上下文有限。把 System Prompt + Tool Schema + 历史对话 + RAG 检索结果的总 token 数控制在窗口的 70% 以内，留余量给模型输出。</div>
+</section>
+
+<!-- ==================== 6. 模型架构对比 ==================== -->
+<section id="models">
+<h2>模型架构对比</h2>
+
+<div class="card card-accent">
+  <p>不同架构适合不同任务。理解 GPT vs BERT vs T5 的设计差异，帮助你选择合适的模型和微调策略。</p>
+</div>
+
+<h3>三大架构范式</h3>
+<div class="card">
+<table>
+<tr><th>架构</th><th>结构</th><th>Attention</th><th>代表模型</th><th>擅长</th></tr>
+<tr><td><strong>GPT</strong> <span class="tag tag-blue">Decoder-only</span></td><td>仅 Decoder</td><td>Causal (单向)</td><td>GPT-4, LLaMA, Claude</td><td>文本生成、对话、代码</td></tr>
+<tr><td><strong>BERT</strong> <span class="tag tag-green">Encoder-only</span></td><td>仅 Encoder</td><td>双向</td><td>BERT, RoBERTa</td><td>分类、NER、语义匹配</td></tr>
+<tr><td><strong>T5</strong> <span class="tag tag-purple">Encoder-Decoder</span></td><td>Encoder + Decoder</td><td>双向 + Causal</td><td>T5, BART, FLAN-T5</td><td>翻译、摘要、QA</td></tr>
+</table>
+</div>
+
+<h3>为什么 Decoder-only 在生成任务中胜出？</h3>
+<div class="card">
+<ol class="text-sm">
+  <li><strong>统一框架</strong>：预训练（next token prediction）和下游任务（生成）形式一致，无需 task-specific head</li>
+  <li><strong>Scaling Law</strong>：纯 Decoder 架构在大规模数据+参数下展现更强的涌现能力</li>
+  <li><strong>In-Context Learning</strong>：Decoder-only 天然支持 few-shot prompting，无需微调</li>
+  <li><strong>工程简单</strong>：推理只需维护 KV Cache，一条生成路径</li>
+</ol>
+</div>
+
+<h3>模型规模术语</h3>
+<div class="grid-3">
+<div class="card text-center">
+<div class="bold" style="font-size:1.3rem">7B</div>
+<div class="text-sm">轻量部署<br>单卡可跑</div>
+</div>
+<div class="card text-center">
+<div class="bold" style="font-size:1.3rem">13B~34B</div>
+<div class="text-sm">平衡性能<br>2~4 卡推理</div>
+</div>
+<div class="card text-center">
+<div class="bold" style="font-size:1.3rem">70B+</div>
+<div class="text-sm">顶级能力<br>多卡 / 量化</div>
+</div>
+</div>
+
+<h3>参数量 vs 质量权衡</h3>
+<div class="card">
+<table>
+<tr><th>参数量</th><th>典型能力</th><th>推理成本</th><th>Agent 适用场景</th></tr>
+<tr><td>7B</td><td>基础对话、简单分类</td><td>低</td><td>边缘部署、高并发简单任务</td></tr>
+<tr><td>13B~34B</td><td>中等推理、代码辅助</td><td>中</td><td>内部工具、中等复杂度 Agent</td></tr>
+<tr><td>70B</td><td>复杂推理、多步规划</td><td>高</td><td>核心 Agent、复杂分析</td></tr>
+<tr><td>405B+ (GPT-4 级)</td><td>顶级推理、长链思考</td><td>很高</td><td>关键决策、复杂 Agent 编排</td></tr>
+</table>
+</div>
+
+<h3>Mixture of Experts (MoE)</h3>
+<div class="card card-green">
+<p>MoE 不增加推理计算量的情况下扩大模型容量：每层有 N 个「专家」FFN，但每个 token 只激活 Top-K 个。</p>
+<pre><code><span class="cm"># MoE 层工作流程</span>
+input → Router(gate) → 选择 Top-2 专家
+                     → Expert_3(input) × w₃
+                     → Expert_7(input) × w₇
+                     → 加权合并 → output
+
+<span class="cm"># 示例：Mixtral 8×7B</span>
+<span class="cm"># 总参数 47B，但每个 token 只激活 2 个专家 ≈ 13B 计算量</span>
+<span class="cm"># → 大模型容量 + 小模型推理速度</span></code></pre>
+<table class="mt-2">
+<tr><th>模型</th><th>总参数</th><th>激活参数</th><th>专家数</th></tr>
+<tr><td>Mixtral 8×7B</td><td>47B</td><td>~13B</td><td>8, Top-2</td></tr>
+<tr><td>DeepSeek-V2</td><td>236B</td><td>~21B</td><td>160+, Top-6</td></tr>
+<tr><td>Switch Transformer</td><td>1.6T</td><td>~390B</td><td>2048, Top-1</td></tr>
+</table>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>Agent 选型建议</strong>：简单路由/分类用 7B；工具调用 Agent 至少 13B；复杂多步推理用 70B 或 GPT-4 级 API。MoE 模型（Mixtral）是性价比之选——47B 容量但 13B 推理成本。</div>
+</div>
+</section>
+
+<!-- ==================== 7. 训练流程概览 ==================== -->
+<section id="training">
+<h2>训练流程概览</h2>
+
+<div class="card card-accent">
+  <p>现代 LLM 的训练是一个<strong>三阶段流水线</strong>。作为 Agent 工程师，你几乎从不需要从头训练，但需要理解每个阶段做了什么，以便做出正确的技术选型。</p>
+</div>
+
+<h3>三阶段训练流水线</h3>
+<div class="card">
+<pre><code><span class="cm"># Stage 1: Pre-training（预训练）</span>
+<span class="cm"># 数据：互联网文本（TB 级）</span>
+<span class="cm"># 目标：Next Token Prediction</span>
+<span class="cm"># 产出：Base Model（会续写，但不会对话）</span>
+        ↓
+<span class="cm"># Stage 2: SFT（Supervised Fine-Tuning，监督微调）</span>
+<span class="cm"># 数据：人工标注的 instruction-response 对</span>
+<span class="cm"># 目标：学会遵循指令、对话格式</span>
+<span class="cm"># 产出：Chat Model（能对话，但可能不安全/不准确）</span>
+        ↓
+<span class="cm"># Stage 3: RLHF / DPO（对齐）</span>
+<span class="cm"># 数据：人类偏好排序 / 正例-负例对</span>
+<span class="cm"># 目标：输出更有帮助、更安全、更诚实</span>
+<span class="cm"># 产出：Aligned Model（ChatGPT、Claude 就是这个）</span></code></pre>
+</div>
+
+<h3>每个阶段教会模型什么？</h3>
+<div class="grid-3">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>Pre-training</h3>
+<ul class="text-sm">
+  <li>语言规律、世界知识</li>
+  <li>代码语法、数学模式</li>
+  <li>推理链的基础能力</li>
+</ul>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>SFT</h3>
+<ul class="text-sm">
+  <li>理解用户意图</li>
+  <li>遵循指令格式</li>
+  <li>生成结构化输出</li>
+</ul>
+</div>
+<div class="card" style="border-top:3px solid var(--purple)">
+<h3>RLHF / DPO</h3>
+<ul class="text-sm">
+  <li>拒绝有害请求</li>
+  <li>承认不确定性</li>
+  <li>偏好简洁/详细的平衡</li>
+</ul>
+</div>
+</div>
+
+<h3>RLHF vs DPO</h3>
+<div class="card">
+<table>
+<tr><th>方法</th><th>流程</th><th>优缺点</th></tr>
+<tr><td><strong>RLHF</strong></td><td>训练 Reward Model → 用 PPO 强化学习优化</td><td>效果好但复杂：需 Reward Model、PPO 不稳定、训练成本高</td></tr>
+<tr><td><strong>DPO</strong></td><td>直接用偏好对 (chosen, rejected) 优化策略</td><td>简单稳定：无需 Reward Model，效果接近 RLHF</td></tr>
+</table>
+</div>
+
+<h3>技术选型决策树</h3>
+<div class="card card-green">
+<pre><code>你的需求是什么？
+│
+├─ 通用问答 / 对话 → <span class="bold">Prompting</span>（零成本，最常用）
+│   └─ 需要最新/私有知识 → + <span class="bold">RAG</span>
+│
+├─ 特定领域术语/风格 → <span class="bold">Fine-tuning</span>（SFT/LoRA）
+│   └─ 例：医疗术语、公司代码风格、特定 JSON 格式
+│
+├─ 需要实时外部数据 → <span class="bold">RAG</span>（检索 + Prompt）
+│   └─ 例：告警分析查日志、客服查知识库
+│
+└─ 需要特定行为模式 → <span class="bold">Fine-tuning + RLHF/DPO</span>
+    └─ 例：严格遵循 SOP、特定输出格式</code></pre>
+</div>
+
+<h3>为什么通常不需要从头训练？</h3>
+<div class="card">
+<ul class="text-sm">
+  <li>Pre-training 需要 <strong>$1M~$100M</strong> 算力成本（GPT-4 级别）</li>
+  <li>需要 <strong>TB 级</strong>高质量清洗数据</li>
+  <li>需要大规模 GPU 集群和分布式训练工程能力</li>
+  <li>开源 Base Model（LLaMA、Qwen）+ LoRA 微调即可满足 95% 的 Agent 需求</li>
+</ul>
+</div>
+
+<div class="tip">🤖 <strong>Agent 开发提示</strong>：90% 的 Agent 场景用 Prompting + RAG 就够了。只有当你需要模型稳定输出特定格式（如告警分析 SOP）、或使用大量领域术语时，才考虑 LoRA 微调。永远优先考虑 Prompt 工程。</div>
+</section>
+
+<!-- ==================== 8. Embedding 与向量空间 ==================== -->
+<section id="embedding">
+<h2>Embedding 与向量空间</h2>
+
+<div class="card card-accent">
+  <p>Embedding 是 LLM 世界中的「通用语言」——将文本映射到高维向量空间，使语义相似的文本距离相近。RAG、语义搜索、聚类都依赖 Embedding。</p>
+</div>
+
+<h3>什么是 Embedding？</h3>
+<div class="card">
+<p>Embedding 是一个<strong>稠密浮点向量</strong>，编码了文本的语义信息：</p>
+<pre><code><span class="cm"># 文本 → 向量</span>
+<span class="st">"Redis 连接超时"</span>  → [0.12, -0.34, 0.56, ..., 0.08]  <span class="cm"># 1536 维</span>
+<span class="st">"Redis connection timeout"</span> → [0.11, -0.33, 0.55, ..., 0.09]  <span class="cm"># 非常接近！</span>
+<span class="st">"今天天气真好"</span>    → [-0.45, 0.78, -0.12, ..., 0.33]  <span class="cm"># 距离很远</span></code></pre>
+</div>
+
+<h3>Word2Vec 直觉</h3>
+<div class="card">
+<p>Embedding 概念的鼻祖。核心思想：<strong>上下文相似的词，向量应该相近</strong>。</p>
+<pre><code><span class="cm"># 经典例子：向量运算</span>
+vec("King") - vec("Man") + vec("Woman") ≈ vec("Queen")
+
+<span class="cm"># 训练方式：</span>
+<span class="cm"># CBOW: 用上下文预测中心词</span>
+<span class="cm"># Skip-gram: 用中心词预测上下文</span></code></pre>
+<p class="text-sm mt-2">Word2Vec 是词级别 embedding。现代 LLM 使用<strong>上下文相关</strong>的 embedding——同一个词在不同句子中向量不同（因为 Self-Attention）。</p>
+</div>
+
+<h3>Sentence Embedding</h3>
+<div class="card">
+<p>将整个句子/段落映射为一个固定长度向量，用于语义搜索和 RAG 检索：</p>
+<pre><code><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+
+client = OpenAI()
+response = client.embeddings.create(
+    model=<span class="st">"text-embedding-3-small"</span>,
+    input=<span class="st">"Redis 连接池耗尽导致服务不可用"</span>
+)
+vector = response.data[<span class="nu">0</span>].embedding  <span class="cm"># 1536 维浮点列表</span>
+<span class="fn">print</span>(<span class="st">f"维度: </span>{<span class="fn">len</span>(vector)}<span class="st">"</span>)</code></pre>
+</div>
+
+<h3>为什么 Cosine Similarity 有效？</h3>
+<div class="card">
+<pre><code>cosine_sim(A, B) = (A · B) / (||A|| × ||B||)
+
+<span class="cm"># 值域 [-1, 1]：</span>
+<span class="cm"># 1.0  = 完全相同方向（语义相同）</span>
+<span class="cm"># 0.0  = 正交（无关）</span>
+<span class="cm"># -1.0 = 完全相反</span>
+
+<span class="cm"># 为什么不用欧氏距离？</span>
+<span class="cm"># Embedding 向量的绝对长度不携带语义信息</span>
+<span class="cm"># Cosine 只关注方向（语义），忽略长度（文本长短）</span></code></pre>
+</div>
+
+<h3>Embedding 维度选择</h3>
+<div class="card">
+<table>
+<tr><th>维度</th><th>代表模型</th><th>特点</th></tr>
+<tr><td>384</td><td>all-MiniLM-L6-v2</td><td>轻量快速，适合本地部署</td></tr>
+<tr><td>768</td><td>BERT-base, BGE-base</td><td>平衡性能与成本</td></tr>
+<tr><td>1024</td><td>BGE-large, GTE-large</td><td>高精度检索</td></tr>
+<tr><td>1536</td><td>text-embedding-3-small</td><td>OpenAI 默认，API 调用</td></tr>
+<tr><td>3072</td><td>text-embedding-3-large</td><td>最高精度，成本 2 倍</td></tr>
+</table>
+<p class="text-sm mt-2">维度越高 → 语义区分能力越强 → 存储/计算成本越高。Agent RAG 场景 768~1536 维通常足够。</p>
+</div>
+
+<h3>主流 Embedding 模型</h3>
+<div class="card">
+<table>
+<tr><th>模型</th><th>提供商</th><th>维度</th><th>特点</th></tr>
+<tr><td>text-embedding-3-small/large</td><td>OpenAI</td><td>1536/3072</td><td>API 调用，多语言，MTEB 排名靠前</td></tr>
+<tr><td>BGE-M3</td><td>BAAI</td><td>1024</td><td>开源，支持 dense+sparse+multi-vector</td></tr>
+<tr><td>GTE-Qwen2</td><td>Alibaba</td><td>1536</td><td>中文表现优秀</td></tr>
+<tr><td>all-MiniLM-L6-v2</td><td>Sentence-Transformers</td><td>384</td><td>极轻量，本地 CPU 可跑</td></tr>
+</table>
+</div>
+
+<h3>RAG 中的 Embedding 流程</h3>
+<div class="card card-green">
+<pre><code><span class="cm"># 离线：文档入库</span>
+documents = load_docs(<span class="st">"告警处理 SOP/"</span>)
+chunks = split_text(documents, chunk_size=<span class="nu">512</span>)
+embeddings = embed_model.encode(chunks)
+vector_db.upsert(chunks, embeddings)
+
+<span class="cm"># 在线：检索</span>
+query = <span class="st">"Redis 连接池满了怎么办？"</span>
+query_vec = embed_model.encode(query)
+results = vector_db.search(query_vec, top_k=<span class="nu">5</span>)
+<span class="cm"># → 返回最相关的 5 个文档片段</span>
+<span class="cm"># → 注入 Prompt 给 LLM 生成回答</span></code></pre>
+</div>
+
+<div class="tip">🤖 <strong>Agent 开发提示</strong>：Embedding 质量直接决定 RAG 召回率。中文场景优先选 BGE/GTE；多语言用 OpenAI embedding；本地部署用 MiniLM。Chunk 大小建议 256~512 token，overlap 50~100 token。</div>
+</section>
+
+<!-- ==================== 9. Token 经济学 ==================== -->
+<section id="economics">
+<h2>Token 经济学</h2>
+
+<div class="card card-accent">
+  <p>Token 是 LLM 服务的<strong>计费单位</strong>。作为 Agent 工程师，理解 Token 经济学是控制成本和设计高效系统的必修课。</p>
+</div>
+
+<h3>Input vs Output Token 定价</h3>
+<div class="card">
+<table>
+<tr><th>模型</th><th>Input ($/1M tokens)</th><th>Output ($/1M tokens)</th><th>Output/Input 倍率</th></tr>
+<tr><td>GPT-4o</td><td>$2.50</td><td>$10.00</td><td>4×</td></tr>
+<tr><td>GPT-4o-mini</td><td>$0.15</td><td>$0.60</td><td>4×</td></tr>
+<tr><td>Claude 3.5 Sonnet</td><td>$3.00</td><td>$15.00</td><td>5×</td></tr>
+<tr><td>Claude 3.5 Haiku</td><td>$0.80</td><td>$4.00</td><td>5×</td></tr>
+<tr><td>text-embedding-3-small</td><td>$0.02</td><td>—</td><td>—</td></tr>
+</table>
+<p class="text-sm mt-2">Output token 通常比 Input 贵 3~5 倍——因为生成需要自回归多次前向传播。</p>
+</div>
+
+<h3>成本估算示例</h3>
+<div class="card">
+<pre><code><span class="cm"># 场景：告警分析 Agent，每次分析</span>
+<span class="cm"># System Prompt: 2000 tokens</span>
+<span class="cm"># RAG 检索结果: 3000 tokens</span>
+<span class="cm"># 告警原文: 500 tokens</span>
+<span class="cm"># 模型输出: 800 tokens</span>
+<span class="cm"># 总计 Input: 5500, Output: 800</span>
+
+<span class="cm"># GPT-4o 单次成本：</span>
+input_cost  = <span class="nu">5500</span> / <span class="nu">1_000_000</span> * <span class="nu">2.50</span>  = $<span class="nu">0.01375</span>
+output_cost = <span class="nu">800</span>  / <span class="nu">1_000_000</span> * <span class="nu">10.00</span> = $<span class="nu">0.008</span>
+total       = $<span class="nu">0.022</span>  <span class="cm"># 约 2 分钱/次</span>
+
+<span class="cm"># 每天 1000 次告警 → $22/天 → $660/月</span>
+<span class="cm"># 换成 GPT-4o-mini → $0.001/次 → $30/月</span></code></pre>
+</div>
+
+<h3>Token 预算控制策略</h3>
+<div class="grid-2">
+<div class="card">
+<h3>输入端控制</h3>
+<ul class="text-sm">
+  <li>精简 System Prompt，去掉冗余示例</li>
+  <li>RAG 检索 top_k 从 10 降到 3~5</li>
+  <li>对话历史只保留最近 N 轮</li>
+  <li>长文档预摘要再注入</li>
+</ul>
+</div>
+<div class="card">
+<h3>输出端控制</h3>
+<ul class="text-sm">
+  <li>设置 <code>max_tokens</code> 上限</li>
+  <li>Prompt 中要求「简洁回答」</li>
+  <li>结构化输出比自由文本更短</li>
+  <li>流式输出 + 早停检测</li>
+</ul>
+</div>
+</div>
+
+<h3>Prompt 压缩技术</h3>
+<div class="card">
+<table>
+<tr><th>技术</th><th>原理</th><th>压缩率</th></tr>
+<tr><td>LLMLingua</td><td>用小模型评估 token 重要性，删除低重要性 token</td><td>2~5×</td></tr>
+<tr><td>摘要替换</td><td>用 LLM 对长文本做摘要，保留关键信息</td><td>3~10×</td></tr>
+<tr><td>结构化提取</td><td>提取 JSON 字段，丢弃原文</td><td>5~20×</td></tr>
+<tr><td>Prompt 模板化</td><td>固定模板 + 变量，避免重复描述</td><td>1.5~2×</td></tr>
+</table>
+</div>
+
+<h3>缓存策略</h3>
+<div class="card card-green">
+<pre><code><span class="cm"># 1. Prompt Caching（OpenAI/Anthropic 支持）</span>
+<span class="cm"># 相同的 System Prompt 前缀会被缓存，后续请求 Input 费用降低 50~90%</span>
+<span class="cm"># → 把固定的 System Prompt 放在最前面</span>
+
+<span class="cm"># 2. Semantic Caching（语义缓存）</span>
+<span class="cm"># 相似问题直接返回缓存答案，跳过 LLM 调用</span>
+<span class="kw">from</span> semantic_cache <span class="kw">import</span> SemanticCache
+
+cache = SemanticCache(threshold=<span class="nu">0.95</span>)  <span class="cm"># 相似度 > 0.95 命中</span>
+result = cache.get(query_embedding)
+<span class="kw">if</span> result <span class="kw">is None</span>:
+    result = llm.generate(query)
+    cache.set(query_embedding, result)
+
+<span class="cm"># 3. 精确缓存</span>
+<span class="cm"># 相同 hash 的输入 → 直接返回，适合批处理场景</span></code></pre>
+</div>
+
+<h3>Model Routing（模型路由）</h3>
+<div class="card">
+<p>不是所有请求都需要最强模型。用<strong>小模型做路由/简单任务，大模型做复杂推理</strong>：</p>
+<pre><code><span class="cm"># 路由策略示例</span>
+<span class="kw">def</span> <span class="fn">route_request</span>(query: <span class="kw">str</span>) -> <span class="kw">str</span>:
+    complexity = classifier.predict(query)  <span class="cm"># 用小模型/规则分类</span>
+    <span class="kw">if</span> complexity == <span class="st">"simple"</span>:
+        <span class="kw">return</span> call_llm(<span class="st">"gpt-4o-mini"</span>, query)   <span class="cm"># $0.001/次</span>
+    <span class="kw">elif</span> complexity == <span class="st">"medium"</span>:
+        <span class="kw">return</span> call_llm(<span class="st">"gpt-4o"</span>, query)       <span class="cm"># $0.02/次</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> call_llm(<span class="st">"gpt-4o"</span>, query, think=<span class="kw">True</span>)  <span class="cm"># 复杂推理</span>
+
+<span class="cm"># 典型路由：</span>
+<span class="cm"># FAQ/分类/格式化 → mini (80% 流量)</span>
+<span class="cm"># 分析/推理/代码 → 4o (15% 流量)</span>
+<span class="cm"># 多步 Agent 编排 → 4o + 多次调用 (5% 流量)</span></code></pre>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">💰</div>
+<div><strong>成本优化公式</strong>：总成本 = 请求数 × (Input tokens × Input 单价 + Output tokens × Output 单价)。优化优先级：① 减少请求次数（缓存/路由）→ ② 减少 Input tokens（压缩/RAG 精选）→ ③ 减少 Output tokens（max_tokens/结构化）→ ④ 降低模型单价（路由到 mini）。</div>
+</div>
+</section>
+
+<!-- ==================== 10. 面试高频题 ==================== -->
+<section id="faq">
+<h2>面试高频题</h2>
+
+<div class="card card-accent">
+  <p>以下 8 道是 AI Agent 工程师面试中最常被问到的 LLM 基础题。点击展开查看参考答案。</p>
+</div>
+
+<div class="card">
+<details>
+<summary>Transformer 为什么比 RNN 好？</summary>
+<div class="mt-2">
+<p><strong>三个核心优势：</strong></p>
+<ol class="text-sm">
+  <li><strong>并行计算</strong>：RNN 必须按时间步串行计算 h<sub>t</sub> = f(h<sub>t-1</sub>, x<sub>t</sub>)，Transformer 所有位置同时计算 Attention，训练速度提升 10~100 倍</li>
+  <li><strong>长距离依赖</strong>：RNN 中相距 100 步的两个 token 需经过 100 次隐状态传递，梯度消失/信息衰减严重。Transformer 任意两位置直接 Attention，路径长度 O(1)</li>
+  <li><strong>可扩展性</strong>：Transformer 完美适配 GPU 并行 + Scaling Law，参数从 100M 扩展到 1T+ 仍有效。RNN 在大规模下无明显收益</li>
+</ol>
+</div>
+</details>
+
+<details>
+<summary>Attention 的计算复杂度是多少？</summary>
+<div class="mt-2">
+<pre><code>Time:  O(n² · d)
+Space: O(n²)
+
+<span class="cm"># n = 序列长度, d = 隐藏维度</span>
+<span class="cm"># QK^T 矩阵: n × n</span>
+<span class="cm"># 每个 head 都要算一次</span>
+<span class="cm"># Multi-Head: O(h · n² · d/h) = O(n² · d)</span>
+
+<span class="cm"># 优化方向：</span>
+<span class="cm"># Flash Attention: O(n²) 时间但 O(n) 显存（分块计算）</span>
+<span class="cm"># Sparse Attention: O(n·√n) 只算部分位置</span>
+<span class="cm"># Linear Attention: O(n·d²) 用核函数近似</span></code></pre>
+</div>
+</details>
+
+<details>
+<summary>Temperature=0 和 Temperature=1 的区别？</summary>
+<div class="mt-2">
+<table>
+<tr><th>Temperature</th><th>行为</th><th>适用场景</th></tr>
+<tr><td><strong>T = 0</strong></td><td>贪婪解码，永远选概率最高的 token。输出完全确定（相同输入 → 相同输出）</td><td>代码生成、工具调用、数据提取、需要可复现结果</td></tr>
+<tr><td><strong>T = 1</strong></td><td>使用模型原始概率分布采样，保留模型的「自然」随机性</td><td>通用对话、问答</td></tr>
+<tr><td><strong>T > 1</strong></td><td>分布更平坦，低概率 token 也有机会被选中，输出更随机/创意</td><td>创意写作、头脑风暴</td></tr>
+</table>
+<p class="text-sm mt-2">公式：p<sub>i</sub> = exp(z<sub>i</sub>/T) / Σexp(z<sub>j</sub>/T)。T 越小，最高 logit 对应的概率越接近 1。</p>
+</div>
+</details>
+
+<details>
+<summary>什么是 KV Cache？为什么它能加速推理？</summary>
+<div class="mt-2">
+<p><strong>KV Cache</strong> 是推理优化技术：在自回归生成中，缓存之前所有 token 的 Key 和 Value 向量，避免重复计算。</p>
+<pre><code><span class="cm"># 无 KV Cache：生成第 100 个 token 时，重新计算 1~99 的所有 K/V</span>
+<span class="cm"># 有 KV Cache：只计算第 100 个 token 的 K/V，与缓存的 1~99 拼接</span>
+
+<span class="cm"># 计算量对比（生成 N 个 token）：</span>
+<span class="cm"># 无 Cache: O(N²) — 每步重新算全部</span>
+<span class="cm"># 有 Cache: O(N)   — 每步只算 1 个新 token</span>
+
+<span class="cm"># 代价：显存占用 O(N · d · layers · 2)</span>
+<span class="cm"># 长上下文 + 大模型 → KV Cache 可能占数 GB 显存</span></code></pre>
+<p class="text-sm mt-2">Agent 开发影响：多轮对话时 KV Cache 可复用 System Prompt 部分（Prompt Caching 的基础）。</p>
+</div>
+</details>
+
+<details>
+<summary>GPT 和 BERT 的区别是什么？</summary>
+<div class="mt-2">
+<table>
+<tr><th>维度</th><th>GPT (Decoder-only)</th><th>BERT (Encoder-only)</th></tr>
+<tr><td>Attention</td><td>Causal（单向，只看左边）</td><td>Bidirectional（双向，看全部）</td></tr>
+<tr><td>预训练任务</td><td>Next Token Prediction</td><td>Masked Language Model (MLM)</td></tr>
+<tr><td>擅长</td><td>文本生成、对话、代码</td><td>文本分类、NER、语义匹配</td></tr>
+<tr><td>Prompt 方式</td><td>In-Context Learning，直接生成</td><td>需要 task-specific fine-tuning head</td></tr>
+<tr><td>代表</td><td>GPT-4, LLaMA, Claude</td><td>BERT, RoBERTa</td></tr>
+</table>
+<p class="text-sm mt-2">现代趋势：Decoder-only（GPT 路线）主导生成任务；Encoder 组件被 Embedding 模型（BGE、GTE）继承用于检索。</p>
+</div>
+</details>
+
+<details>
+<summary>什么是 Hallucination？如何缓解？</summary>
+<div class="mt-2">
+<p><strong>Hallucination（幻觉）</strong>：模型生成看似合理但实际错误的内容——编造事实、引用不存在的论文、虚构数据。</p>
+<p><strong>根本原因</strong>：LLM 是概率生成模型，训练目标是「生成流畅文本」而非「生成真实文本」。</p>
+<p><strong>缓解策略：</strong></p>
+<ol class="text-sm">
+  <li><strong>RAG</strong>：提供真实文档作为 grounding，减少凭空编造</li>
+  <li><strong>降低 Temperature</strong>：减少随机性，更忠实于输入</li>
+  <li><strong>Prompt 约束</strong>：「仅根据提供的文档回答，不知道就说不知道」</li>
+  <li><strong>输出验证</strong>：用代码/API 验证模型输出的数据（如 SQL 查询结果）</li>
+  <li><strong>Self-Consistency</strong>：多次生成取一致答案</li>
+  <li><strong>Citation 要求</strong>：要求模型标注信息来源</li>
+</ol>
+</div>
+</details>
+
+<details>
+<summary>RAG vs Fine-tuning 如何选择？</summary>
+<div class="mt-2">
+<table>
+<tr><th>维度</th><th>RAG</th><th>Fine-tuning</th></tr>
+<tr><td>知识更新</td><td>实时（更新文档即可）</td><td>需重新训练</td></tr>
+<tr><td>成本</td><td>低（Embedding + 检索）</td><td>中~高（GPU 训练）</td></tr>
+<tr><td>可解释性</td><td>高（可展示检索来源）</td><td>低（知识在权重里）</td></tr>
+<tr><td>适合</td><td>知识库 QA、文档分析、私有数据</td><td>特定风格/格式、领域术语、行为模式</td></tr>
+<tr><td>局限</td><td>检索质量决定上限</td><td>数据量不足时效果差</td></tr>
+</table>
+<p class="text-sm mt-2"><strong>决策法则</strong>：需要最新/私有知识 → RAG；需要特定输出风格/格式 → Fine-tuning；两者可以组合使用（Fine-tune 模型 + RAG 注入知识）。</p>
+</div>
+</details>
+
+<details>
+<summary>什么是 MoE？为什么它能降低推理成本？</summary>
+<div class="mt-2">
+<p><strong>Mixture of Experts (MoE)</strong>：每层包含 N 个独立的 FFN「专家」，Router 为每个 token 选择 Top-K 个专家处理，最终加权合并。</p>
+<pre><code><span class="cm"># 传统 Dense 模型：每个 token 激活全部参数</span>
+<span class="cm"># MoE 模型：每个 token 只激活 K/N 的参数</span>
+
+<span class="cm"># Mixtral 8×7B 示例：</span>
+<span class="cm"># 总参数: 47B（大容量，学更多知识）</span>
+<span class="cm"># 激活参数: ~13B（小计算量，推理快）</span>
+<span class="cm"># → 47B 的知识密度 + 13B 的推理速度</span></code></pre>
+<p class="text-sm mt-2"><strong>降低推理成本的原因</strong>：计算量 ∝ 激活参数量（而非总参数量）。MoE 通过稀疏激活，在保持大模型容量的同时，将每次前向传播的计算量控制在较小范围。代价是需要存储全部专家参数（显存需求仍较大）。</p>
+</div>
+</details>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-icon">📚</div>
+<div><strong>复习建议</strong>：面试前重点掌握 Attention 公式、KV Cache 原理、RAG vs Fine-tuning 选型、Temperature 影响。这些是 Agent 工程师的「基本功」，几乎每次面试都会涉及。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['transformer','attention','tokenization','decoding','context','models','training','embedding','economics','faq'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

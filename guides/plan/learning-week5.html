@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 5 — 评估体系 + 数据库 + 模拟面试</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:800px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:#fff;text-align:center;padding:48px 20px}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem}
+.hero .tag{display:inline-block;margin-top:12px;padding:6px 16px;border-radius:20px;background:rgba(255,255,255,.2);font-size:.9rem}
+.nav-back{display:inline-flex;align-items:center;gap:6px;padding:12px 0;color:var(--accent);text-decoration:none;font-size:.9rem;font-weight:600}
+.nav-back:hover{text-decoration:underline}
+.day{margin-top:40px}
+.day-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.day-num{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:#fff;flex-shrink:0}
+.day-info h2{font-size:1.3rem;font-weight:700}
+.day-info p{font-size:.85rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:12px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.task{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.task:last-child{border-bottom:none}
+.task-check{flex-shrink:0;width:22px;height:22px;margin-top:2px}
+.task-check input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.task-body{flex:1}
+.task-title{font-weight:600;font-size:.95rem}
+.task-desc{font-size:.85rem;color:var(--muted);margin-top:2px}
+.task-time{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent);font-weight:600;margin-top:4px}
+.task.done .task-title{text-decoration:line-through;color:var(--muted)}
+.resource{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--accent-light);margin:6px 0;font-size:.85rem;transition:background .3s}
+.resource a{color:var(--accent);text-decoration:none;font-weight:600;word-break:break-all}
+.resource a:hover{text-decoration:underline}
+.checkpoint{padding:14px 18px;border-radius:10px;background:var(--green-light);border-left:4px solid var(--green);margin:16px 0;font-size:.9rem;transition:background .3s}
+.checkpoint strong{color:var(--green)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.5;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.85rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.grid-2{grid-template-columns:1fr}}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.summary-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:16px;z-index:100;transition:background .3s}
+.summary-bar .bar{flex:1;max-width:400px;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.summary-bar .fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.summary-bar .text{font-size:.85rem;font-weight:600;color:var(--muted);min-width:100px;text-align:right}
+.theme-toggle{position:fixed;bottom:64px;right:20px;z-index:1000;width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+</style>
+</head>
+<body>
+
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Week 5：评估体系 + 数据库 + 模拟面试</h1>
+  <p>补齐工程能力短板，冲刺面试准备</p>
+  <div class="tag">7 天 · 25 个任务 · 目标：工程能力达标 + 面试就绪</div>
+</div>
+
+<div class="container">
+<a href="ai-agent-engineering-guide.html" class="nav-back">← 返回总指南</a>
+
+<!-- ============ Day 1-2 ============ -->
+<div class="day" id="day1">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--accent)">D1<br>D2</div>
+    <div class="day-info">
+      <h2>LLM 评估与成本优化</h2>
+      <p>预计 10 小时 · 建立评估体系，掌握成本估算与优化策略</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>评估体系</h3>
+    <div class="task" data-id="1-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-1')"></div>
+      <div class="task-body">
+        <div class="task-title">学习评估金字塔：离线评估 → 在线 A/B 测试 → 生产监控</div>
+        <div class="task-desc">理解三层评估各自解决什么问题，以及从开发到上线的评估路径</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>层级</th><th>方法</th><th>适用阶段</th></tr>
+      <tr><td>离线评估</td><td>Golden Set + 自动指标</td><td>开发迭代、回归测试</td></tr>
+      <tr><td>在线 A/B</td><td>流量分割 + 业务指标</td><td>上线决策、策略对比</td></tr>
+      <tr><td>生产监控</td><td>延迟/成本/用户反馈</td><td>持续运营、异常告警</td></tr>
+    </table>
+
+    <div class="task" data-id="1-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-2')"></div>
+      <div class="task-body">
+        <div class="task-title">掌握 RAGAS 框架：Relevance、Faithfulness、Context Precision/Recall</div>
+        <div class="task-desc">理解 RAG 评估四大核心指标的含义和计算方式</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <pre>pip install ragas datasets
+
+from ragas import evaluate
+from ragas.metrics import (
+    answer_relevancy,      # 回答与问题的相关度
+    faithfulness,          # 回答是否忠于检索上下文
+    context_precision,     # 检索结果中相关片段占比
+    context_recall,        # 标准答案所需信息是否被检索到
+)
+
+# 准备 dataset: question, answer, contexts, ground_truth
+result = evaluate(dataset, metrics=[
+    answer_relevancy, faithfulness,
+    context_precision, context_recall,
+])
+print(result)</pre>
+    <div class="resource">📖 <a href="https://docs.ragas.io/" target="_blank">RAGAS 官方文档</a></div>
+
+    <div class="task" data-id="1-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-3')"></div>
+      <div class="task-body">
+        <div class="task-title">理解 LLM-as-Judge：用大模型评估小模型的方法和局限</div>
+        <div class="task-desc">掌握 G-Eval、Pairwise Comparison 等范式，了解位置偏差、长度偏差等陷阱</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <div class="tip">LLM-as-Judge 适合主观质量评估，但不适合作为唯一指标。最佳实践：Judge + 人工抽检 + 业务指标三角验证。</div>
+
+    <div class="task" data-id="1-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-4')"></div>
+      <div class="task-body">
+        <div class="task-title">学习 A/B 测试设计：流量分割、指标选择、统计显著性</div>
+        <div class="task-desc">理解实验设计：对照组/实验组、样本量、P-value、置信区间</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre># Agent A/B 测试常见指标
+primary_metrics = [
+    "task_success_rate",    # 任务完成率
+    "user_satisfaction",    # 用户满意度（点赞率）
+    "avg_turns_to_resolve", # 平均对话轮次
+]
+guardrail_metrics = [
+    "p99_latency",          # 延迟不能恶化
+    "cost_per_session",     # 成本不能超预算
+    "error_rate",           # 错误率不能上升
+]</pre>
+  </div>
+
+  <div class="card">
+    <h3>成本优化</h3>
+    <div class="task" data-id="1-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-5')"></div>
+      <div class="task-body">
+        <div class="task-title">掌握 Token 成本计算：Input/Output Token 定价、Agent 单次会话成本估算</div>
+        <div class="task-desc">能根据模型定价表和 Token 用量估算单次/月度 API 费用</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <pre># 单次 Agent 会话成本估算模板
+input_tokens  = system_prompt + history + tool_results + user_query
+output_tokens = model_response + tool_calls
+
+cost = (
+    input_tokens  / 1_000_000 * price_input_per_1M +
+    output_tokens / 1_000_000 * price_output_per_1M
+)
+
+# 示例：gpt-4o-mini ($0.15/$0.60 per 1M)
+# 一次告警分析：~8K input + ~2K output ≈ $0.0024
+# 1000 条/天 × 30 天 ≈ $72/月（仅模型费用）</pre>
+
+    <div class="task" data-id="1-6">
+      <div class="task-check"><input type="checkbox" onchange="toggle('1-6')"></div>
+      <div class="task-body">
+        <div class="task-title">学习 6 种成本优化策略：模型路由、Prompt 压缩、语义缓存、对话压缩、批处理、小模型微调</div>
+        <div class="task-desc">理解每种策略的适用场景和预期收益</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>策略</th><th>原理</th><th>典型节省</th></tr>
+      <tr><td>模型路由</td><td>简单任务用小模型，复杂任务用大模型</td><td>40-70%</td></tr>
+      <tr><td>Prompt 压缩</td><td>精简 system prompt、去除冗余上下文</td><td>20-40%</td></tr>
+      <tr><td>语义缓存</td><td>相似问题直接返回缓存结果</td><td>30-60%</td></tr>
+      <tr><td>对话压缩</td><td>摘要历史对话，减少 token 传递</td><td>30-50%</td></tr>
+      <tr><td>批处理</td><td>非实时任务合并请求</td><td>15-30%</td></tr>
+      <tr><td>小模型微调</td><td>专用场景替代通用大模型</td><td>60-90%</td></tr>
+    </table>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 1-2 检查点：</strong>能估算一个"每天处理 1000 条告警的 Agent 服务"的月度模型 API 费用。
+  </div>
+</div>
+
+<!-- ============ Day 3-4 ============ -->
+<div class="day" id="day3">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--purple)">D3<br>D4</div>
+    <div class="day-info">
+      <h2>数据库进阶</h2>
+      <p>预计 10 小时 · 索引原理、SQL 优化、事务与 Redis 实战</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>索引与 SQL 优化</h3>
+    <div class="task" data-id="2-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('2-1')"></div>
+      <div class="task-body">
+        <div class="task-title">学习 B+ Tree 索引原理：为什么数据库用 B+ Tree 而非哈希</div>
+        <div class="task-desc">理解 B+ Tree 支持范围查询、有序遍历，哈希只支持等值查询</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <div class="tip">面试高频：B+ Tree 叶子节点链表结构 → 范围查询 O(log n + k)；哈希 O(1) 但不支持 ORDER BY / 范围扫描。</div>
+
+    <div class="task" data-id="2-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('2-2')"></div>
+      <div class="task-body">
+        <div class="task-title">掌握 EXPLAIN 分析：type 列的含义（ALL/index/range/ref/const）</div>
+        <div class="task-desc">从好到差：system &gt; const &gt; eq_ref &gt; ref &gt; range &gt; index &gt; ALL</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <pre>EXPLAIN SELECT * FROM analysis_results
+WHERE biz_line = 'alert' AND created_at > '2026-01-01'
+ORDER BY created_at DESC LIMIT 20;
+
+-- 关注列：
+-- type:  ALL=全表扫描(差)  range=范围扫描(中)  ref=索引查找(好)
+-- key:   实际使用的索引
+-- rows:  预估扫描行数
+-- Extra: Using filesort / Using temporary 需优化</pre>
+
+    <div class="task" data-id="2-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('2-3')"></div>
+      <div class="task-body">
+        <div class="task-title">学习 SQL 优化反模式：SELECT *、前导通配符 LIKE、索引列函数调用</div>
+        <div class="task-desc">识别导致索引失效的常见写法，掌握改写方法</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre>-- ❌ 反模式
+SELECT * FROM sessions WHERE DATE(created_at) = '2026-01-01';  -- 函数导致索引失效
+SELECT * FROM users WHERE name LIKE '%张三%';                     -- 前导通配符
+SELECT * FROM orders;                                            -- 返回不需要的列
+
+-- ✅ 优化
+SELECT id, status FROM sessions
+WHERE created_at >= '2026-01-01' AND created_at < '2026-01-02';
+SELECT id, name FROM users WHERE name LIKE '张三%';</pre>
+  </div>
+
+  <div class="card">
+    <h3>事务、连接池与 Redis</h3>
+    <div class="task" data-id="2-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('2-4')"></div>
+      <div class="task-body">
+        <div class="task-title">理解事务隔离级别：Read Committed vs Repeatable Read，MVCC 原理</div>
+        <div class="task-desc">MySQL 默认 RR，理解脏读/不可重复读/幻读及 MVCC 如何通过版本链解决</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="2-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('2-5')"></div>
+      <div class="task-body">
+        <div class="task-title">学习连接池管理：参数调优（max_connections, pool_recycle, idle_timeout）</div>
+        <div class="task-desc">理解连接池大小与数据库 max_connections 的关系，避免连接泄漏</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <pre># SQLAlchemy 连接池配置示例
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=10,           # 常驻连接数
+    max_overflow=20,        # 超出 pool_size 的临时连接
+    pool_recycle=3600,      # 1 小时回收，避免 MySQL wait_timeout 断连
+    pool_pre_ping=True,     # 使用前检测连接有效性
+)</pre>
+
+    <div class="task" data-id="2-6">
+      <div class="task-check"><input type="checkbox" onchange="toggle('2-6')"></div>
+      <div class="task-body">
+        <div class="task-title">Redis 数据结构实战：String/Hash/List/Set/ZSet 的使用场景</div>
+        <div class="task-desc">为 Agent 场景选择合适的数据结构</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>结构</th><th>Agent 场景</th><th>示例</th></tr>
+      <tr><td>String</td><td>缓存、分布式锁</td><td>SET session:{id} EX 3600</td></tr>
+      <tr><td>Hash</td><td>对象存储</td><td>HSET task:{id} status running</td></tr>
+      <tr><td>List</td><td>消息队列、历史</td><td>LPUSH chat:{id} message</td></tr>
+      <tr><td>Set</td><td>去重、标签</td><td>SADD biz:skills rag,sql</td></tr>
+      <tr><td>ZSet</td><td>排行榜、延迟队列</td><td>ZADD pending_tasks score task_id</td></tr>
+    </table>
+
+    <div class="task" data-id="2-7">
+      <div class="task-check"><input type="checkbox" onchange="toggle('2-7')"></div>
+      <div class="task-body">
+        <div class="task-title">实战：设计 Agent 分析结果存储的表结构（含索引设计）</div>
+        <div class="task-desc">为告警分析场景设计表结构，考虑查询模式和索引策略</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <pre>CREATE TABLE analysis_results (
+    id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+    biz_line    VARCHAR(64)  NOT NULL,
+    alert_id    VARCHAR(128) NOT NULL,
+    session_id  VARCHAR(64)  NOT NULL,
+    status      ENUM('pending','running','done','failed') NOT NULL,
+    result_url  VARCHAR(512),
+    token_used  INT DEFAULT 0,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_biz_created (biz_line, created_at),   -- 按业务线查最近结果
+    INDEX idx_alert (alert_id),                      -- 按告警 ID 查
+    INDEX idx_status_created (status, created_at)    -- 查 pending 任务
+);</pre>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 3-4 检查点：</strong>给一条慢查询写出 EXPLAIN 分析 + 优化方案。
+  </div>
+</div>
+
+<!-- ============ Day 5 ============ -->
+<div class="day" id="day5">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--green)">D5</div>
+    <div class="day-info">
+      <h2>gRPC + 消息队列</h2>
+      <p>预计 5 小时 · 掌握 RPC 通信模式与消息队列生产实践</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>gRPC 实战</h3>
+    <div class="task" data-id="3-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-1')"></div>
+      <div class="task-body">
+        <div class="task-title">学习 gRPC 四种通信模式：Unary、Server Streaming、Client Streaming、Bidirectional</div>
+        <div class="task-desc">理解每种模式的适用场景，Agent 流式输出常用 Server Streaming</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>模式</th><th>方向</th><th>场景</th></tr>
+      <tr><td>Unary</td><td>1 请求 → 1 响应</td><td>普通 API 调用</td></tr>
+      <tr><td>Server Streaming</td><td>1 请求 → N 响应</td><td>Agent 流式输出、日志推送</td></tr>
+      <tr><td>Client Streaming</td><td>N 请求 → 1 响应</td><td>文件上传、批量写入</td></tr>
+      <tr><td>Bidirectional</td><td>N 请求 ↔ N 响应</td><td>实时对话、协作编辑</td></tr>
+    </table>
+
+    <div class="task" data-id="3-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-2')"></div>
+      <div class="task-body">
+        <div class="task-title">用 Go 实现一个简单的 gRPC 服务（定义 proto → 生成代码 → 实现服务）</div>
+        <div class="task-desc">从零搭建一个 Hello World gRPC 服务并调用</div>
+        <div class="task-time">120 分钟</div>
+      </div>
+    </div>
+    <pre>// proto/analyzer.proto
+syntax = "proto3";
+package analyzer;
+option go_package = "./pb";
+
+service Analyzer {
+  rpc Analyze(AnalyzeRequest) returns (stream AnalyzeChunk);
+}
+
+message AnalyzeRequest { string alert_id = 1; string content = 2; }
+message AnalyzeChunk   { string text = 1; bool done = 2; }
+
+// 生成代码
+// protoc --go_out=. --go-grpc_out=. proto/analyzer.proto
+
+// server.go
+func (s *Server) Analyze(req *pb.AnalyzeRequest, stream pb.Analyzer_AnalyzeServer) error {
+    for _, chunk := range s.agent.Run(req.Content) {
+        stream.Send(&amp;pb.AnalyzeChunk{Text: chunk})
+    }
+    return stream.Send(&amp;pb.AnalyzeChunk{Done: true})
+}</pre>
+    <div class="resource">📖 <a href="https://grpc.io/docs/languages/go/quickstart/" target="_blank">gRPC Go Quick Start</a></div>
+  </div>
+
+  <div class="card">
+    <h3>消息队列</h3>
+    <div class="task" data-id="3-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-3')"></div>
+      <div class="task-body">
+        <div class="task-title">理解消息队列核心概念：Producer/Consumer/Partition/Offset/Ack</div>
+        <div class="task-desc">掌握消息队列的基本模型和消费语义</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="3-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-4')"></div>
+      <div class="task-body">
+        <div class="task-title">对比选型：Kafka vs Redis Streams vs RabbitMQ</div>
+        <div class="task-desc">根据吞吐量、持久化、消费模型选择合适的 MQ</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>特性</th><th>Kafka</th><th>Redis Streams</th><th>RabbitMQ</th></tr>
+      <tr><td>吞吐量</td><td>极高</td><td>高</td><td>中</td></tr>
+      <tr><td>持久化</td><td>磁盘</td><td>可选 AOF</td><td>磁盘</td></tr>
+      <tr><td>消费模型</td><td>Consumer Group</td><td>Consumer Group</td><td>Queue/Exchange</td></tr>
+      <tr><td>适用场景</td><td>日志/事件流</td><td>轻量任务队列</td><td>复杂路由</td></tr>
+    </table>
+
+    <div class="task" data-id="3-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('3-5')"></div>
+      <div class="task-body">
+        <div class="task-title">学习生产实践：幂等消费、死信队列、消费积压处理</div>
+        <div class="task-desc">掌握消息队列三大生产难题的解决方案</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre># 幂等消费：业务层去重
+if redis.setnx(f"processed:{msg_id}", 1, ex=86400):
+    process(msg)  # 仅首次处理
+
+# 死信队列：重试 N 次后转入 DLQ
+max_retries = 3
+if retry_count >= max_retries:
+    send_to_dlq(msg)
+
+# 消费积压：临时扩容消费者 + 降级非核心逻辑</pre>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Day 5 检查点：</strong>能解释"Kafka 为什么快（顺序 IO、零拷贝、批量）"。
+  </div>
+</div>
+
+<!-- ============ Day 6-7 ============ -->
+<div class="day" id="day6">
+  <div class="day-header">
+    <div class="day-num" style="background:var(--orange)">D6<br>D7</div>
+    <div class="day-info">
+      <h2>综合模拟面试</h2>
+      <p>预计 10 小时（周末）· 刷题 + 系统设计 + 行为面试 + 全真模拟</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>技术面试题刷题</h3>
+    <div class="task" data-id="4-1">
+      <div class="task-check"><input type="checkbox" onchange="toggle('4-1')"></div>
+      <div class="task-body">
+        <div class="task-title">Python 面试题练习（10 题）：GIL、装饰器、异步、内存管理</div>
+        <div class="task-desc">每题 2-3 分钟口头回答，录音自查</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div><span class="tag tag-blue">GIL</span> 为什么有 GIL？multiprocessing vs threading？</div>
+      <div><span class="tag tag-blue">装饰器</span> @wraps 作用？带参数装饰器怎么写？</div>
+      <div><span class="tag tag-blue">异步</span> asyncio 事件循环原理？async/await 本质？</div>
+      <div><span class="tag tag-blue">内存</span> 引用计数 + 分代 GC？__slots__ 作用？</div>
+    </div>
+
+    <div class="task" data-id="4-2">
+      <div class="task-check"><input type="checkbox" onchange="toggle('4-2')"></div>
+      <div class="task-body">
+        <div class="task-title">Go 面试题练习（8 题）：goroutine、channel、GC、slice 底层、interface</div>
+        <div class="task-desc">结合 gdp-gravitysvr-alertAnalysis 项目中的 Go 代码回答</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div><span class="tag tag-green">Goroutine</span> 调度模型 GMP？栈大小？</div>
+      <div><span class="tag tag-green">Channel</span> 有缓冲 vs 无缓冲？select 机制？</div>
+      <div><span class="tag tag-green">GC</span> 三色标记？STW 优化？</div>
+      <div><span class="tag tag-green">Slice</span> 扩容规则？底层 array 共享？</div>
+    </div>
+
+    <div class="task" data-id="4-3">
+      <div class="task-check"><input type="checkbox" onchange="toggle('4-3')"></div>
+      <div class="task-body">
+        <div class="task-title">LLM/Agent 面试题练习（8 题）：Transformer、RAG vs Fine-tune、多 Agent、Token 优化</div>
+        <div class="task-desc">用 Week 1-5 的实践经验支撑每个答案</div>
+        <div class="task-time">90 分钟</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div><span class="tag tag-orange">Transformer</span> Self-Attention 计算过程？</div>
+      <div><span class="tag tag-orange">RAG vs FT</span> 什么场景选哪个？</div>
+      <div><span class="tag tag-orange">Multi-Agent</span> Supervisor 模式优缺点？</div>
+      <div><span class="tag tag-orange">Token</span> 6 种成本优化策略？</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>系统设计练习</h3>
+    <div class="task" data-id="4-4">
+      <div class="task-check"><input type="checkbox" onchange="toggle('4-4')"></div>
+      <div class="task-body">
+        <div class="task-title">系统设计练习 1：设计一个智能客服系统（画架构图 + 说明关键决策）</div>
+        <div class="task-desc">5 分钟版讲述：需求 → 架构 → Agent 编排 → RAG → 安全 → 性能</div>
+        <div class="task-time">120 分钟</div>
+      </div>
+    </div>
+
+    <div class="task" data-id="4-5">
+      <div class="task-check"><input type="checkbox" onchange="toggle('4-5')"></div>
+      <div class="task-body">
+        <div class="task-title">系统设计练习 2：设计一个告警分析 Agent 服务（从接收告警到输出分析报告）</div>
+        <div class="task-desc">结合 gdp-gravitysvr-alertAnalysis 真实架构，画出完整数据流</div>
+        <div class="task-time">120 分钟</div>
+      </div>
+    </div>
+    <pre>告警分析 Agent 服务架构要点：
+1. 接入层：RULIU Webhook / REST API / 同步 API
+2. 编排层：Agent Gateway → 业务线路由 → Workspace 准备
+3. 工具层：Git 仓库、Skills、MCP、Infra 指标拉取
+4. 执行层：Cursor/Claude/Codex Agent → 流式输出
+5. 存储层：GCS 结果 + MySQL 会话 + Redis 缓存
+6. 通知层：分析完成 → 如流通知 + HTML 报告</pre>
+    <div class="tip">系统设计题的关键不是画得多复杂，而是能清晰解释每个设计决策的 trade-off。</div>
+  </div>
+
+  <div class="card">
+    <h3>行为面试 + 全真模拟</h3>
+    <div class="task" data-id="4-6">
+      <div class="task-check"><input type="checkbox" onchange="toggle('4-6')"></div>
+      <div class="task-body">
+        <div class="task-title">行为面试准备：梳理 3 个项目经验（STAR 法则）</div>
+        <div class="task-desc">Situation → Task → Action → Result，每个项目 2 分钟版本</div>
+        <div class="task-time">60 分钟</div>
+      </div>
+    </div>
+    <pre>STAR 模板：
+S - 背景：告警分析平台，日均处理 500+ 告警
+T - 任务：RAG 检索命中率仅 60%，影响分析质量
+A - 行动：对比 chunk_size + 引入 BM25 混合检索 + RAGAS 评估
+R - 结果：命中率提升至 85%，用户满意度 +20%</pre>
+
+    <div class="task" data-id="4-7">
+      <div class="task-check"><input type="checkbox" onchange="toggle('4-7')"></div>
+      <div class="task-body">
+        <div class="task-title">全真模拟面试：计时 45 分钟，自问自答一轮完整面试</div>
+        <div class="task-desc">10min 自我介绍+项目 → 15min 技术题 → 15min 系统设计 → 5min 反问</div>
+        <div class="task-time">45 分钟</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>环节</th><th>时间</th><th>内容</th></tr>
+      <tr><td>开场</td><td>5 min</td><td>自我介绍 + 项目亮点</td></tr>
+      <tr><td>Python/Go</td><td>10 min</td><td>各 2-3 道基础题</td></tr>
+      <tr><td>LLM/Agent</td><td>10 min</td><td>RAG、Agent 架构、评估</td></tr>
+      <tr><td>系统设计</td><td>15 min</td><td>告警分析 Agent 服务</td></tr>
+      <tr><td>反问</td><td>5 min</td><td>团队技术栈、成长路径</td></tr>
+    </table>
+  </div>
+
+  <div class="checkpoint">
+    <strong>Week 5 最终检查点：</strong><br>
+    ✅ 能估算 Agent 服务月度 API 成本并给出优化方案<br>
+    ✅ 能给慢查询写 EXPLAIN 分析 + 优化 SQL<br>
+    ✅ 能解释 Kafka 高性能原理 + gRPC 四种模式<br>
+    ✅ 完成 45 分钟模拟面试，记录并针对薄弱点补强<br>
+    ✅ 3 个项目 STAR 故事随时能讲
+  </div>
+</div>
+
+</div><!-- container -->
+
+<!-- Summary bar -->
+<div class="summary-bar">
+  <div class="text" id="summaryText">0 / 25</div>
+  <div class="bar"><div class="fill" id="summaryFill" style="width:0%"></div></div>
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var TOTAL = 25;
+  function getProgress(){try{return JSON.parse(localStorage.getItem('w5-progress')||'{}')}catch(e){return{}}}
+  function saveProgress(p){localStorage.setItem('w5-progress',JSON.stringify(p))}
+  function updateUI(){
+    var p=getProgress(),done=0;
+    document.querySelectorAll('.task').forEach(function(el){
+      var id=el.getAttribute('data-id');
+      if(!id)return;
+      var cb=el.querySelector('input[type="checkbox"]');
+      if(p[id]){cb.checked=true;el.classList.add('done');done++}
+      else{cb.checked=false;el.classList.remove('done')}
+    });
+    document.getElementById('summaryText').textContent=done+' / '+TOTAL;
+    document.getElementById('summaryFill').style.width=(done/TOTAL*100)+'%';
+  }
+  window.toggle=function(id){var p=getProgress();p[id]=!p[id];saveProgress(p);updateUI()};
+  updateUI();
+
+  // Theme
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  // Progress bar
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+  });
+
+  // Scroll animations
+  var els=document.querySelectorAll('.card,.checkpoint,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

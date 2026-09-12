@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go 工程实战指南</title>
+<style>
+:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#2563eb;--accent-light:#dbeafe;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#60a5fa;--accent-light:#1e3a5f;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
+.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#00897b 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,250,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;overflow-x:auto;transition:background .3s}
+[data-theme="dark"] .nav{background:rgba(15,23,42,.95)}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 20px;display:flex;gap:6px;flex-wrap:nowrap}
+.nav a{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:.8rem;text-decoration:none;color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.nav a:hover,.nav a.active{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+section{margin-top:44px}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:20px;padding-bottom:6px;border-bottom:3px solid var(--accent);display:inline-block}
+h3{font-size:1.1rem;font-weight:600;margin:20px 0 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;transition:background .3s,border-color .3s,transform .2s}
+.card:hover{transform:translateY(-1px)}
+.card-accent{border-left:4px solid var(--accent)}
+.card-green{border-left:4px solid var(--green)}
+.card-orange{border-left:4px solid var(--orange)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.tag-blue{background:var(--accent-light);color:var(--accent)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:var(--orange-light);color:var(--orange)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.6;margin:10px 0}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem}
+th{background:var(--code-bg);font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);transition:background .3s}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
+.callout{display:flex;gap:12px;padding:14px;border-radius:8px;margin:14px 0;font-size:.9rem}
+.callout-icon{font-size:1.4rem;flex-shrink:0}
+.callout-info{background:var(--accent-light)}
+.callout-ok{background:var(--green-light)}
+.text-sm{font-size:.85rem;color:var(--muted)}
+.text-center{text-align:center}
+.bold{font-weight:700}
+.mt-2{margin-top:8px}
+.mb-2{margin-bottom:8px}
+details{margin:8px 0}
+details summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}
+details[open] summary::before{content:'▾ '}
+.theme-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:48px;height:48px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.kw{color:#c084fc}.fn{color:#38bdf8}.st{color:#86efac}.cm{color:#64748b;font-style:italic}.nu{color:#fbbf24}.op{color:#f472b6}.ty{color:#fbbf24}
+</style>
+</head>
+<body>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Go 工程实战指南</h1>
+  <p>面向 AI Agent 后端工程师的 Go 技能图谱<br>从基础语法到并发编程、Gin、GORM 与生产级模式</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#basics">基础语法</a>
+    <a href="#data">数据结构</a>
+    <a href="#functions">函数</a>
+    <a href="#errors">错误处理</a>
+    <a href="#concurrency">并发</a>
+    <a href="#interfaces">接口</a>
+    <a href="#modules">包管理</a>
+    <a href="#stdlib">标准库</a>
+    <a href="#gin">Gin</a>
+    <a href="#gorm">GORM</a>
+    <a href="#patterns">并发模式</a>
+    <a href="#faq">面试题</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. Go 基础语法 ==================== -->
+<section id="basics">
+<h2>Go 基础语法</h2>
+
+<div class="card card-accent">
+  <p>Go 的设计哲学：<strong>简单、显式、高效</strong>。静态类型 + 编译型语言，适合高并发后端服务。如果你熟悉 Python，最大的转变是<strong>必须声明类型、显式处理错误、没有类继承</strong>。</p>
+</div>
+
+<h3>变量声明</h3>
+<div class="card">
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> <span class="st">"fmt"</span>
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    <span class="cm">// var 声明（函数外必须用 var）</span>
+    <span class="kw">var</span> name <span class="ty">string</span> = <span class="st">"Alice"</span>
+    <span class="kw">var</span> age <span class="ty">int</span> = <span class="nu">25</span>
+
+    <span class="cm">// 类型推断</span>
+    <span class="kw">var</span> score = <span class="nu">98.5</span>  <span class="cm">// float64</span>
+
+    <span class="cm">// 短变量声明（函数内最常用）</span>
+    isActive := <span class="kw">true</span>
+    level := <span class="st">"warning"</span>
+
+    <span class="cm">// 常量</span>
+    <span class="kw">const</span> MaxRetries = <span class="nu">3</span>
+    <span class="kw">const</span> (
+        StatusOK    = <span class="nu">200</span>
+        StatusError = <span class="nu">500</span>
+    )
+
+    fmt.<span class="fn">Println</span>(name, age, isActive)
+}</code></pre>
+</div>
+
+<h3>基本类型与零值</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="cm">// 基本类型</span>
+<span class="kw">var</span> i <span class="ty">int</span>       <span class="cm">// int, int8, int32, int64</span>
+<span class="kw">var</span> f <span class="ty">float64</span>   <span class="cm">// 默认浮点类型</span>
+<span class="kw">var</span> s <span class="ty">string</span>
+<span class="kw">var</span> b <span class="ty">bool</span>
+
+<span class="cm">// 零值（未初始化时的默认值）</span>
+<span class="cm">// int → 0, float → 0.0, string → "", bool → false</span>
+<span class="cm">// pointer/slice/map/channel/interface → nil</span>
+
+<span class="cm">// 类型转换（必须显式，无隐式转换）</span>
+<span class="kw">var</span> x <span class="ty">int</span> = <span class="nu">42</span>
+<span class="kw">var</span> y <span class="ty">float64</span> = <span class="ty">float64</span>(x)
+<span class="kw">var</span> z <span class="ty">int</span> = <span class="ty">int</span>(y)</code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm">// 输出</span>
+fmt.<span class="fn">Println</span>(<span class="st">"Hello"</span>, name)           <span class="cm">// 空格分隔</span>
+fmt.<span class="fn">Printf</span>(<span class="st">"Level: %s\n"</span>, level)    <span class="cm">// 格式化</span>
+fmt.<span class="fn">Sprintf</span>(<span class="st">"[%s] %s"</span>, level, title) <span class="cm">// 返回 string</span>
+
+<span class="cm">// 条件与循环</span>
+<span class="kw">if</span> score >= <span class="nu">90</span> {
+    grade = <span class="st">"A"</span>
+} <span class="kw">else if</span> score >= <span class="nu">60</span> {
+    grade = <span class="st">"B"</span>
+} <span class="kw">else</span> {
+    grade = <span class="st">"C"</span>
+}
+
+<span class="cm">// Go 只有 for 循环（无 while）</span>
+<span class="kw">for</span> i := <span class="nu">0</span>; i &lt; <span class="nu">5</span>; i++ { fmt.<span class="fn">Println</span>(i) }
+<span class="kw">for</span> _, item := <span class="kw">range</span> items { ... }</code></pre>
+</div>
+</div>
+
+<h3>Python vs Go 语法对照</h3>
+<div class="card">
+<table>
+<tr><th>特性</th><th>Python</th><th>Go</th></tr>
+<tr><td>变量声明</td><td><code>name = "Alice"</code></td><td><code>name := "Alice"</code> 或 <code>var name string = "Alice"</code></td></tr>
+<tr><td>类型</td><td>动态类型，运行时确定</td><td>静态类型，编译期检查</td></tr>
+<tr><td>常量</td><td>无真正常量（约定大写）</td><td><code>const MaxRetries = 3</code></td></tr>
+<tr><td>None/null</td><td><code>None</code></td><td><code>nil</code>（指针/引用类型）</td></tr>
+<tr><td>字符串格式化</td><td><code>f"Hello {name}"</code></td><td><code>fmt.Sprintf("Hello %s", name)</code></td></tr>
+<tr><td>缩进</td><td>强制缩进</td><td>大括号 <code>{}</code>，可用 gofmt 自动格式化</td></tr>
+<tr><td>入口</td><td><code>if __name__ == "__main__"</code></td><td><code>func main()</code> in package main</td></tr>
+<tr><td>导入</td><td><code>from x import y</code></td><td><code>import "fmt"</code>，未使用会编译失败</td></tr>
+</table>
+</div>
+
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>写一个函数 <code>FormatAlert(title, level string, timestamp ...string) string</code>，返回格式化告警字符串。level 默认为 "warning"；timestamp 为可选参数，不传则用当前时间。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="st">"fmt"</span>
+    <span class="st">"strings"</span>
+    <span class="st">"time"</span>
+)
+
+<span class="kw">func</span> <span class="fn">FormatAlert</span>(title, level <span class="ty">string</span>, timestamp ...<span class="ty">string</span>) <span class="ty">string</span> {
+    <span class="kw">if</span> level == <span class="st">""</span> {
+        level = <span class="st">"warning"</span>
+    }
+    ts := time.Now().Format(<span class="st">"2006-01-02 15:04:05"</span>)
+    <span class="kw">if</span> <span class="fn">len</span>(timestamp) > <span class="nu">0</span> &amp;&amp; timestamp[<span class="nu">0</span>] != <span class="st">""</span> {
+        ts = timestamp[<span class="nu">0</span>]
+    }
+    <span class="kw">return</span> fmt.<span class="fn">Sprintf</span>(<span class="st">"[%s] %s - %s"</span>, strings.<span class="fn">ToUpper</span>(level), ts, title)
+}
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    fmt.<span class="fn">Println</span>(FormatAlert(<span class="st">"CPU 使用率超过 90%"</span>, <span class="st">""</span>))
+    fmt.<span class="fn">Println</span>(FormatAlert(<span class="st">"磁盘已满"</span>, <span class="st">"critical"</span>, <span class="st">"2026-09-12 09:00:00"</span>))
+}</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 2. 数据结构 ==================== -->
+<section id="data">
+<h2>数据结构</h2>
+
+<div class="grid-2">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>Slice 切片 <span class="tag tag-blue">动态数组</span></h3>
+<pre><code><span class="cm">// 创建</span>
+nums := []<span class="ty">int</span>{<span class="nu">1</span>, <span class="nu">2</span>, <span class="nu">3</span>}
+nums = <span class="fn">make</span>([]<span class="ty">int</span>, <span class="nu">0</span>, <span class="nu">10</span>)  <span class="cm">// len=0, cap=10</span>
+
+<span class="cm">// 追加</span>
+nums = <span class="fn">append</span>(nums, <span class="nu">4</span>, <span class="nu">5</span>)
+
+<span class="cm">// 切片（共享底层数组！）</span>
+sub := nums[<span class="nu">1</span>:<span class="nu">3</span>]  <span class="cm">// [2, 3]</span>
+fmt.<span class="fn">Println</span>(<span class="fn">len</span>(nums), <span class="fn">cap</span>(nums))
+
+<span class="cm">// 遍历</span>
+<span class="kw">for</span> i, v := <span class="kw">range</span> nums {
+    fmt.<span class="fn">Println</span>(i, v)
+}</code></pre>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>Array 数组 <span class="tag tag-green">固定长度</span></h3>
+<pre><code><span class="cm">// 数组长度是类型的一部分</span>
+<span class="kw">var</span> arr [<span class="nu">3</span>]<span class="ty">int</span> = [<span class="nu">3</span>]<span class="ty">int</span>{<span class="nu">1</span>, <span class="nu">2</span>, <span class="nu">3</span>}
+
+<span class="cm">// 实际开发几乎只用 slice</span>
+<span class="cm">// array 用于特殊场景（如 [32]byte 哈希）</span></code></pre>
+<div class="tip">Slice 底层 = 指针 + len + cap。append 超 cap 时会分配新数组并拷贝。</div>
+</div>
+</div>
+
+<h3>Map 映射</h3>
+<div class="card">
+<pre><code><span class="cm">// 创建</span>
+scores := <span class="fn">make</span>(<span class="kw">map</span>[<span class="ty">string</span>]<span class="ty">int</span>)
+scores[<span class="st">"alice"</span>] = <span class="nu">95</span>
+
+<span class="cm">// 字面量</span>
+config := <span class="kw">map</span>[<span class="ty">string</span>]<span class="ty">string</span>{
+    <span class="st">"model"</span>: <span class="st">"gpt-4o"</span>,
+    <span class="st">"timeout"</span>: <span class="st">"30s"</span>,
+}
+
+<span class="cm">// 检查 key 是否存在</span>
+val, ok := config[<span class="st">"model"</span>]
+<span class="kw">if</span> !ok { fmt.<span class="fn">Println</span>(<span class="st">"key not found"</span>) }
+
+<span class="cm">// 删除</span>
+<span class="fn">delete</span>(config, <span class="st">"timeout"</span>)
+
+<span class="cm">// 遍历（顺序随机！）</span>
+<span class="kw">for</span> k, v := <span class="kw">range</span> config {
+    fmt.<span class="fn">Printf</span>(<span class="st">"%s: %s\n"</span>, k, v)
+}</code></pre>
+</div>
+
+<h3>Struct 结构体</h3>
+<div class="card">
+<pre><code><span class="kw">type</span> <span class="ty">Alert</span> <span class="kw">struct</span> {
+    Title     <span class="ty">string</span>    <span class="st">`json:"title"`</span>
+    Level     <span class="ty">string</span>    <span class="st">`json:"level"`</span>
+    Timestamp time.Time <span class="st">`json:"timestamp"`</span>
+}
+
+<span class="cm">// 方法（值接收者 vs 指针接收者）</span>
+<span class="kw">func</span> (a *Alert) <span class="fn">IsCritical</span>() <span class="ty">bool</span> {
+    <span class="kw">return</span> a.Level == <span class="st">"critical"</span>
+}
+
+<span class="cm">// 嵌入（组合，非继承）</span>
+<span class="kw">type</span> <span class="ty">AgentConfig</span> <span class="kw">struct</span> {
+    Alert                    <span class="cm">// 嵌入 Alert 的字段和方法</span>
+    Model   <span class="ty">string</span>
+    APIKey  <span class="ty">string</span>
+}
+
+cfg := AgentConfig{
+    Alert: Alert{Title: <span class="st">"CPU High"</span>, Level: <span class="st">"warning"</span>},
+    Model: <span class="st">"claude-sonnet"</span>,
+}
+fmt.<span class="fn">Println</span>(cfg.Title)  <span class="cm">// 直接访问嵌入字段</span></code></pre>
+</div>
+
+<h3>Python 对照</h3>
+<div class="card">
+<table>
+<tr><th>Python</th><th>Go</th><th>注意</th></tr>
+<tr><td><code>list</code></td><td><code>slice []T</code></td><td>slice 是引用类型，切片共享底层数组</td></tr>
+<tr><td><code>dict</code></td><td><code>map[K]V</code></td><td>map 非并发安全，需 sync.Map 或 mutex</td></tr>
+<tr><td><code>class</code></td><td><code>struct</code> + methods</td><td>无继承，用 embedding 组合</td></tr>
+<tr><td><code>dataclass</code></td><td>struct + json tags</td><td>无自动生成方法，需手写或使用工具</td></tr>
+<tr><td><code>tuple</code></td><td>多返回值 <code>(a, b)</code></td><td>Go 原生支持多返回值</td></tr>
+</table>
+</div>
+
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>定义 <code>AgentState</code> 结构体，包含 Messages（[]map[string]string）、ToolCalls（[]string）、CurrentAgent（string）。实现 <code>AddMessage(role, content string)</code> 方法。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">type</span> <span class="ty">AgentState</span> <span class="kw">struct</span> {
+    Messages      []<span class="kw">map</span>[<span class="ty">string</span>]<span class="ty">string</span>
+    ToolCalls     []<span class="ty">string</span>
+    CurrentAgent  <span class="ty">string</span>
+}
+
+<span class="kw">func</span> (s *AgentState) <span class="fn">AddMessage</span>(role, content <span class="ty">string</span>) {
+    s.Messages = <span class="fn">append</span>(s.Messages, <span class="kw">map</span>[<span class="ty">string</span>]<span class="ty">string</span>{
+        <span class="st">"role"</span>: role, <span class="st">"content"</span>: content,
+    })
+}
+
+state := &amp;AgentState{CurrentAgent: <span class="st">"supervisor"</span>}
+state.AddMessage(<span class="st">"user"</span>, <span class="st">"分析这条告警"</span>)</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 3. 函数与方法 ==================== -->
+<section id="functions">
+<h2>函数与方法</h2>
+
+<div class="card card-accent">
+  <p>Go 函数的核心特征：<strong>多返回值</strong>（尤其是 error）、<strong>命名返回值</strong>、<strong>defer 延迟执行</strong>。错误不是异常，而是正常的返回值。</p>
+</div>
+
+<h3>多返回值与命名返回值</h3>
+<div class="card">
+<pre><code><span class="cm">// 多返回值（Go 最常用模式之一）</span>
+<span class="kw">func</span> <span class="fn">Divide</span>(a, b <span class="ty">float64</span>) (<span class="ty">float64</span>, <span class="ty">error</span>) {
+    <span class="kw">if</span> b == <span class="nu">0</span> {
+        <span class="kw">return</span> <span class="nu">0</span>, fmt.<span class="fn">Errorf</span>(<span class="st">"division by zero"</span>)
+    }
+    <span class="kw">return</span> a / b, <span class="kw">nil</span>
+}
+
+<span class="cm">// 命名返回值（defer 中可修改）</span>
+<span class="kw">func</span> <span class="fn">FetchAlert</span>(id <span class="ty">string</span>) (alert Alert, err <span class="ty">error</span>) {
+    alert, err = db.<span class="fn">Get</span>(id)
+    <span class="kw">return</span>  <span class="cm">// 裸 return，返回命名变量</span>
+}</code></pre>
+</div>
+
+<h3>值接收者 vs 指针接收者</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="cm">// 值接收者：不修改原 struct</span>
+<span class="kw">func</span> (a Alert) <span class="fn">Summary</span>() <span class="ty">string</span> {
+    <span class="kw">return</span> a.Title
+}
+
+<span class="cm">// 指针接收者：可修改 + 避免大 struct 拷贝</span>
+<span class="kw">func</span> (a *Alert) <span class="fn">SetLevel</span>(level <span class="ty">string</span>) {
+    a.Level = level
+}</code></pre>
+<div class="tip">规则：需要修改 struct 或 struct 较大时用指针接收者；小 struct 只读用值接收者。同一类型的方法接收者应保持一致。</div>
+</div>
+<div class="card">
+<pre><code><span class="cm">// 一等函数</span>
+<span class="kw">type</span> <span class="ty">Handler</span> <span class="kw">func</span>(ctx context.Context, msg <span class="ty">string</span>) <span class="ty">error</span>
+
+<span class="kw">func</span> <span class="fn">Process</span>(h Handler, msg <span class="ty">string</span>) <span class="ty">error</span> {
+    <span class="kw">return</span> h(context.<span class="fn">Background</span>(), msg)
+}
+
+<span class="cm">// 闭包</span>
+<span class="kw">func</span> <span class="fn">Counter</span>() <span class="kw">func</span>() <span class="ty">int</span> {
+    n := <span class="nu">0</span>
+    <span class="kw">return</span> <span class="kw">func</span>() <span class="ty">int</span> {
+        n++
+        <span class="kw">return</span> n
+    }
+}</code></pre>
+</div>
+</div>
+
+<h3>defer 关键字</h3>
+<div class="card">
+<pre><code><span class="kw">func</span> <span class="fn">ReadFile</span>(path <span class="ty">string</span>) ([]<span class="ty">byte</span>, <span class="ty">error</span>) {
+    f, err := os.<span class="fn">Open</span>(path)
+    <span class="kw">if</span> err != <span class="kw">nil</span> {
+        <span class="kw">return</span> <span class="kw">nil</span>, err
+    }
+    <span class="kw">defer</span> f.<span class="fn">Close</span>()  <span class="cm">// 函数返回前执行，LIFO 顺序</span>
+
+    <span class="kw">return</span> io.<span class="fn">ReadAll</span>(f)
+}
+
+<span class="cm">// defer 执行顺序：后进先出（LIFO）</span>
+<span class="kw">defer</span> fmt.<span class="fn">Println</span>(<span class="st">"1"</span>)
+<span class="kw">defer</span> fmt.<span class="fn">Println</span>(<span class="st">"2"</span>)
+<span class="kw">defer</span> fmt.<span class="fn">Println</span>(<span class="st">"3"</span>)
+<span class="cm">// 输出: 3, 2, 1</span></code></pre>
+</div>
+
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>实现 <code>Retry(fn func() error, maxAttempts int) error</code>，失败时重试直到成功或达到最大次数。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">func</span> <span class="fn">Retry</span>(fn <span class="kw">func</span>() <span class="ty">error</span>, maxAttempts <span class="ty">int</span>) <span class="ty">error</span> {
+    <span class="kw">var</span> lastErr <span class="ty">error</span>
+    <span class="kw">for</span> i := <span class="nu">0</span>; i &lt; maxAttempts; i++ {
+        <span class="kw">if</span> err := fn(); err == <span class="kw">nil</span> {
+            <span class="kw">return</span> <span class="kw">nil</span>
+        } <span class="kw">else</span> {
+            lastErr = err
+        }
+    }
+    <span class="kw">return</span> fmt.<span class="fn">Errorf</span>(<span class="st">"after %d attempts: %w"</span>, maxAttempts, lastErr)
+}</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 4. 错误处理 ==================== -->
+<section id="errors">
+<h2>错误处理</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>Go 哲学：</strong>错误是值，不是异常。每个可能失败的操作都返回 <code>error</code>，调用方必须显式处理。这让错误路径清晰可见，但代码中会有大量 <code>if err != nil</code>。</div>
+</div>
+
+<h3>基本模式</h3>
+<div class="card">
+<pre><code>result, err := doSomething()
+<span class="kw">if</span> err != <span class="kw">nil</span> {
+    <span class="kw">return</span> fmt.<span class="fn">Errorf</span>(<span class="st">"doSomething failed: %w"</span>, err)
+}
+<span class="cm">// 继续使用 result</span></code></pre>
+</div>
+
+<h3>创建与包装错误</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="kw">import</span> <span class="st">"errors"</span>
+
+<span class="cm">// 简单错误</span>
+err := errors.<span class="fn">New</span>(<span class="st">"alert not found"</span>)
+
+<span class="cm">// 格式化错误</span>
+err := fmt.<span class="fn">Errorf</span>(<span class="st">"invalid alert id: %s"</span>, id)
+
+<span class="cm">// 包装错误（Go 1.13+）</span>
+err := fmt.<span class="fn">Errorf</span>(<span class="st">"fetch alert: %w"</span>, originalErr)</code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm">// 自定义错误类型</span>
+<span class="kw">type</span> <span class="ty">NotFoundError</span> <span class="kw">struct</span> {
+    Resource <span class="ty">string</span>
+    ID       <span class="ty">string</span>
+}
+
+<span class="kw">func</span> (e *NotFoundError) <span class="fn">Error</span>() <span class="ty">string</span> {
+    <span class="kw">return</span> fmt.<span class="fn">Sprintf</span>(<span class="st">"%s %s not found"</span>, e.Resource, e.ID)
+}
+
+<span class="cm">// 错误检查</span>
+<span class="kw">if</span> errors.<span class="fn">Is</span>(err, sql.ErrNoRows) { ... }
+<span class="kw">var</span> nfe *NotFoundError
+<span class="kw">if</span> errors.<span class="fn">As</span>(err, &amp;nfe) { ... }</code></pre>
+</div>
+</div>
+
+<h3>Panic / Recover</h3>
+<div class="card card-orange">
+<pre><code><span class="cm">// panic：程序不可恢复的错误（类似 Python 未捕获异常）</span>
+<span class="cm">// 只在真正无法继续时使用，如 init 失败、编程 bug</span>
+
+<span class="cm">// recover：在 defer 中捕获 panic</span>
+<span class="kw">func</span> <span class="fn">SafeHandler</span>(w http.ResponseWriter, r *http.Request) {
+    <span class="kw">defer</span> <span class="kw">func</span>() {
+        <span class="kw">if</span> rec := <span class="fn">recover</span>(); rec != <span class="kw">nil</span> {
+            log.<span class="fn">Printf</span>(<span class="st">"panic recovered: %v"</span>, rec)
+            http.<span class="fn">Error</span>(w, <span class="st">"Internal Server Error"</span>, <span class="nu">500</span>)
+        }
+    }()
+    <span class="cm">// 业务逻辑...</span>
+}</code></pre>
+<div class="tip"><strong>何时用 panic：</strong>几乎不用。业务错误返回 error；只在 init、不可恢复的内部 bug 时用 panic。<strong>不要用 panic 做流程控制。</strong></div>
+</div>
+
+<h3>Python try/except vs Go error</h3>
+<div class="card">
+<table>
+<tr><th>Python</th><th>Go</th></tr>
+<tr><td><code>try: ... except Exception as e:</code></td><td><code>if err != nil { ... }</code></td></tr>
+<tr><td>异常可以不被捕获，向上传播</td><td>error 必须显式返回或处理</td></tr>
+<tr><td><code>raise ValueError("msg")</code></td><td><code>return fmt.Errorf("msg")</code></td></tr>
+<tr><td><code>except SpecificError:</code></td><td><code>errors.Is(err, Target)</code> / <code>errors.As</code></td></tr>
+<tr><td>异常栈自动追踪</td><td>需手动 <code>%w</code> 包装保留错误链</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== 5. 并发编程 ==================== -->
+<section id="concurrency">
+<h2>并发编程：goroutine 与 channel</h2>
+
+<div class="card card-accent">
+  <p>Go 的杀手级特性：<strong>goroutine + channel</strong>。轻量级协程（初始栈 ~2KB），M:N 调度，由 runtime 管理。Agent 分析服务中大量用于并行 enrichment、流式输出、后台任务。</p>
+</div>
+
+<h3>Goroutine 基础</h3>
+<div class="card">
+<pre><code><span class="cm">// 启动 goroutine：go 关键字</span>
+<span class="kw">go</span> <span class="fn">fetchMetrics</span>(alertID)
+
+<span class="cm">// WaitGroup：等待一组 goroutine 完成</span>
+<span class="kw">var</span> wg sync.WaitGroup
+<span class="kw">for</span> _, id := <span class="kw">range</span> alertIDs {
+    wg.<span class="fn">Add</span>(<span class="nu">1</span>)
+    <span class="kw">go</span> <span class="kw">func</span>(alertID <span class="ty">string</span>) {
+        <span class="kw">defer</span> wg.<span class="fn">Done</span>()
+        <span class="fn">processAlert</span>(alertID)
+    }(id)  <span class="cm">// 注意：传参避免闭包捕获循环变量</span>
+}
+wg.<span class="fn">Wait</span>()</code></pre>
+</div>
+
+<h3>Channel</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="cm">// 无缓冲 channel（同步）</span>
+ch := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">string</span>)
+<span class="kw">go</span> <span class="kw">func</span>() { ch &lt;- <span class="st">"result"</span> }()
+msg := &lt;-ch
+
+<span class="cm">// 有缓冲 channel</span>
+ch := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">int</span>, <span class="nu">100</span>)
+
+<span class="cm">// 关闭 channel</span>
+<span class="fn">close</span>(ch)
+<span class="kw">for</span> v := <span class="kw">range</span> ch { ... }
+
+<span class="cm">// select：多路复用</span>
+<span class="kw">select</span> {
+<span class="kw">case</span> result := &lt;-resultCh:
+    <span class="fn">handle</span>(result)
+<span class="kw">case</span> &lt;-ctx.<span class="fn">Done</span>():
+    <span class="kw">return</span> ctx.<span class="fn">Err</span>()
+<span class="kw">case</span> &lt;-time.<span class="fn">After</span>(<span class="nu">5</span> * time.Second):
+    <span class="kw">return</span> errors.<span class="fn">New</span>(<span class="st">"timeout"</span>)
+}</code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm">// Context：取消、超时、传值</span>
+ctx, cancel := context.<span class="fn">WithTimeout</span>(
+    context.<span class="fn">Background</span>(), <span class="nu">30</span>*time.Second,
+)
+<span class="kw">defer</span> cancel()
+
+<span class="cm">// 传递给下游</span>
+req, _ := http.<span class="fn">NewRequestWithContext</span>(ctx, <span class="st">"GET"</span>, url, <span class="kw">nil</span>)
+
+<span class="cm">// Mutex vs Channel</span>
+<span class="cm">// Mutex：保护共享状态（计数器、缓存）</span>
+<span class="kw">var</span> mu sync.Mutex
+mu.<span class="fn">Lock</span>()
+counter++
+mu.<span class="fn">Unlock</span>()
+
+<span class="cm">// Channel：传递数据、协调 goroutine</span>
+<span class="cm">// "Don't communicate by sharing memory;</span>
+<span class="cm">//  share memory by communicating."</span></code></pre>
+</div>
+</div>
+
+<h3>并发模式</h3>
+<div class="card">
+<pre><code><span class="cm">// Fan-out：一个 producer，多个 worker 消费</span>
+<span class="kw">func</span> <span class="fn">worker</span>(id <span class="ty">int</span>, jobs &lt;-<span class="kw">chan</span> <span class="ty">string</span>, results <span class="kw">chan</span>&lt;- <span class="ty">string</span>) {
+    <span class="kw">for</span> job := <span class="kw">range</span> jobs {
+        results &lt;- fmt.<span class="fn">Sprintf</span>(<span class="st">"worker-%d: %s"</span>, id, job)
+    }
+}
+
+<span class="cm">// Fan-in：多个 channel 合并为一个</span>
+<span class="kw">func</span> <span class="fn">merge</span>(chs ...&lt;-<span class="kw">chan</span> <span class="ty">string</span>) &lt;-<span class="kw">chan</span> <span class="ty">string</span> {
+    out := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">string</span>)
+    <span class="kw">var</span> wg sync.WaitGroup
+    <span class="kw">for</span> _, ch := <span class="kw">range</span> chs {
+        wg.<span class="fn">Add</span>(<span class="nu">1</span>)
+        <span class="kw">go</span> <span class="kw">func</span>(c &lt;-<span class="kw">chan</span> <span class="ty">string</span>) {
+            <span class="kw">defer</span> wg.<span class="fn">Done</span>()
+            <span class="kw">for</span> v := <span class="kw">range</span> c { out &lt;- v }
+        }(ch)
+    }
+    <span class="kw">go</span> <span class="kw">func</span>() { wg.<span class="fn">Wait</span>(); <span class="fn">close</span>(out) }()
+    <span class="kw">return</span> out
+}
+
+<span class="cm">// Worker Pool</span>
+<span class="kw">const</span> numWorkers = <span class="nu">5</span>
+jobs := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">string</span>, <span class="nu">100</span>)
+<span class="kw">for</span> w := <span class="nu">0</span>; w &lt; numWorkers; w++ {
+    <span class="kw">go</span> worker(w, jobs, results)
+}</code></pre>
+</div>
+
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>实现一个 Worker Pool：5 个 worker 并发处理 alert ID，主 goroutine 发送 20 个任务并收集结果。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">func</span> <span class="fn">WorkerPool</span>(ids []<span class="ty">string</span>, workers <span class="ty">int</span>) []<span class="ty">string</span> {
+    jobs := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">string</span>, <span class="fn">len</span>(ids))
+    results := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">string</span>, <span class="fn">len</span>(ids))
+    <span class="kw">var</span> wg sync.WaitGroup
+    <span class="kw">for</span> w := <span class="nu">0</span>; w &lt; workers; w++ {
+        wg.<span class="fn">Add</span>(<span class="nu">1</span>)
+        <span class="kw">go</span> <span class="kw">func</span>() {
+            <span class="kw">defer</span> wg.<span class="fn">Done</span>()
+            <span class="kw">for</span> id := <span class="kw">range</span> jobs {
+                results &lt;- <span class="st">"processed:"</span> + id
+            }
+        }()
+    }
+    <span class="kw">for</span> _, id := <span class="kw">range</span> ids { jobs &lt;- id }
+    <span class="fn">close</span>(jobs)
+    wg.<span class="fn">Wait</span>()
+    <span class="fn">close</span>(results)
+    <span class="kw">var</span> out []<span class="ty">string</span>
+    <span class="kw">for</span> r := <span class="kw">range</span> results { out = <span class="fn">append</span>(out, r) }
+    <span class="kw">return</span> out
+}</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 6. 接口与多态 ==================== -->
+<section id="interfaces">
+<h2>接口与多态</h2>
+
+<div class="card card-accent">
+  <p>Go 接口是<strong>隐式实现</strong>：只要类型实现了接口的所有方法，就自动满足该接口。无需 <code>implements</code> 关键字。这是 Go 多态的核心。</p>
+</div>
+
+<h3>接口定义与实现</h3>
+<div class="card">
+<pre><code><span class="cm">// 定义接口</span>
+<span class="kw">type</span> <span class="ty">AgentRunner</span> <span class="kw">interface</span> {
+    Run(ctx context.Context, prompt <span class="ty">string</span>) (<span class="ty">string</span>, <span class="ty">error</span>)
+    Stream(ctx context.Context, prompt <span class="ty">string</span>) &lt;-<span class="kw">chan</span> <span class="ty">string</span>
+}
+
+<span class="cm">// CursorRunner 自动满足 AgentRunner（无需声明）</span>
+<span class="kw">type</span> <span class="ty">CursorRunner</span> <span class="kw">struct</span> { APIKey <span class="ty">string</span> }
+
+<span class="kw">func</span> (c *CursorRunner) <span class="fn">Run</span>(ctx context.Context, prompt <span class="ty">string</span>) (<span class="ty">string</span>, <span class="ty">error</span>) {
+    <span class="cm">// 调用 Cursor API...</span>
+    <span class="kw">return</span> <span class="st">"analysis result"</span>, <span class="kw">nil</span>
+}
+
+<span class="kw">func</span> (c *CursorRunner) <span class="fn">Stream</span>(ctx context.Context, prompt <span class="ty">string</span>) &lt;-<span class="kw">chan</span> <span class="ty">string</span> {
+    ch := <span class="fn">make</span>(<span class="kw">chan</span> <span class="ty">string</span>)
+    <span class="kw">go</span> <span class="kw">func</span>() { <span class="kw">defer</span> <span class="fn">close</span>(ch); ch &lt;- <span class="st">"chunk"</span> }()
+    <span class="kw">return</span> ch
+}
+
+<span class="cm">// 多态调用</span>
+<span class="kw">func</span> <span class="fn">Analyze</span>(runner AgentRunner, prompt <span class="ty">string</span>) (<span class="ty">string</span>, <span class="ty">error</span>) {
+    <span class="kw">return</span> runner.<span class="fn">Run</span>(context.<span class="fn">Background</span>(), prompt)
+}</code></pre>
+</div>
+
+<h3>空接口与类型断言</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="cm">// 空接口：任何类型都满足</span>
+<span class="kw">var</span> v <span class="kw">interface</span>{} = <span class="nu">42</span>
+<span class="kw">var</span> v <span class="ty">any</span> = <span class="st">"hello"</span>  <span class="cm">// Go 1.18+ 别名</span>
+
+<span class="cm">// 类型断言</span>
+s, ok := v.(<span class="ty">string</span>)
+<span class="kw">if</span> !ok { ... }
+
+<span class="cm">// 类型 switch</span>
+<span class="kw">switch</span> val := v.(<span class="kw">type</span>) {
+<span class="kw">case</span> <span class="ty">string</span>:
+    fmt.<span class="fn">Println</span>(<span class="st">"string:"</span>, val)
+<span class="kw">case</span> <span class="ty">int</span>:
+    fmt.<span class="fn">Println</span>(<span class="st">"int:"</span>, val)
+<span class="kw">default</span>:
+    fmt.<span class="fn">Println</span>(<span class="st">"unknown"</span>)
+}</code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm">// 常用标准接口</span>
+<span class="cm">// io.Reader / io.Writer — 读写抽象</span>
+<span class="cm">// error — Error() string</span>
+<span class="cm">// fmt.Stringer — String() string</span>
+
+<span class="cm">// 接口组合</span>
+<span class="kw">type</span> <span class="ty">ReadWriter</span> <span class="kw">interface</span> {
+    io.Reader
+    io.Writer
+}
+
+<span class="cm">// 小接口原则：接口应该很小</span>
+<span class="cm">// "The bigger the interface,</span>
+<span class="cm">//  the weaker the abstraction."</span></code></pre>
+</div>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>Agent 服务中的应用：</strong><code>library/agent/</code> 中 CursorRunner、ClaudeRunner、CodexRunner 都实现统一的 Handler 接口，Gateway 通过接口多态路由到不同 Agent，无需 switch-case 具体类型。</div>
+</div>
+</section>
+
+<!-- ==================== 7. 包管理与项目结构 ==================== -->
+<section id="modules">
+<h2>包管理与项目结构</h2>
+
+<h3>Go Modules</h3>
+<div class="card">
+<pre><code><span class="cm">// go.mod — 类似 Python 的 pyproject.toml + requirements.txt</span>
+module icode.baidu.com/baidu/gensoft-ipcs-mobile/gdp-gravitysvr-alertAnalysis
+
+go <span class="nu">1.21</span>
+
+require (
+    github.com/gin-gonic/gin v1.9.1
+    gorm.io/gorm v1.25.5
+    gorm.io/driver/mysql v1.5.2
+)
+
+<span class="cm">// 常用命令</span>
+go mod init &lt;module-path&gt;   <span class="cm"># 初始化</span>
+go get github.com/gin-gonic/gin  <span class="cm"># 添加依赖</span>
+go mod tidy                  <span class="cm"># 清理未用依赖</span>
+go build ./...               <span class="cm"># 编译</span>
+go test ./...                <span class="cm"># 测试</span></code></pre>
+</div>
+
+<h3>标准项目布局</h3>
+<div class="card">
+<pre><code>gdp-gravitysvr-alertAnalysis/
+├── main.go                 <span class="cm"># 入口</span>
+├── go.mod / go.sum
+├── conf/                   <span class="cm"># 配置文件</span>
+├── modules/
+│   ├── controllers/        <span class="cm"># HTTP handler（薄层）</span>
+│   ├── services/           <span class="cm"># 业务逻辑</span>
+│   ├── daos/               <span class="cm"># 数据访问</span>
+│   ├── models/             <span class="cm"># 数据模型</span>
+│   └── routers/            <span class="cm"># 路由注册</span>
+├── library/                <span class="cm"># 共享库（agent, gateway, auth...）</span>
+└── cmd/                    <span class="cm"># 独立二进制入口</span></code></pre>
+</div>
+
+<h3>包命名规范</h3>
+<div class="card">
+<table>
+<tr><th>规则</th><th>示例</th></tr>
+<tr><td>小写、短、无下划线</td><td><code>package analyzeservice</code></td></tr>
+<tr><td>目录名 = 包名（通常）</td><td><code>modules/services/analyzeservice/</code></td></tr>
+<tr><td>internal/ 仅模块内可见</td><td><code>internal/cache/</code></td></tr>
+<tr><td>导出 = 大写开头</td><td><code>func Analyze()</code> 导出，<code>func parse()</code> 私有</td></tr>
+</table>
+</div>
+
+<h3>Python pip vs Go modules</h3>
+<div class="card">
+<table>
+<tr><th>Python</th><th>Go</th></tr>
+<tr><td><code>requirements.txt</code></td><td><code>go.mod</code> + <code>go.sum</code></td></tr>
+<tr><td><code>pip install pkg</code></td><td><code>go get pkg@version</code></td></tr>
+<tr><td>虚拟环境 venv</td><td>无需虚拟环境，GOPATH/pkg/mod 全局缓存</td></tr>
+<tr><td><code>from x import y</code></td><td><code>import "module/path"</code>，用 pkg.Func 调用</td></tr>
+<tr><td>相对导入</td><td>不支持，必须用完整 module path</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== 8. 标准库精选 ==================== -->
+<section id="stdlib">
+<h2>标准库精选</h2>
+
+<div class="grid-2">
+<div class="card">
+<h3>net/http</h3>
+<pre><code><span class="cm">// HTTP Server</span>
+http.<span class="fn">HandleFunc</span>(<span class="st">"/health"</span>, <span class="kw">func</span>(w http.ResponseWriter, r *http.Request) {
+    w.<span class="fn">Write</span>([]<span class="ty">byte</span>(<span class="st">`{"status":"ok"}`</span>))
+})
+http.<span class="fn">ListenAndServe</span>(<span class="st">":8080"</span>, <span class="kw">nil</span>)
+
+<span class="cm">// HTTP Client</span>
+resp, err := http.<span class="fn">Get</span>(<span class="st">"https://api.example.com/alerts"</span>)
+<span class="kw">defer</span> resp.Body.<span class="fn">Close</span>()
+body, _ := io.<span class="fn">ReadAll</span>(resp.Body)</code></pre>
+</div>
+<div class="card">
+<h3>encoding/json</h3>
+<pre><code><span class="kw">type</span> <span class="ty">Alert</span> <span class="kw">struct</span> {
+    Title <span class="ty">string</span> <span class="st">`json:"title"`</span>
+    Level <span class="ty">string</span> <span class="st">`json:"level,omitempty"`</span>
+}
+
+<span class="cm">// Marshal（struct → JSON）</span>
+data, _ := json.<span class="fn">Marshal</span>(alert)
+
+<span class="cm">// Unmarshal（JSON → struct）</span>
+<span class="kw">var</span> a Alert
+json.<span class="fn">Unmarshal</span>(data, &amp;a)</code></pre>
+</div>
+</div>
+
+<div class="grid-2">
+<div class="card">
+<h3>context</h3>
+<pre><code>ctx, cancel := context.<span class="fn">WithCancel</span>(parent)
+<span class="kw">defer</span> cancel()
+
+ctx, cancel := context.<span class="fn">WithTimeout</span>(parent, <span class="nu">5</span>*time.Second)
+ctx, cancel := context.<span class="fn">WithDeadline</span>(parent, deadline)
+
+<span class="cm">// 传值（谨慎使用）</span>
+ctx = context.<span class="fn">WithValue</span>(ctx, <span class="st">"traceID"</span>, id)</code></pre>
+</div>
+<div class="card">
+<h3>sync</h3>
+<pre><code><span class="kw">var</span> mu sync.Mutex          <span class="cm">// 互斥锁</span>
+<span class="kw">var</span> rw sync.RWMutex        <span class="cm">// 读写锁</span>
+<span class="kw">var</span> wg sync.WaitGroup      <span class="cm">// 等待组</span>
+<span class="kw">var</span> once sync.Once         <span class="cm">// 只执行一次</span>
+
+once.<span class="fn">Do</span>(<span class="kw">func</span>() {
+    db = <span class="fn">initDB</span>()  <span class="cm">// 单例初始化</span>
+})</code></pre>
+</div>
+</div>
+
+<div class="grid-3">
+<div class="card">
+<h3>io / os</h3>
+<pre><code><span class="cm">// 读写</span>
+io.<span class="fn">Copy</span>(dst, src)
+io.<span class="fn">ReadAll</span>(reader)
+
+<span class="cm">// 文件</span>
+data, _ := os.<span class="fn">ReadFile</span>(path)
+os.<span class="fn">WriteFile</span>(path, data, <span class="nu">0644</span>)
+os.<span class="fn">Getenv</span>(<span class="st">"PORT"</span>)</code></pre>
+</div>
+<div class="card">
+<h3>log</h3>
+<pre><code>log.<span class="fn">Println</span>(<span class="st">"info"</span>)
+log.<span class="fn">Printf</span>(<span class="st">"alert %s processed"</span>, id)
+
+<span class="cm">// 生产环境推荐结构化日志</span>
+<span class="cm">// logit（GDP 框架）或 zap/zerolog</span></code></pre>
+</div>
+<div class="card">
+<h3>testing</h3>
+<pre><code><span class="kw">func</span> <span class="fn">TestFormatAlert</span>(t *testing.T) {
+    got := FormatAlert(<span class="st">"CPU High"</span>, <span class="st">"warning"</span>)
+    <span class="kw">if</span> !strings.<span class="fn">Contains</span>(got, <span class="st">"CPU High"</span>) {
+        t.<span class="fn">Fatalf</span>(<span class="st">"got %q"</span>, got)
+    }
+}
+
+<span class="cm">// go test -v ./...</span>
+<span class="cm">// go test -race ./...</span></code></pre>
+</div>
+</div>
+</section>
+
+<!-- ==================== 9. Gin 框架 ==================== -->
+<section id="gin">
+<h2>Gin 框架</h2>
+
+<div class="card card-accent">
+  <p>Gin 是 Go 最流行的 HTTP 框架，性能接近 net/http 原生。本项目（gdp-gravitysvr-alertAnalysis）使用 GDP 框架封装 Gin/ghttp 处理 HTTP 路由。语法与原生 Gin 高度一致。</p>
+</div>
+
+<h3>路由与中间件</h3>
+<div class="card">
+<pre><code><span class="kw">import</span> <span class="st">"github.com/gin-gonic/gin"</span>
+
+r := gin.<span class="fn">Default</span>()  <span class="cm">// 含 Logger + Recovery 中间件</span>
+
+<span class="cm">// 路由</span>
+r.<span class="fn">GET</span>(<span class="st">"/health"</span>, <span class="kw">func</span>(c *gin.Context) {
+    c.<span class="fn">JSON</span>(<span class="nu">200</span>, gin.H{<span class="st">"status"</span>: <span class="st">"ok"</span>})
+})
+
+<span class="cm">// 路由分组</span>
+api := r.<span class="fn">Group</span>(<span class="st">"/api/v1"</span>)
+{
+    api.<span class="fn">POST</span>(<span class="st">"/analyze"</span>, analyzeHandler)
+    api.<span class="fn">GET</span>(<span class="st">"/sessions/:id"</span>, getSessionHandler)
+}
+
+<span class="cm">// 自定义中间件</span>
+<span class="kw">func</span> <span class="fn">AuthMiddleware</span>() gin.HandlerFunc {
+    <span class="kw">return</span> <span class="kw">func</span>(c *gin.Context) {
+        token := c.<span class="fn">GetHeader</span>(<span class="st">"Authorization"</span>)
+        <span class="kw">if</span> token == <span class="st">""</span> {
+            c.<span class="fn">AbortWithStatusJSON</span>(<span class="nu">401</span>, gin.H{<span class="st">"error"</span>: <span class="st">"unauthorized"</span>})
+            <span class="kw">return</span>
+        }
+        c.<span class="fn">Next</span>()
+    }
+}
+api.<span class="fn">Use</span>(AuthMiddleware())</code></pre>
+</div>
+
+<h3>请求绑定与响应</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="kw">type</span> <span class="ty">AnalyzeRequest</span> <span class="kw">struct</span> {
+    AlertID  <span class="ty">string</span> <span class="st">`json:"alert_id" binding:"required"`</span>
+    BizLine  <span class="ty">string</span> <span class="st">`json:"biz_line"`</span>
+    Model    <span class="ty">string</span> <span class="st">`json:"model"`</span>
+}
+
+<span class="kw">func</span> <span class="fn">analyzeHandler</span>(c *gin.Context) {
+    <span class="kw">var</span> req AnalyzeRequest
+    <span class="kw">if</span> err := c.<span class="fn">ShouldBindJSON</span>(&amp;req); err != <span class="kw">nil</span> {
+        c.<span class="fn">JSON</span>(<span class="nu">400</span>, gin.H{<span class="st">"error"</span>: err.<span class="fn">Error</span>()})
+        <span class="kw">return</span>
+    }
+
+    <span class="cm">// Query params: c.Query("page")</span>
+    <span class="cm">// Path params:  c.Param("id")</span>
+
+    c.<span class="fn">JSON</span>(<span class="nu">200</span>, gin.H{<span class="st">"task_id"</span>: <span class="st">"abc123"</span>})
+}</code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm">// SSE 流式响应（Agent 输出）</span>
+<span class="kw">func</span> <span class="fn">streamHandler</span>(c *gin.Context) {
+    c.<span class="fn">Header</span>(<span class="st">"Content-Type"</span>, <span class="st">"text/event-stream"</span>)
+    c.<span class="fn">Header</span>(<span class="st">"Cache-Control"</span>, <span class="st">"no-cache"</span>)
+    c.<span class="fn">Header</span>(<span class="st">"Connection"</span>, <span class="st">"keep-alive"</span>)
+
+    flusher, _ := c.Writer.(http.Flusher)
+    ch := agent.<span class="fn">Stream</span>(c.Request.Context(), prompt)
+    <span class="kw">for</span> chunk := <span class="kw">range</span> ch {
+        fmt.<span class="fn">Fprintf</span>(c.Writer, <span class="st">"data: %s\n\n"</span>, chunk)
+        flusher.<span class="fn">Flush</span>()
+    }
+}</code></pre>
+</div>
+</div>
+
+<h3>Gin vs FastAPI</h3>
+<div class="card">
+<table>
+<tr><th>特性</th><th>FastAPI (Python)</th><th>Gin (Go)</th></tr>
+<tr><td>路由</td><td><code>@app.get("/path")</code></td><td><code>r.GET("/path", handler)</code></td></tr>
+<tr><td>请求体</td><td>Pydantic 自动校验</td><td>struct tags + <code>binding:"required"</code></td></tr>
+<tr><td>依赖注入</td><td><code>Depends()</code></td><td>中间件 / 手动注入</td></tr>
+<tr><td>异步</td><td><code>async def</code></td><td>goroutine（handler 本身同步）</td></tr>
+<tr><td>流式响应</td><td><code>StreamingResponse</code></td><td>SSE + Flusher</td></tr>
+<tr><td>性能</td><td>中等（async 单线程事件循环）</td><td>高（原生并发，无 GIL）</td></tr>
+</table>
+</div>
+
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>写一个 Gin 路由 <code>POST /api/analyze</code>，接收 JSON body，校验 alert_id 必填，返回 task_id。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">type</span> <span class="ty">Req</span> <span class="kw">struct</span> {
+    AlertID <span class="ty">string</span> <span class="st">`json:"alert_id" binding:"required"`</span>
+}
+
+r.<span class="fn">POST</span>(<span class="st">"/api/analyze"</span>, <span class="kw">func</span>(c *gin.Context) {
+    <span class="kw">var</span> req Req
+    <span class="kw">if</span> err := c.<span class="fn">ShouldBindJSON</span>(&amp;req); err != <span class="kw">nil</span> {
+        c.<span class="fn">JSON</span>(<span class="nu">400</span>, gin.H{<span class="st">"error"</span>: err.<span class="fn">Error</span>()})
+        <span class="kw">return</span>
+    }
+    c.<span class="fn">JSON</span>(<span class="nu">200</span>, gin.H{<span class="st">"task_id"</span>: uuid.<span class="fn">New</span>().<span class="fn">String</span>()})
+})</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 10. GORM 数据库 ==================== -->
+<section id="gorm">
+<h2>GORM 数据库</h2>
+
+<div class="card card-accent">
+  <p>GORM 是 Go 最流行的 ORM，类似 Python 的 SQLAlchemy。本项目用于 Session、Chat、Evolution 等数据的持久化。</p>
+</div>
+
+<h3>Model 与 CRUD</h3>
+<div class="card">
+<pre><code><span class="kw">type</span> <span class="ty">Session</span> <span class="kw">struct</span> {
+    ID        <span class="ty">uint</span>      <span class="st">`gorm:"primaryKey"`</span>
+    BizLine   <span class="ty">string</span>    <span class="st">`gorm:"size:64;index"`</span>
+    AlertID   <span class="ty">string</span>    <span class="st">`gorm:"size:128"`</span>
+    Status    <span class="ty">string</span>    <span class="st">`gorm:"size:32;default:pending"`</span>
+    CreatedAt time.Time
+    UpdatedAt time.Time
+}
+
+<span class="cm">// 连接</span>
+dsn := <span class="st">"user:pass@tcp(127.0.0.1:3306)/alert_analysis?charset=utf8mb4"</span>
+db, err := gorm.<span class="fn">Open</span>(mysql.<span class="fn">Open</span>(dsn), &amp;gorm.Config{})
+
+<span class="cm">// 自动迁移</span>
+db.<span class="fn">AutoMigrate</span>(&amp;Session{})
+
+<span class="cm">// Create</span>
+db.<span class="fn">Create</span>(&amp;Session{BizLine: <span class="st">"mobile"</span>, AlertID: <span class="st">"alert-001"</span>})
+
+<span class="cm">// Read</span>
+<span class="kw">var</span> session Session
+db.<span class="fn">First</span>(&amp;session, <span class="st">"alert_id = ?"</span>, <span class="st">"alert-001"</span>)
+db.<span class="fn">Where</span>(<span class="st">"status = ?"</span>, <span class="st">"pending"</span>).<span class="fn">Find</span>(&amp;sessions)
+
+<span class="cm">// Update</span>
+db.<span class="fn">Model</span>(&amp;session).<span class="fn">Update</span>(<span class="st">"status"</span>, <span class="st">"completed"</span>)
+
+<span class="cm">// Delete</span>
+db.<span class="fn">Delete</span>(&amp;session)</code></pre>
+</div>
+
+<h3>关联、Hooks 与事务</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="kw">type</span> <span class="ty">ChatMessage</span> <span class="kw">struct</span> {
+    ID        <span class="ty">uint</span>
+    SessionID <span class="ty">uint</span>
+    Role      <span class="ty">string</span>
+    Content   <span class="ty">string</span> <span class="st">`gorm:"type:text"`</span>
+    Session   Session <span class="st">`gorm:"foreignKey:SessionID"`</span>
+}
+
+<span class="cm">// Preload 关联查询</span>
+db.<span class="fn">Preload</span>(<span class="st">"Session"</span>).<span class="fn">Find</span>(&amp;messages)
+
+<span class="cm">// Hooks</span>
+<span class="kw">func</span> (s *Session) <span class="fn">BeforeCreate</span>(tx *gorm.DB) <span class="ty">error</span> {
+    s.Status = <span class="st">"pending"</span>
+    <span class="kw">return</span> <span class="kw">nil</span>
+}</code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm">// 事务</span>
+err := db.<span class="fn">Transaction</span>(<span class="kw">func</span>(tx *gorm.DB) <span class="ty">error</span> {
+    <span class="kw">if</span> err := tx.<span class="fn">Create</span>(&amp;session).Error; err != <span class="kw">nil</span> {
+        <span class="kw">return</span> err
+    }
+    <span class="kw">return</span> tx.<span class="fn">Create</span>(&amp;message).Error
+})
+
+<span class="cm">// 连接池配置</span>
+sqlDB, _ := db.<span class="fn">DB</span>()
+sqlDB.<span class="fn">SetMaxOpenConns</span>(<span class="nu">50</span>)
+sqlDB.<span class="fn">SetMaxIdleConns</span>(<span class="nu">10</span>)
+sqlDB.<span class="fn">SetConnMaxLifetime</span>(time.Hour)</code></pre>
+</div>
+</div>
+
+<h3>GORM vs SQLAlchemy</h3>
+<div class="card">
+<table>
+<tr><th>SQLAlchemy</th><th>GORM</th></tr>
+<tr><td><code>class Session(Base): __tablename__</code></td><td><code>type Session struct {}</code> + gorm tags</td></tr>
+<tr><td><code>session.add(obj); session.commit()</code></td><td><code>db.Create(&amp;obj)</code></td></tr>
+<tr><td><code>session.query(Session).filter_by(...)</code></td><td><code>db.Where(...).Find(&amp;results)</code></td></tr>
+<tr><td><code>relationship()</code></td><td>struct field + <code>foreignKey</code> tag + Preload</td></tr>
+<tr><td><code>session.begin()</code></td><td><code>db.Transaction(func(tx *gorm.DB) error {})</code></td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== 11. Go 并发模式实战 ==================== -->
+<section id="patterns">
+<h2>Go 并发模式实战</h2>
+
+<div class="card card-accent">
+  <p>以下模式在 Agent 分析服务中高频出现：HTTP handler 传递 Context、优雅关闭、限流、熔断、Worker Pool、外部 API 超时控制。</p>
+</div>
+
+<h3>Context 传播与 Graceful Shutdown</h3>
+<div class="card">
+<pre><code><span class="cm">// HTTP handler 中获取 context</span>
+<span class="kw">func</span> <span class="fn">analyzeHandler</span>(c *gin.Context) {
+    ctx := c.Request.Context()  <span class="cm">// 客户端断开时自动 cancel</span>
+    result, err := service.<span class="fn">Analyze</span>(ctx, req)
+    ...
+}
+
+<span class="cm">// Graceful Shutdown</span>
+srv := &amp;http.Server{Addr: <span class="st">":8080"</span>, Handler: r}
+<span class="kw">go</span> srv.<span class="fn">ListenAndServe</span>()
+
+quit := <span class="fn">make</span>(<span class="kw">chan</span> os.Signal, <span class="nu">1</span>)
+signal.<span class="fn">Notify</span>(quit, syscall.SIGINT, syscall.SIGTERM)
+&lt;-quit
+
+ctx, cancel := context.<span class="fn">WithTimeout</span>(context.<span class="fn">Background</span>(), <span class="nu">30</span>*time.Second)
+<span class="kw">defer</span> cancel()
+srv.<span class="fn">Shutdown</span>(ctx)  <span class="cm">// 等待进行中的请求完成</span></code></pre>
+</div>
+
+<h3>Rate Limiter 与 Circuit Breaker</h3>
+<div class="grid-2">
+<div class="card">
+<pre><code><span class="kw">import</span> <span class="st">"golang.org/x/time/rate"</span>
+
+<span class="cm">// 令牌桶限流：每秒 10 个，突发 20</span>
+limiter := rate.<span class="fn">NewLimiter</span>(<span class="nu">10</span>, <span class="nu">20</span>)
+
+<span class="kw">func</span> <span class="fn">RateLimitMiddleware</span>() gin.HandlerFunc {
+    <span class="kw">return</span> <span class="kw">func</span>(c *gin.Context) {
+        <span class="kw">if</span> !limiter.<span class="fn">Allow</span>() {
+            c.<span class="fn">AbortWithStatus</span>(<span class="nu">429</span>)
+            <span class="kw">return</span>
+        }
+        c.<span class="fn">Next</span>()
+    }
+}</code></pre>
+</div>
+<div class="card">
+<pre><code><span class="cm">// 熔断器（简化版）</span>
+<span class="kw">type</span> <span class="ty">CircuitBreaker</span> <span class="kw">struct</span> {
+    failures  <span class="ty">int</span>
+    threshold <span class="ty">int</span>
+    open      <span class="ty">bool</span>
+    mu        sync.Mutex
+}
+
+<span class="kw">func</span> (cb *CircuitBreaker) <span class="fn">Call</span>(fn <span class="kw">func</span>() <span class="ty">error</span>) <span class="ty">error</span> {
+    cb.mu.<span class="fn">Lock</span>()
+    <span class="kw">if</span> cb.open {
+        cb.mu.<span class="fn">Unlock</span>()
+        <span class="kw">return</span> errors.<span class="fn">New</span>(<span class="st">"circuit open"</span>)
+    }
+    cb.mu.<span class="fn">Unlock</span>()
+    err := fn()
+    cb.mu.<span class="fn">Lock</span>()
+    <span class="kw">if</span> err != <span class="kw">nil</span> {
+        cb.failures++
+        <span class="kw">if</span> cb.failures >= cb.threshold { cb.open = <span class="kw">true</span> }
+    } <span class="kw">else</span> { cb.failures = <span class="nu">0</span> }
+    cb.mu.<span class="fn">Unlock</span>()
+    <span class="kw">return</span> err
+}</code></pre>
+</div>
+</div>
+
+<h3>Worker Pool 与超时控制</h3>
+<div class="card">
+<pre><code><span class="cm">// 批量处理告警的 Worker Pool</span>
+<span class="kw">func</span> <span class="fn">BatchAnalyze</span>(ctx context.Context, alerts []Alert, workers <span class="ty">int</span>) []Result {
+    jobs := <span class="fn">make</span>(<span class="kw">chan</span> Alert, <span class="fn">len</span>(alerts))
+    results := <span class="fn">make</span>(<span class="kw">chan</span> Result, <span class="fn">len</span>(alerts))
+    <span class="kw">var</span> wg sync.WaitGroup
+    <span class="kw">for</span> i := <span class="nu">0</span>; i &lt; workers; i++ {
+        wg.<span class="fn">Add</span>(<span class="nu">1</span>)
+        <span class="kw">go</span> <span class="kw">func</span>() {
+            <span class="kw">defer</span> wg.<span class="fn">Done</span>()
+            <span class="kw">for</span> alert := <span class="kw">range</span> jobs {
+                results &lt;- analyzeOne(ctx, alert)
+            }
+        }()
+    }
+    <span class="kw">for</span> _, a := <span class="kw">range</span> alerts { jobs &lt;- a }
+    <span class="fn">close</span>(jobs)
+    wg.<span class="fn">Wait</span>()
+    <span class="fn">close</span>(results)
+    ...
+}
+
+<span class="cm">// 外部 API 超时控制</span>
+<span class="kw">func</span> <span class="fn">CallExternalAPI</span>(ctx context.Context, url <span class="ty">string</span>) ([]<span class="ty">byte</span>, <span class="ty">error</span>) {
+    ctx, cancel := context.<span class="fn">WithTimeout</span>(ctx, <span class="nu">5</span>*time.Second)
+    <span class="kw">defer</span> cancel()
+    req, _ := http.<span class="fn">NewRequestWithContext</span>(ctx, <span class="st">"GET"</span>, url, <span class="kw">nil</span>)
+    resp, err := http.<span class="fn">DefaultClient</span>.<span class="fn">Do</span>(req)
+    ...
+}</code></pre>
+</div>
+
+<div class="card card-green">
+<h3>实战练习</h3>
+<p><strong>题目：</strong>实现带超时的 HTTP GET 请求函数 <code>FetchWithTimeout(url string, timeout time.Duration) ([]byte, error)</code>。</p>
+<details>
+<summary>参考答案</summary>
+<pre><code><span class="kw">func</span> <span class="fn">FetchWithTimeout</span>(url <span class="ty">string</span>, timeout time.Duration) ([]<span class="ty">byte</span>, <span class="ty">error</span>) {
+    ctx, cancel := context.<span class="fn">WithTimeout</span>(context.<span class="fn">Background</span>(), timeout)
+    <span class="kw">defer</span> cancel()
+    req, err := http.<span class="fn">NewRequestWithContext</span>(ctx, http.MethodGet, url, <span class="kw">nil</span>)
+    <span class="kw">if</span> err != <span class="kw">nil</span> { <span class="kw">return</span> <span class="kw">nil</span>, err }
+    resp, err := http.<span class="fn">DefaultClient</span>.<span class="fn">Do</span>(req)
+    <span class="kw">if</span> err != <span class="kw">nil</span> { <span class="kw">return</span> <span class="kw">nil</span>, err }
+    <span class="kw">defer</span> resp.Body.<span class="fn">Close</span>()
+    <span class="kw">return</span> io.<span class="fn">ReadAll</span>(resp.Body)
+}</code></pre>
+</details>
+</div>
+</section>
+
+<!-- ==================== 12. 面试高频题 ==================== -->
+<section id="faq">
+<h2>面试高频题</h2>
+
+<div class="card">
+<details>
+<summary>goroutine 和 thread 的区别？</summary>
+<p><strong>goroutine</strong> 是 Go runtime 管理的轻量级协程，初始栈约 2KB，可动态扩缩；由 Go 调度器做 M:N 映射（M 个 goroutine 映射到 N 个 OS thread）。</p>
+<p><strong>OS thread</strong> 由内核调度，栈通常 1-8MB，创建/切换成本高。</p>
+<p>Go 调度器使用 GMP 模型：G（goroutine）、M（machine/OS thread）、P（processor/逻辑 CPU）。goroutine 阻塞时（如 channel、syscall），调度器会将 M 上的其他 G 迁移到其他 M，避免 thread 浪费。</p>
+</details>
+
+<details>
+<summary>channel 是如何实现的？</summary>
+<p>channel 底层是 <strong>hchan</strong> 结构体，包含：</p>
+<ul>
+<li><strong>环形缓冲区（ring buffer）</strong>：有缓冲 channel 用 fixed-size 数组存储数据</li>
+<li><strong>mutex</strong>：保护 channel 内部状态</li>
+<li><strong>sendq / recvq</strong>：等待发送/接收的 goroutine 队列（sudog 链表）</li>
+</ul>
+<p>无缓冲 channel：发送方和接收方必须同时就绪（同步握手）。有缓冲 channel：缓冲区未满时可异步发送。关闭 channel 后，接收方读到零值 + <code>false</code>。</p>
+</details>
+
+<details>
+<summary>Go 的 GC 是如何工作的？</summary>
+<p>Go 使用<strong>三色标记清除（tricolor mark-and-sweep）</strong>并发 GC：</p>
+<ul>
+<li><strong>白色</strong>：未被访问的对象（待回收）</li>
+<li><strong>灰色</strong>：已被访问但子对象未扫描</li>
+<li><strong>黑色</strong>：已被访问且子对象已扫描</li>
+</ul>
+<p>GC 大部分时间与 mutator（用户代码）并发执行。仅在<strong>标记终止（mark termination）</strong>阶段有短暂 STW（Stop-The-World），用于完成最终标记。Go 1.5+ 目标 STW &lt; 1ms。</p>
+</details>
+
+<details>
+<summary>defer 的执行顺序？</summary>
+<p><strong>LIFO（后进先出）</strong>。多个 defer 按注册的反序执行。</p>
+<pre><code><span class="kw">defer</span> fmt.<span class="fn">Println</span>(<span class="st">"1"</span>)
+<span class="kw">defer</span> fmt.<span class="fn">Println</span>(<span class="st">"2"</span>)
+<span class="kw">defer</span> fmt.<span class="fn">Println</span>(<span class="st">"3"</span>)
+<span class="cm">// 输出: 3, 2, 1</span></code></pre>
+<p>defer 的参数在<strong>注册时</strong>就确定了值（非执行时），但闭包变量在执行时读取最新值。defer 有一定性能开销，热路径避免滥用。</p>
+</details>
+
+<details>
+<summary>slice 的底层结构？</summary>
+<p>slice 是三个字段的<strong>描述符</strong>（24 字节 on 64-bit）：</p>
+<pre><code><span class="kw">type</span> slice <span class="kw">struct</span> {
+    array <span class="kw">unsafe</span>.Pointer  <span class="cm">// 指向底层数组</span>
+    len   <span class="ty">int</span>               <span class="cm">// 当前元素数</span>
+    cap   <span class="ty">int</span>               <span class="cm">// 底层数组容量</span>
+}</code></pre>
+<p>切片操作 <code>s[low:high]</code> 共享底层数组——修改 sub slice 可能影响原 slice。append 超出 cap 时分配新数组（通常 2 倍扩容）并拷贝。</p>
+</details>
+
+<details>
+<summary>map 是并发安全的吗？</summary>
+<p><strong>不是。</strong>并发读写 map 会导致 fatal error: concurrent map read and map write。</p>
+<p>解决方案：</p>
+<ul>
+<li><code>sync.Mutex</code> / <code>sync.RWMutex</code> 保护 map</li>
+<li><code>sync.Map</code>：适合读多写少或 key 相对固定的场景</li>
+<li>使用 channel 传递数据，避免共享 map</li>
+</ul>
+</details>
+
+<details>
+<summary>context 的用途？</summary>
+<p><code>context.Context</code> 提供三种能力：</p>
+<ul>
+<li><strong>取消（Cancellation）</strong>：<code>WithCancel</code> — 父 context 取消时，所有子 context 自动取消</li>
+<li><strong>超时/截止（Timeout/Deadline）</strong>：<code>WithTimeout</code> / <code>WithDeadline</code></li>
+<li><strong>值传递（Value）</strong>：<code>WithValue</code> — 传递 trace ID 等请求级元数据（谨慎使用）</li>
+</ul>
+<p>在 HTTP handler → service → DAO 调用链中传递 context，确保客户端断开或超时时，所有下游操作都能及时终止。</p>
+</details>
+
+<details>
+<summary>interface 是如何实现的？</summary>
+<p>Go interface 底层是 <strong>iface</strong>（含方法的接口）或 <strong>eface</strong>（空接口）：</p>
+<pre><code><span class="kw">type</span> iface <span class="kw">struct</span> {
+    tab  *itab           <span class="cm">// 类型信息 + 方法表</span>
+    data <span class="kw">unsafe</span>.Pointer <span class="cm">// 指向实际数据</span>
+}</code></pre>
+<p><strong>itab</strong> 包含：接口类型、具体类型、方法指针数组。类型断言就是查 itab 是否匹配。空接口 eface 只有 type 指针 + data 指针，无方法表。</p>
+<p>这也是为什么 nil interface 不等于 nil：interface 值为 nil 需要 type 和 data 都为 nil。</p>
+</details>
+</div>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🚀</div>
+<div><strong>下一步建议：</strong>clone <code>gdp-gravitysvr-alertAnalysis</code> 仓库，从 <code>modules/controllers/analyze/</code> 和 <code>library/agent/</code> 入手，对照本指南逐模块阅读。运行 <code>go test ./...</code> 验证理解。</div>
+</div>
+</section>
+
+</div>
+
+<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+<script>
+(function(){
+  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
+  var saved=localStorage.getItem('ai-guide-theme');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
+  tgl.addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
+    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
+  });
+
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
+    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
+    var navLinks=document.querySelectorAll('.nav a');
+    var sections=['basics','data','functions','errors','concurrency','interfaces','modules','stdlib','gin','gorm','patterns','faq'];
+    var current='';
+    sections.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)current=id});
+    navLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current)});
+  });
+
+  var els=document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){el.classList.add('animate-in')});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>
