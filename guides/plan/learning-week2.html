@@ -3,61 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Week 2 学习计划 — 深入优化 Agent 系统与工程实践">
+<link rel="stylesheet" href="/tech-guide-docs/assets/css/shared.css">
 <title>Week 2 — 做深做精</title>
 <style>
-:root{--bg:#fafafa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--accent:#059669;--accent-light:#d1fae5;--green:#059669;--green-light:#d1fae5;--orange:#d97706;--orange-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--blue:#2563eb;--blue-light:#dbeafe;--border:#e5e7eb;--radius:12px;--code-bg:#f1f5f9;--pre-bg:#1e293b;--pre-text:#e2e8f0}
-[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#34d399;--accent-light:#064e3b;--green:#34d399;--green-light:#064e3b;--orange:#fbbf24;--orange-light:#78350f;--red:#f87171;--red-light:#7f1d1d;--purple:#a78bfa;--purple-light:#4c1d95;--blue:#60a5fa;--blue-light:#1e3a5f;--border:#334155;--code-bg:#334155;--pre-bg:#0f172a;--pre-text:#e2e8f0}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 100px;transition:background .3s,color .3s}
-.progress-bar-top{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9999;width:0%;transition:width .1s}
-.container{max-width:800px;margin:0 auto;padding:0 20px}
-.hero{background:linear-gradient(135deg,#064e3b 0%,#059669 100%);color:#fff;text-align:center;padding:48px 20px}
-.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:8px}
-.hero p{opacity:.85;font-size:1.1rem}
-.hero .tag{display:inline-block;margin-top:12px;padding:6px 16px;border-radius:20px;background:rgba(255,255,255,.2);font-size:.9rem}
-.nav-back{display:inline-flex;align-items:center;gap:6px;padding:12px 0;color:var(--accent);text-decoration:none;font-size:.9rem;font-weight:600}
-.nav-back:hover{text-decoration:underline}
-.day{margin-top:40px}
-.day-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
-.day-num{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:#fff;flex-shrink:0}
-.day-info h2{font-size:1.3rem;font-weight:700}
-.day-info p{font-size:.85rem;color:var(--muted)}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:12px 0;transition:background .3s,border-color .3s,transform .2s}
-.card:hover{transform:translateY(-1px)}
-.card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
-.task{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
-.task:last-child{border-bottom:none}
-.task-check{flex-shrink:0;width:22px;height:22px;margin-top:2px}
-.task-check input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
-.task-body{flex:1}
-.task-title{font-weight:600;font-size:.95rem}
-.task-desc{font-size:.85rem;color:var(--muted);margin-top:2px}
-.task-time{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent);font-weight:600;margin-top:4px}
-.task.done .task-title{text-decoration:line-through;color:var(--muted)}
-.resource{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--blue-light);margin:6px 0;font-size:.85rem;transition:background .3s}
-.resource a{color:var(--blue);text-decoration:none;font-weight:600;word-break:break-all}
-.resource a:hover{text-decoration:underline}
-.checkpoint{padding:14px 18px;border-radius:10px;background:var(--green-light);border-left:4px solid var(--green);margin:16px 0;font-size:.9rem;transition:background .3s}
-.checkpoint strong{color:var(--green)}
-pre{background:var(--pre-bg);color:var(--pre-text);padding:14px 18px;border-radius:8px;overflow-x:auto;font-size:.83rem;line-height:1.5;margin:10px 0}
-code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:.85em;font-family:'SF Mono',Menlo,monospace}
-.tip{padding:12px 16px;border-radius:8px;background:var(--orange-light);font-size:.85rem;margin:10px 0;transition:background .3s}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:600px){.grid-2{grid-template-columns:1fr}}
-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.85rem}
-th{background:var(--code-bg);font-weight:600;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border)}
-td{padding:8px 12px;border-bottom:1px solid var(--border)}
-.summary-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:16px;z-index:100;transition:background .3s}
-.summary-bar .bar{flex:1;max-width:400px;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
-.summary-bar .fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
-.summary-bar .text{font-size:.85rem;font-weight:600;color:var(--muted);min-width:100px;text-align:right}
-.theme-toggle{position:fixed;bottom:64px;right:20px;z-index:1000;width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:all .3s}
-.theme-toggle:hover{transform:scale(1.1);border-color:var(--accent)}
-.animate-in{opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease}
-.animate-in.visible{opacity:1;transform:translateY(0)}
+.container {max-width:800px;margin:0 auto;padding:0 20px}
+.hero {background:linear-gradient(135deg,#064e3b 0%,#059669 100%);color:#fff;text-align:center;padding:48px 20px}
+.hero h1 {font-size:2.2rem;font-weight:800;margin-bottom:8px}
+.hero p {opacity:.85;font-size:1.1rem}
+.hero .tag {display:inline-block;margin-top:12px;padding:6px 16px;border-radius:20px;background:rgba(255,255,255,.2);font-size:.9rem}
+.day {margin-top:40px}
+.day-header {display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.day-num {width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:#fff;flex-shrink:0}
+.day-info h2 {font-size:1.3rem;font-weight:700}
+.day-info p {font-size:.85rem;color:var(--muted)}
+.card h3 {font-size:1rem;font-weight:700;margin-bottom:8px}
+.task {display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.task:last-child {border-bottom:none}
+.task-check {flex-shrink:0;width:22px;height:22px;margin-top:2px}
+.task-check input {width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.task-body {flex:1}
+.task-title {font-weight:600;font-size:.95rem}
+.task-desc {font-size:.85rem;color:var(--muted);margin-top:2px}
+.task-time {display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent);font-weight:600;margin-top:4px}
+.task.done .task-title {text-decoration:line-through;color:var(--muted)}
+.resource {display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--blue-light);margin:6px 0;font-size:.85rem;transition:background .3s}
+.resource a {color:var(--blue);text-decoration:none;font-weight:600;word-break:break-all}
+.checkpoint {padding:14px 18px;border-radius:10px;background:var(--green-light);border-left:4px solid var(--green);margin:16px 0;font-size:.9rem;transition:background .3s}
+.checkpoint strong {color:var(--green)}
+.summary-bar {position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:16px;z-index:100;transition:background .3s}
+.summary-bar .bar {flex:1;max-width:400px;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.summary-bar .fill {height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.summary-bar .text {font-size:.85rem;font-weight:600;color:var(--muted);min-width:100px;text-align:right}
+
+.summary-bar { left: 260px; }
+@media(max-width:768px) { .summary-bar { left: 0; } }
 </style>
 </head>
 <body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">🤖 AI Engineer 知识库</div>
+    </aside>
+    <main class="main-content">
+      <div class="breadcrumb" id="breadcrumb"></div>
 <div class="progress-bar-top" id="progressBar"></div>
 
 <div class="hero">
@@ -67,7 +56,6 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)}
 </div>
 
 <div class="container">
-<a href="ai-agent-engineering-guide.html" class="nav-back">← 返回总指南</a>
 
 <!-- Day 8 -->
 <div class="day" id="day8">
@@ -493,7 +481,12 @@ LANGCHAIN_PROJECT=my-agent-demo</pre>
   <div class="text" id="summaryText">0 / 24</div>
   <div class="bar"><div class="fill" id="summaryFill" style="width:0%"></div></div>
 </div>
-<button class="theme-toggle" id="themeToggle" title="切换暗色模式"><span id="themeIcon">🌙</span></button>
+
+      <div class="page-nav" id="page-nav"></div>
+    </main>
+  </div>
+  <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="打开导航">☰</button>
+  <script src="/tech-guide-docs/assets/js/shared.js" defer></script>
 
 <script>
 (function(){
@@ -513,23 +506,12 @@ LANGCHAIN_PROJECT=my-agent-demo</pre>
   }
   window.toggle=function(id){var p=getProgress();p[id]=!p[id];saveProgress(p);updateUI()};
   updateUI();
-  var tgl=document.getElementById('themeToggle'),icon=document.getElementById('themeIcon');
-  var saved=localStorage.getItem('ai-guide-theme');
-  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️'}
-  tgl.addEventListener('click',function(){
-    var d=document.documentElement.getAttribute('data-theme')==='dark';
-    if(d){document.documentElement.removeAttribute('data-theme');icon.textContent='🌙';localStorage.setItem('ai-guide-theme','light')}
-    else{document.documentElement.setAttribute('data-theme','dark');icon.textContent='☀️';localStorage.setItem('ai-guide-theme','dark')}
-  });
-  window.addEventListener('scroll',function(){
+window.addEventListener('scroll',function(){
     var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,sh=h.scrollHeight-h.clientHeight;
-    document.getElementById('progressBar').style.width=(sh>0?(st/sh)*100:0)+'%';
-  });
+    });
   var els=document.querySelectorAll('.card,.checkpoint,.tip');
   els.forEach(function(el){el.classList.add('animate-in')});
-  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
-  els.forEach(function(el){obs.observe(el)});
-})();
+  })();
 </script>
 </body>
 </html>
