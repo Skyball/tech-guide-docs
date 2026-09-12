@@ -24,6 +24,7 @@ var SITE = {
         { slug: 'database-advanced-guide', title: '数据库进阶', priority: 'P2', keywords: ['索引', 'SQL', '事务', 'Redis', 'B+Tree'] },
         { slug: 'message-queue-guide', title: '消息队列深入', priority: 'P2', keywords: ['Kafka', 'RabbitMQ', 'Redis Streams'] },
         { slug: 'grpc-guide', title: 'gRPC / Protocol Buffers', priority: 'P1', keywords: ['gRPC', 'Protobuf', 'Go', 'Python'] },
+        { slug: 'elasticsearch-guide', title: 'Elasticsearch 原理深入', priority: 'P0', keywords: ['Elasticsearch', '倒排索引', '分布式', 'Lucene', '搜索引擎'] },
         { slug: 'docker-k8s-guide', title: 'Docker & Kubernetes 容器化', priority: 'P0', keywords: ['Docker', 'Kubernetes', 'K8s', '容器', '编排', 'Dockerfile'] },
         { slug: 'redis-guide', title: 'Redis 实战指南', priority: 'P1', keywords: ['Redis', '缓存', '分布式锁', 'Go', 'Python'] }
       ]

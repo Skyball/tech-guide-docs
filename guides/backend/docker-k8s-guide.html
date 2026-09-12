@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Docker & Kubernetes 容器化实战指南 — 从镜像构建到 K8s 编排，面试高频题全覆盖">
+<link rel="stylesheet" href="/tech-guide-docs/assets/css/shared.css">
+<title>Docker & Kubernetes 容器化实战指南</title>
+<style>
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#4527a0 100%);color:#fff;text-align:center;padding:56px 20px}
+.hero h1{font-size:2.4rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider{display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+</style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">🤖 AI Engineer 知识库</div>
+    </aside>
+    <main class="main-content">
+      <div class="breadcrumb" id="breadcrumb"></div>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Docker & Kubernetes 容器化实战指南</h1>
+  <p>面向后端 / AI 工程师的容器化全栈指南<br>从 Dockerfile 到 K8s 编排，面试高频题全覆盖</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#ch1">容器化是什么</a>
+    <a href="#ch2">Docker 核心</a>
+    <a href="#ch3">Dockerfile</a>
+    <a href="#ch4">Docker 网络</a>
+    <a href="#ch5">Docker 存储</a>
+    <a href="#ch6">Compose</a>
+    <a href="#ch7">K8s 架构</a>
+    <a href="#ch8">K8s 对象</a>
+    <a href="#ch9">K8s 网络</a>
+    <a href="#ch10">K8s 存储</a>
+    <a href="#ch11">部署策略</a>
+    <a href="#ch12">监控运维</a>
+    <a href="#ch13">面试总结</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. 容器化是什么 ==================== -->
+<section id="ch1" class="animate-in">
+<h2>1. 容器化是什么</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：容器 = 轻量级的「应用沙盒」，把代码和依赖打包在一起，在任何机器上都能一模一样地运行。</div>
+</div>
+
+<div class="card">
+  <h3>直觉理解：集装箱的类比</h3>
+  <p>想象国际贸易——以前货物散装运输，到港口要逐件卸载，效率低还容易损坏。<strong>集装箱</strong>的发明改变了一切：不管里面装的是玩具、电子产品还是食品，外面都是标准化的箱子，任何港口的吊车都能装卸。</p>
+  <p>容器对应用做了同样的事：不管你的应用是 Python + Redis 还是 Go + PostgreSQL，打包成容器后，在开发机、测试服务器、云平台上都能以<strong>完全一致</strong>的方式运行。</p>
+</div>
+
+<h3>演进路线</h3>
+<div class="card">
+<pre><code>物理机时代          虚拟机时代              容器时代
+┌─────────┐     ┌──────────────┐     ┌──────────────────┐
+│  App A   │     │ VM1   VM2    │     │ C1  C2  C3  C4   │
+│  App B   │     │┌────┐┌────┐ │     │┌──┐┌──┐┌──┐┌──┐ │
+│  App C   │     ││AppA││AppB│ │     ││A ││B ││C ││D │ │
+│──────────│     ││Libs││Libs│ │     │└──┘└──┘└──┘└──┘ │
+│    OS    │     ││ OS ││ OS │ │     │   Container Engine │
+│ Hardware │     │└────┘└────┘ │     │       OS           │
+└─────────┘     │  Hypervisor  │     │    Hardware        │
+                │  Hardware    │     └──────────────────┘
+                └──────────────┘
+</code></pre>
+</div>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>虚拟机 <span class="tag tag-blue">重量级</span></h3>
+<ul>
+<li>每个 VM 包含完整 Guest OS</li>
+<li>启动时间：分钟级</li>
+<li>内存占用：GB 级</li>
+<li>隔离性：硬件级别，安全性强</li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>容器 <span class="tag tag-green">轻量级</span></h3>
+<ul>
+<li>共享宿主机 OS 内核</li>
+<li>启动时间：秒级（甚至毫秒级）</li>
+<li>内存占用：MB 级</li>
+<li>隔离性：进程级别，通过 Namespace + Cgroups</li>
+</ul>
+</div>
+</div>
+
+<h3>容器的底层原理（Linux）</h3>
+<div class="card">
+<table>
+<tr><th>技术</th><th>作用</th><th>类比</th></tr>
+<tr><td><strong>Namespace</strong></td><td>隔离进程、网络、文件系统等资源</td><td>每个容器有自己的「房间」，看不到别人的东西</td></tr>
+<tr><td><strong>Cgroups</strong></td><td>限制 CPU、内存等资源使用量</td><td>每个房间有「水电表」，超额就断供</td></tr>
+<tr><td><strong>UnionFS</strong></td><td>分层文件系统，镜像层共享 + 容器层可写</td><td>多层透明纸叠在一起，最上面一层可以写字</td></tr>
+</table>
+</div>
+
+<details><summary>面试题：容器和虚拟机的本质区别是什么？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：虚拟机通过 Hypervisor 虚拟化硬件，每个 VM 运行一个完整的 Guest OS，隔离粒度是硬件级别；容器通过 Linux Namespace 隔离进程视图（PID/NET/MNT/UTS/IPC/USER），通过 Cgroups 限制资源配额，共享宿主机内核，隔离粒度是进程级别。因此容器更轻量（MB vs GB）、启动更快（秒 vs 分钟），但隔离性弱于 VM。生产中常见的方案是 VM + 容器混用：VM 做租户级隔离，容器做应用级部署。</p>
+</div>
+</details>
+
+<details><summary>面试题：Docker 容器本质上是什么？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：Docker 容器本质上就是一个被 Namespace 隔离、被 Cgroups 限制、根文件系统由 UnionFS（如 OverlayFS）提供的<strong>特殊进程</strong>。它不是虚拟机，没有独立的内核，<code>docker exec</code> 进入容器看到的 PID 1 进程就是容器的主进程。所以容器的生命周期 = 主进程的生命周期。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 2. Docker 核心概念 ==================== -->
+<section id="ch2" class="animate-in">
+<h2>2. Docker 核心概念</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：镜像是「菜谱」，容器是「做出来的菜」，Registry 是「菜谱分享平台」。</div>
+</div>
+
+<div class="grid-3">
+<div class="card" style="border-top:3px solid var(--accent)">
+<h3>镜像 Image</h3>
+<p>只读模板，包含运行应用的一切：代码、运行时、库、环境变量。由多个<strong>只读层</strong>叠加组成。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--green)">
+<h3>容器 Container</h3>
+<p>镜像的运行实例。在镜像的只读层上加一个<strong>可写层</strong>。停止后可写层还在，删除后消失。</p>
+</div>
+<div class="card" style="border-top:3px solid var(--orange)">
+<h3>仓库 Registry</h3>
+<p>存储和分发镜像的服务。Docker Hub 是公共仓库，企业用 Harbor、ECR、GCR 做私有仓库。</p>
+</div>
+</div>
+
+<h3>镜像分层原理</h3>
+<div class="card">
+<pre><code>┌──────────────────────┐  ← 可写层（Container Layer）
+├──────────────────────┤
+│  COPY app.py .       │  ← Layer 4（应用代码）
+├──────────────────────┤
+│  RUN pip install     │  ← Layer 3（依赖安装）
+├──────────────────────┤
+│  RUN apt-get update  │  ← Layer 2（系统包）
+├──────────────────────┤
+│  FROM python:3.11    │  ← Layer 1（基础镜像）
+└──────────────────────┘
+
+关键：每一层只读且可被多个镜像/容器共享 → 节省磁盘和传输时间
+</code></pre>
+</div>
+
+<h3>常用命令速查</h3>
+<div class="card">
+<pre><code># 镜像操作
+docker pull nginx:1.25           # 拉取镜像
+docker images                     # 列出本地镜像
+docker rmi nginx:1.25            # 删除镜像
+docker build -t myapp:v1 .       # 构建镜像
+docker tag myapp:v1 registry/myapp:v1  # 打标签
+docker push registry/myapp:v1   # 推送到仓库
+
+# 容器操作
+docker run -d --name web -p 8080:80 nginx  # 后台运行
+docker ps                         # 列出运行中的容器
+docker ps -a                      # 列出所有容器（含停止的）
+docker logs -f web               # 查看日志（实时跟踪）
+docker exec -it web /bin/sh      # 进入容器
+docker stop web                  # 优雅停止（SIGTERM → SIGKILL）
+docker rm web                    # 删除容器
+
+# 调试诊断
+docker inspect web               # 查看容器元数据（JSON）
+docker stats                     # 实时资源使用
+docker top web                   # 容器内进程列表</code></pre>
+</div>
+
+<div class="tip">⚠️ 常见坑：<code>docker run</code> 不加 <code>--rm</code> 时，容器停止后仍占用磁盘空间。开发环境建议加 <code>--rm</code> 自动清理；生产环境不要加，方便 debug。</div>
+
+<details><summary>面试题：docker run 的完整生命周期是什么？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：<code>docker run</code> 背后发生了：① Docker Client 发 HTTP 请求给 Docker Daemon；② Daemon 检查本地是否有镜像，没有则 pull；③ 创建容器（分配 ID、可写层、网络配置）；④ 配置 Namespace 和 Cgroups；⑤ 启动容器主进程（ENTRYPOINT/CMD）；⑥ 主进程退出时容器停止（exit code 传递给 Daemon）。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 3. Dockerfile 最佳实践 ==================== -->
+<section id="ch3" class="animate-in">
+<h2>3. Dockerfile 最佳实践</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：Dockerfile 就是镜像的「施工图纸」，写得好构建快且镜像小，写得差构建慢且镜像大。</div>
+</div>
+
+<h3>多阶段构建（Multi-stage Build）</h3>
+<div class="card">
+<p>核心思想：用一个阶段编译，另一个阶段只拷贝产物。最终镜像不包含编译工具链，体积大幅缩小。</p>
+</div>
+
+<div class="vs">
+<div class="card card-orange">
+<h3>单阶段（臃肿）</h3>
+<pre><code>FROM golang:1.22
+WORKDIR /app
+COPY . .
+RUN go build -o server .
+EXPOSE 8080
+CMD ["./server"]
+# 最终镜像 ~800MB（含 Go 工具链）</code></pre>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card card-green">
+<h3>多阶段（精简）</h3>
+<pre><code># 阶段 1：编译
+FROM golang:1.22 AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o server .
+
+# 阶段 2：运行
+FROM alpine:3.19
+COPY --from=builder /app/server /server
+EXPOSE 8080
+CMD ["/server"]
+# 最终镜像 ~15MB</code></pre>
+</div>
+</div>
+
+<h3>层缓存优化</h3>
+<div class="card">
+<pre><code># ❌ 错误：每次代码改动都会重新 pip install
+FROM python:3.11-slim
+COPY . /app
+RUN pip install -r /app/requirements.txt
+
+# ✅ 正确：先拷贝依赖文件，利用层缓存
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+# 只有 requirements.txt 变化时才重新安装依赖</code></pre>
+</div>
+
+<h3>最佳实践清单</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>镜像瘦身</h3>
+<ul>
+<li>用 <code>alpine</code> 或 <code>distroless</code> 基础镜像</li>
+<li>合并 <code>RUN</code> 指令减少层数</li>
+<li>用 <code>.dockerignore</code> 排除无关文件</li>
+<li><code>--no-cache-dir</code> 避免 pip 缓存</li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>安全加固</h3>
+<ul>
+<li>不要用 <code>root</code> 运行应用</li>
+<li>用 <code>USER</code> 指令切换非特权用户</li>
+<li>不在镜像中硬编码密钥/密码</li>
+<li>定期用 <code>trivy</code> / <code>snyk</code> 扫描漏洞</li>
+</ul>
+</div>
+</div>
+
+<h3>完整 Python 项目 Dockerfile</h3>
+<div class="card">
+<pre><code>FROM python:3.11-slim AS base
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+</div>
+
+<div class="tip">⚠️ 常见坑：<code>COPY . .</code> 会把 <code>.git</code>、<code>node_modules</code>、<code>__pycache__</code> 都拷进去。务必写好 <code>.dockerignore</code>！</div>
+
+<details><summary>面试题：Docker 层缓存的失效规则是什么？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：Docker 从 Dockerfile 顶部逐层检查缓存：① 对 <code>COPY</code>/<code>ADD</code> 指令，比较文件内容的 checksum，有变化则缓存失效；② 对 <code>RUN</code> 指令，比较命令字符串是否完全相同（不会检查命令的输出）；③ <strong>某一层缓存失效后，后续所有层都不再使用缓存</strong>。所以把变化频率低的指令放前面（如安装依赖），变化频率高的放后面（如拷贝代码）。</p>
+</div>
+</details>
+
+<details><summary>面试题：ENTRYPOINT 和 CMD 的区别？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：<code>ENTRYPOINT</code> 定义容器的「入口程序」，<code>CMD</code> 定义「默认参数」。<code>docker run</code> 后面的参数会覆盖 <code>CMD</code>，但不会覆盖 <code>ENTRYPOINT</code>（除非加 <code>--entrypoint</code>）。最佳实践：<code>ENTRYPOINT</code> 设为可执行文件，<code>CMD</code> 设为默认参数。例如 <code>ENTRYPOINT ["python"]</code>、<code>CMD ["app.py"]</code>，这样 <code>docker run myimage test.py</code> 会执行 <code>python test.py</code>。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 4. Docker 网络 ==================== -->
+<section id="ch4" class="animate-in">
+<h2>4. Docker 网络</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：Docker 网络就是给容器「接网线」——选择不同的网络模式，决定容器怎么跟外界和彼此通信。</div>
+</div>
+
+<h3>四种网络模式</h3>
+<div class="card">
+<table>
+<tr><th>模式</th><th>原理</th><th>场景</th><th>隔离性</th></tr>
+<tr><td><strong>bridge</strong>（默认）</td><td>创建虚拟网桥 docker0，容器通过 veth pair 连接</td><td>单机多容器通信</td><td>中</td></tr>
+<tr><td><strong>host</strong></td><td>容器直接使用宿主机网络栈，无网络隔离</td><td>性能敏感场景（减少 NAT 开销）</td><td>无</td></tr>
+<tr><td><strong>none</strong></td><td>没有网络，只有 loopback</td><td>安全敏感的离线计算任务</td><td>完全</td></tr>
+<tr><td><strong>overlay</strong></td><td>跨主机的虚拟网络（VXLAN 隧道）</td><td>Docker Swarm / 多主机通信</td><td>高</td></tr>
+</table>
+</div>
+
+<h3>Bridge 网络图解</h3>
+<div class="card">
+<pre><code>宿主机
+┌───────────────────────────────────┐
+│                                   │
+│  ┌─────────┐    ┌─────────┐     │
+│  │ 容器 A   │    │ 容器 B   │     │
+│  │172.17.0.2│    │172.17.0.3│     │
+│  └────┬─────┘    └────┬─────┘     │
+│       │ veth          │ veth      │
+│  ─────┴───────────────┴─────      │
+│          docker0 (bridge)         │
+│          172.17.0.1               │
+│               │                   │
+│          ┌────┴────┐              │
+│          │ iptables │ ← NAT/端口映射
+│          │  (NAT)  │              │
+│          └────┬────┘              │
+│               │                   │
+│          eth0 (宿主机网卡)          │
+└───────────────┴───────────────────┘
+                │
+           外部网络</code></pre>
+</div>
+
+<h3>自定义网络</h3>
+<div class="card">
+<pre><code># 创建自定义网络（推荐替代默认 bridge）
+docker network create --driver bridge my-net
+
+# 容器加入自定义网络（支持容器名 DNS 解析）
+docker run -d --name api --network my-net myapi:v1
+docker run -d --name db  --network my-net postgres:16
+
+# api 容器中可以直接用 "db" 作为主机名访问 postgres
+# psql -h db -U postgres  ← 这就能连上！
+
+# 查看网络详情
+docker network inspect my-net</code></pre>
+</div>
+
+<div class="callout callout-ok">
+  <div class="callout-icon">✅</div>
+  <div><strong>最佳实践</strong>：不要用默认的 bridge 网络。创建自定义网络可以获得<strong>容器名 DNS 解析</strong>，默认 bridge 只能用 IP 通信，非常不方便。</div>
+</div>
+
+<details><summary>面试题：容器间通过容器名通信的原理是什么？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：Docker 的自定义 bridge 网络内置了一个 DNS 服务器（运行在 127.0.0.11）。当容器用 <code>--name</code> 启动并加入自定义网络后，Docker Daemon 会在 DNS 中注册 <code>容器名 → IP</code> 的映射。其他同网络容器解析该容器名时，会被 <code>/etc/resolv.conf</code> 中的 nameserver 127.0.0.11 截获，由 Docker 内置 DNS 返回对应 IP。注意：默认的 bridge 网络不支持此功能。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 5. Docker 存储 ==================== -->
+<section id="ch5" class="animate-in">
+<h2>5. Docker 存储</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：容器默认是「用完即扔」的，数据要持久化就得用 Volume 或 Bind Mount 把数据「存到容器外面」。</div>
+</div>
+
+<h3>三种存储方式对比</h3>
+<div class="card">
+<table>
+<tr><th>类型</th><th>数据位置</th><th>适用场景</th><th>生命周期</th></tr>
+<tr><td><strong>Volume</strong></td><td>Docker 管理的区域<br><code>/var/lib/docker/volumes/</code></td><td>数据库、持久化数据</td><td>独立于容器，需手动删除</td></tr>
+<tr><td><strong>Bind Mount</strong></td><td>宿主机任意路径</td><td>开发环境热重载、配置注入</td><td>跟随宿主机文件</td></tr>
+<tr><td><strong>tmpfs</strong></td><td>内存中</td><td>敏感数据临时存储</td><td>容器停止即消失</td></tr>
+</table>
+</div>
+
+<div class="card">
+<pre><code># Volume（推荐生产使用）
+docker volume create pgdata
+docker run -d --name db \
+  -v pgdata:/var/lib/postgresql/data \
+  postgres:16
+
+# Bind Mount（开发环境代码热重载）
+docker run -d --name dev \
+  -v $(pwd)/src:/app/src \
+  -p 8000:8000 \
+  myapp:dev
+
+# tmpfs（内存存储，适合存临时密钥）
+docker run -d --name secure \
+  --tmpfs /run/secrets:rw,size=64m \
+  myapp:v1</code></pre>
+</div>
+
+<div class="tip">⚠️ 常见坑：<code>-v /host/path:/container/path</code> 如果宿主机路径不存在，Docker 会<strong>自动创建空目录</strong>（不会报错），导致容器内看到空目录覆盖了原有文件。调试时经常踩这个坑。</div>
+
+<details><summary>面试题：Volume 和 Bind Mount 的区别？生产应该用哪个？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：Volume 由 Docker Daemon 管理，存在 <code>/var/lib/docker/volumes/</code> 下，支持驱动扩展（如 NFS、云存储），可被多个容器安全共享，是生产环境首选。Bind Mount 直接映射宿主机路径，性能略好但与宿主机文件系统耦合，适合开发环境的代码热重载。生产环境应使用 Volume，原因：① 可移植性好（不依赖宿主机目录结构）；② 安全性好（不暴露宿主机文件系统）；③ 支持 backup/restore 工具链。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 6. Docker Compose ==================== -->
+<section id="ch6" class="animate-in">
+<h2>6. Docker Compose</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：Compose 是管理多容器应用的「剧本」——一个 YAML 文件描述所有服务，一条命令全部拉起。</div>
+</div>
+
+<div class="card">
+  <h3>直觉理解</h3>
+  <p>单独的 <code>docker run</code> 就像手动一个一个做菜。Compose 就像一份「宴席菜单」：定义好所有菜品（服务）、原料（镜像/构建）、调味（环境变量）、上菜顺序（依赖关系），然后喊一声「开始」——所有菜同时开做。</p>
+</div>
+
+<h3>完整示例：FastAPI + PostgreSQL + Redis</h3>
+<div class="card">
+<pre><code># docker-compose.yml
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/mydb
+      - REDIS_URL=redis://cache:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: mydb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  cache:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+
+volumes:
+  pgdata:
+  redis-data:</code></pre>
+</div>
+
+<h3>常用命令</h3>
+<div class="card">
+<pre><code>docker compose up -d          # 后台启动所有服务
+docker compose ps             # 查看服务状态
+docker compose logs -f api    # 查看 api 服务日志
+docker compose exec api sh    # 进入 api 容器
+docker compose down           # 停止并删除容器
+docker compose down -v        # 停止并删除容器 + Volume（危险！）
+docker compose build --no-cache  # 重新构建（不用缓存）</code></pre>
+</div>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>开发环境技巧</h3>
+<ul>
+<li>用 <code>volumes</code> 挂载源代码实现热重载</li>
+<li>用 <code>profiles</code> 区分 dev/test 服务</li>
+<li>用 <code>override</code> 文件叠加配置</li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>生产注意事项</h3>
+<ul>
+<li>Compose 适合单机部署，多机用 K8s</li>
+<li>敏感信息用 <code>docker secret</code> 或环境变量注入</li>
+<li>始终指定镜像版本号，不用 <code>latest</code></li>
+</ul>
+</div>
+</div>
+
+<details><summary>面试题：depends_on 能保证服务就绪吗？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：<code>depends_on</code> 默认只保证依赖容器<strong>启动了</strong>，不保证服务<strong>就绪了</strong>。比如 PostgreSQL 容器启动后还需要几秒初始化数据库，此时 API 连接会失败。解决方案：① Compose v2 支持 <code>condition: service_healthy</code>，配合 <code>healthcheck</code> 等服务真正就绪后才启动依赖者；② 应用层做重试逻辑（指数退避）。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 7. K8s 架构全景 ==================== -->
+<section id="ch7" class="animate-in">
+<h2>7. Kubernetes 架构全景</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：K8s 就是容器世界的「操作系统」——你告诉它「我要 3 个 API 实例 + 1 个数据库」，它自动调度、部署、修复。</div>
+</div>
+
+<div class="card">
+  <h3>直觉理解</h3>
+  <p>想象你经营一家连锁餐厅。你（开发者）只需要告诉总部（K8s）：「我要在 3 个门店各开一个窗口卖汉堡」。总部负责：选哪些门店（调度）、配送原料（拉取镜像）、监控出餐速度（健康检查）、如果某个窗口关了就自动开一个新的（自愈）。你<strong>不需要</strong>亲自跑到每个门店操作。</p>
+</div>
+
+<h3>架构图</h3>
+<div class="card">
+<pre><code>┌──────────────── Control Plane (Master) ────────────────┐
+│                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐ │
+│  │ API      │  │ etcd     │  │Scheduler │  │Control │ │
+│  │ Server   │  │(键值存储) │  │(调度器)   │  │Manager │ │
+│  │          │  │          │  │          │  │        │ │
+│  │ 唯一入口  │  │ 集群状态  │  │ Pod→Node │  │ 控制循环│ │
+│  │ RESTful  │  │ 真相之源  │  │ 匹配     │  │ 自愈   │ │
+│  └──────────┘  └──────────┘  └──────────┘  └────────┘ │
+└─────────────────────────┬───────────────────────────────┘
+                          │ kubelet 通信
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   Node 1     │  │   Node 2     │  │   Node 3     │
+│ ┌──────────┐ │  │ ┌──────────┐ │  │ ┌──────────┐ │
+│ │ kubelet  │ │  │ │ kubelet  │ │  │ │ kubelet  │ │
+│ │ kube-    │ │  │ │ kube-    │ │  │ │ kube-    │ │
+│ │ proxy    │ │  │ │ proxy    │ │  │ │ proxy    │ │
+│ ├──────────┤ │  │ ├──────────┤ │  │ ├──────────┤ │
+│ │[Pod][Pod]│ │  │ │[Pod][Pod]│ │  │ │[Pod]     │ │
+│ └──────────┘ │  │ └──────────┘ │  │ └──────────┘ │
+└──────────────┘  └──────────────┘  └──────────────┘</code></pre>
+</div>
+
+<h3>核心组件详解</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>Control Plane 组件</h3>
+<ul>
+<li><strong>API Server</strong>：集群的「前台」，所有操作都经过它（kubectl、Dashboard、其他组件）</li>
+<li><strong>etcd</strong>：分布式键值存储，保存集群所有状态数据（唯一的有状态组件）</li>
+<li><strong>Scheduler</strong>：决定新 Pod 放在哪个 Node（考虑资源、亲和性、污点等）</li>
+<li><strong>Controller Manager</strong>：运行各种控制器（Deployment、ReplicaSet、Node Controller 等），确保实际状态 = 期望状态</li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>Node 组件</h3>
+<ul>
+<li><strong>kubelet</strong>：Node 上的「管家」，负责管理 Pod 生命周期，向 API Server 汇报状态</li>
+<li><strong>kube-proxy</strong>：维护网络规则（iptables/IPVS），实现 Service 到 Pod 的负载均衡</li>
+<li><strong>Container Runtime</strong>：实际运行容器的引擎（containerd / CRI-O），通过 CRI 接口与 kubelet 通信</li>
+</ul>
+</div>
+</div>
+
+<h3>声明式 vs 命令式</h3>
+<div class="vs">
+<div class="card card-orange">
+<h3>命令式（怎么做）</h3>
+<pre><code>kubectl run nginx --image=nginx
+kubectl scale deploy nginx --replicas=3
+kubectl expose deploy nginx --port=80</code></pre>
+<p>直接告诉 K8s 执行具体操作</p>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card card-green">
+<h3>声明式（要什么）</h3>
+<pre><code># nginx.yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  replicas: 3
+  ...
+---
+kubectl apply -f nginx.yaml</code></pre>
+<p>告诉 K8s 期望状态，它自己搞定</p>
+</div>
+</div>
+
+<div class="callout callout-ok">
+  <div class="callout-icon">✅</div>
+  <div><strong>核心哲学</strong>：K8s 是<strong>声明式</strong>系统。你定义「期望状态」（YAML），Controller 不断对比「实际状态 vs 期望状态」，自动修复差异。这就是<strong>Reconciliation Loop（调谐循环）</strong>。</div>
+</div>
+
+<details><summary>面试题：etcd 在 K8s 中的角色？为什么它如此关键？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：etcd 是 K8s 集群的「唯一真相之源」（Single Source of Truth），存储所有资源对象的状态（Pod、Service、ConfigMap 等）。它是基于 Raft 共识算法的分布式键值数据库，保证强一致性。只有 API Server 直接读写 etcd，其他组件通过 API Server 间接访问。etcd 挂了 = 集群瘫痪（虽然已运行的容器不会立即停止，但无法做任何变更）。生产环境必须做 etcd 高可用（奇数节点，至少 3 个）和定期备份。</p>
+</div>
+</details>
+
+<details><summary>面试题：一个 Pod 从创建到运行的完整流程是什么？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：① 用户提交 YAML → API Server 验证并写入 etcd；② Scheduler watch 到未调度的 Pod，根据资源请求、亲和性、污点等策略选择 Node，把结果写回 etcd；③ 目标 Node 上的 kubelet watch 到分配给自己的 Pod，通过 CRI 接口调用 Container Runtime（containerd）拉取镜像、创建容器；④ kubelet 持续通过 Probe 监控容器健康状态，上报给 API Server；⑤ kube-proxy 更新 iptables/IPVS 规则，将 Service 流量路由到该 Pod。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 8. K8s 核心对象 ==================== -->
+<section id="ch8" class="animate-in">
+<h2>8. K8s 核心对象</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：K8s 的对象就像乐高积木——Pod 是最小的砖块，Deployment 管理砖块的数量和更新，Service 给砖块一个稳定的门牌号。</div>
+</div>
+
+<h3>对象层级关系</h3>
+<div class="card">
+<pre><code>Deployment  ─管理→  ReplicaSet  ─管理→  Pod  ─包含→  Container(s)
+     │                                        │
+     │ 负责滚动更新            负责维持副本数    │ 最小调度单位
+     │                                        │
+Service ───────── 提供稳定的访问入口 ─────────→  Pod (通过 label 匹配)</code></pre>
+</div>
+
+<h3>Pod — 最小调度单位</h3>
+<div class="card">
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+    env: production
+spec:
+  containers:
+  - name: api
+    image: myapp:v1
+    ports:
+    - containerPort: 8000
+    resources:
+      requests:          # 调度时的最低保障
+        cpu: "100m"      # 0.1 核
+        memory: "128Mi"
+      limits:            # 运行时的上限
+        cpu: "500m"
+        memory: "512Mi"
+    livenessProbe:       # 存活检查：失败则重启
+      httpGet:
+        path: /health
+        port: 8000
+      initialDelaySeconds: 10
+      periodSeconds: 15
+    readinessProbe:      # 就绪检查：失败则从 Service 摘除
+      httpGet:
+        path: /ready
+        port: 8000
+      periodSeconds: 5</code></pre>
+</div>
+
+<h3>Deployment — 无状态应用管理</h3>
+<div class="card">
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1         # 更新时最多多出 1 个 Pod
+      maxUnavailable: 0   # 更新时不允许少于期望数
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: api
+        image: myapp:v2
+        # ... （同上 Pod spec）</code></pre>
+</div>
+
+<h3>Service — 稳定的访问入口</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>ClusterIP（默认）</h3>
+<p>集群内部虚拟 IP，只能在集群内访问。最常用。</p>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: api-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp
+  ports:
+  - port: 80
+    targetPort: 8000</code></pre>
+</div>
+<div class="card card-green">
+<h3>NodePort</h3>
+<p>在每个 Node 上开一个端口（30000-32767），外部可访问。</p>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: api-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: myapp
+  ports:
+  - port: 80
+    targetPort: 8000
+    nodePort: 30080</code></pre>
+</div>
+</div>
+
+<h3>ConfigMap & Secret</h3>
+<div class="card">
+<pre><code># ConfigMap — 非敏感配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  LOG_LEVEL: "info"
+  MAX_CONNECTIONS: "100"
+---
+# Secret — 敏感配置（Base64 编码，非加密！）
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+type: Opaque
+data:
+  username: dXNlcg==        # echo -n 'user' | base64
+  password: cGFzc3dvcmQ=    # echo -n 'password' | base64</code></pre>
+</div>
+
+<div class="tip">⚠️ 常见坑：K8s Secret 只是 Base64 编码，<strong>不是加密</strong>！任何有权限读取 Secret 的人都能解码。生产环境需要配合 Sealed Secrets、HashiCorp Vault 或云平台的 KMS。</div>
+
+<details><summary>面试题：Pod 中为什么可以有多个容器？什么场景需要？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：Pod 内的容器共享网络命名空间（同一个 IP、通过 localhost 通信）和存储卷，适合需要紧密协作的场景。常见模式：① <strong>Sidecar</strong>：主容器 + 日志收集器（如 Fluentd）、代理（如 Envoy）；② <strong>Init Container</strong>：在主容器启动前执行初始化（等待依赖就绪、迁移数据库）；③ <strong>Ambassador</strong>：代理外部服务连接（如本地缓存代理）。但注意不要滥用多容器——如果两个容器不需要共享网络/存储，就应该放在不同 Pod 中。</p>
+</div>
+</details>
+
+<details><summary>面试题：requests 和 limits 的区别？设置不当会怎样？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：<code>requests</code> 是调度依据——Scheduler 保证 Node 有足够资源满足 requests；<code>limits</code> 是运行时上限——超过 CPU limit 会被节流（throttle），超过 Memory limit 会被 OOM Kill。设置不当的问题：① requests 设太高 → 资源浪费，Pod 调度困难；② requests 设太低 → 节点过载，Pod 互相抢资源；③ 不设 limits → 一个 Pod 可以吃掉整个 Node 的资源。最佳实践：通过监控实际使用量来设置，requests ≈ P50 使用量，limits ≈ P99 使用量的 1.5 倍。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 9. K8s 网络模型 ==================== -->
+<section id="ch9" class="animate-in">
+<h2>9. K8s 网络模型</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：K8s 网络的核心约定——每个 Pod 有独立 IP，任何 Pod 可以直接访问任何其他 Pod，不需要 NAT。</div>
+</div>
+
+<h3>三层网络通信</h3>
+<div class="card">
+<table>
+<tr><th>层级</th><th>通信方式</th><th>实现</th></tr>
+<tr><td><strong>容器间</strong>（同 Pod）</td><td><code>localhost</code></td><td>共享 Network Namespace</td></tr>
+<tr><td><strong>Pod 间</strong>（同/跨 Node）</td><td>Pod IP 直连</td><td>CNI 插件（Calico / Flannel / Cilium）</td></tr>
+<tr><td><strong>Service → Pod</strong></td><td>虚拟 IP + 负载均衡</td><td>kube-proxy（iptables / IPVS）</td></tr>
+<tr><td><strong>外部 → 集群</strong></td><td>Ingress / LoadBalancer</td><td>Nginx Ingress / 云 LB</td></tr>
+</table>
+</div>
+
+<h3>Service 网络流量路径</h3>
+<div class="card">
+<pre><code>客户端请求
+    │
+    ▼
+┌──────────────┐
+│   Ingress    │  ← 域名路由、TLS 终止、路径分发
+│  Controller  │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│   Service    │  ← 虚拟 IP (ClusterIP)
+│  10.96.0.10  │     kube-proxy 维护 iptables/IPVS 规则
+└──────┬───────┘
+       │  负载均衡（轮询 / 随机）
+   ┌───┼───┐
+   ▼   ▼   ▼
+┌────┐┌────┐┌────┐
+│Pod1││Pod2││Pod3│  ← 通过 label selector 匹配
+└────┘└────┘└────┘</code></pre>
+</div>
+
+<h3>Ingress 实战配置</h3>
+<div class="card">
+<pre><code>apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - api.example.com
+    secretName: api-tls
+  rules:
+  - host: api.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-svc
+            port:
+              number: 80
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: admin-svc
+            port:
+              number: 80</code></pre>
+</div>
+
+<h3>DNS 解析规则</h3>
+<div class="card">
+<pre><code># Pod 内部 DNS 解析格式
+# 同 Namespace
+api-svc                         → 10.96.0.10
+# 跨 Namespace
+api-svc.production.svc.cluster.local  → 10.96.0.10
+
+# 完整格式
+{service-name}.{namespace}.svc.{cluster-domain}</code></pre>
+</div>
+
+<details><summary>面试题：kube-proxy 的 iptables 模式和 IPVS 模式有什么区别？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：<strong>iptables 模式</strong>：为每个 Service 的每个后端 Pod 生成一条 iptables 规则，流量通过规则链逐条匹配。当 Service/Pod 数量很多时（如数千个），规则数量爆炸，更新和匹配都变慢，延迟增加。<strong>IPVS 模式</strong>：基于 Linux 内核的 IPVS 模块（Layer 4 负载均衡器），使用哈希表查找后端，时间复杂度 O(1)，支持更多负载均衡算法（轮询、最小连接、加权等）。大规模集群（Service 数量 > 1000）推荐 IPVS 模式。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 10. K8s 存储体系 ==================== -->
+<section id="ch10" class="animate-in">
+<h2>10. K8s 存储体系</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：PV 是「硬盘」，PVC 是「申请单」，StorageClass 是「硬盘供应商」——开发者只需填申请单，K8s 自动分配硬盘。</div>
+</div>
+
+<h3>存储对象关系</h3>
+<div class="card">
+<pre><code>StorageClass ──(定义)──→ 存储类型（SSD/HDD、供应商）
+     │
+     │ 动态供给
+     ▼
+PersistentVolume (PV) ←──(绑定)──→ PersistentVolumeClaim (PVC)
+     │                                     │
+     │ 实际存储资源                          │ Pod 引用
+     │ （NFS/EBS/Ceph/...）                 ▼
+     │                                   Pod.spec.volumes
+     │
+     └─ 静态供给：管理员手动创建 PV
+        动态供给：通过 StorageClass 自动创建（推荐）</code></pre>
+</div>
+
+<h3>动态供给实战</h3>
+<div class="card">
+<pre><code># StorageClass（通常集群管理员预先创建）
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+provisioner: ebs.csi.aws.com    # AWS EBS CSI 驱动
+parameters:
+  type: gp3
+  iopsPerGB: "50"
+reclaimPolicy: Retain           # PVC 删除后 PV 保留数据
+volumeBindingMode: WaitForFirstConsumer
+---
+# PVC — 开发者只需写这个
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-storage
+spec:
+  accessModes:
+  - ReadWriteOnce               # 单 Node 读写
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 50Gi
+---
+# Pod 使用 PVC
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db
+spec:
+  containers:
+  - name: postgres
+    image: postgres:16
+    volumeMounts:
+    - name: data
+      mountPath: /var/lib/postgresql/data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: db-storage</code></pre>
+</div>
+
+<h3>访问模式对比</h3>
+<div class="card">
+<table>
+<tr><th>模式</th><th>缩写</th><th>含义</th><th>场景</th></tr>
+<tr><td>ReadWriteOnce</td><td>RWO</td><td>单 Node 读写</td><td>数据库（最常用）</td></tr>
+<tr><td>ReadOnlyMany</td><td>ROX</td><td>多 Node 只读</td><td>共享配置/静态资源</td></tr>
+<tr><td>ReadWriteMany</td><td>RWX</td><td>多 Node 读写</td><td>共享文件存储（NFS/CephFS）</td></tr>
+</table>
+</div>
+
+<div class="tip">⚠️ 常见坑：不是所有存储后端都支持 RWX。AWS EBS 只支持 RWO。如果你的 Pod 需要在多个 Node 上共享文件，需要用 EFS（NFS）或 CephFS。</div>
+
+<details><summary>面试题：reclaimPolicy 的 Retain 和 Delete 有什么区别？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：当 PVC 被删除时：<strong>Delete</strong>（默认）会自动删除对应的 PV 和底层存储资源（如 AWS EBS 卷），适合临时数据；<strong>Retain</strong> 会保留 PV 和数据，PV 状态变为 Released，需管理员手动清理或重新绑定，适合重要数据（如数据库）。生产环境的数据库存储必须用 Retain + 定期备份。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 11. K8s 部署策略 ==================== -->
+<section id="ch11" class="animate-in">
+<h2>11. 部署策略</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：部署策略决定「新版本怎么上线、旧版本怎么退场」——选错策略可能导致服务中断或故障扩散。</div>
+</div>
+
+<h3>四种主流策略</h3>
+<div class="card">
+<table>
+<tr><th>策略</th><th>原理</th><th>停机时间</th><th>回滚速度</th><th>资源开销</th></tr>
+<tr><td><strong>Rolling Update</strong></td><td>逐步替换旧 Pod</td><td>零</td><td>中（回滚到旧 ReplicaSet）</td><td>低（多 1-2 个 Pod）</td></tr>
+<tr><td><strong>Blue-Green</strong></td><td>新旧两套完整环境，切流量</td><td>零</td><td>快（切回旧环境）</td><td>高（双倍资源）</td></tr>
+<tr><td><strong>Canary</strong></td><td>小流量灰度 → 逐步放大</td><td>零</td><td>快（减少金丝雀比例）</td><td>中</td></tr>
+<tr><td><strong>Recreate</strong></td><td>先全部销毁，再全部创建</td><td>有</td><td>慢（重新部署）</td><td>低</td></tr>
+</table>
+</div>
+
+<h3>Rolling Update（K8s 默认）</h3>
+<div class="card">
+<pre><code># 滚动更新过程示意
+时间线 →
+
+Step 1:  [v1] [v1] [v1]           ← 初始状态，3 个旧 Pod
+Step 2:  [v1] [v1] [v1] [v2]     ← maxSurge=1，创建 1 个新 Pod
+Step 3:  [v1] [v1] [v2]          ← 新 Pod 就绪后，销毁 1 个旧 Pod
+Step 4:  [v1] [v1] [v2] [v2]     ← 再创建 1 个新 Pod
+Step 5:  [v1] [v2] [v2]          ← 销毁 1 个旧 Pod
+Step 6:  [v1] [v2] [v2] [v2]     ← 再创建
+Step 7:  [v2] [v2] [v2]          ← 完成！
+
+配置关键参数：
+  maxSurge: 1        # 更新时最多多出几个 Pod
+  maxUnavailable: 0  # 更新时最多少几个 Pod（设 0 = 永不减少可用数）</code></pre>
+</div>
+
+<h3>Canary 部署实战</h3>
+<div class="card">
+<pre><code># 方式 1：手动 Canary（用两个 Deployment + 一个 Service）
+# stable deployment (90% 流量)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-stable
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: api
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: api
+        track: stable
+    spec:
+      containers:
+      - name: api
+        image: myapp:v1
+---
+# canary deployment (10% 流量)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: api
+        track: canary
+    spec:
+      containers:
+      - name: api
+        image: myapp:v2
+---
+# Service 选择所有 app=api 的 Pod → 自然按比例分流
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-svc
+spec:
+  selector:
+    app: api     # 同时匹配 stable 和 canary
+  ports:
+  - port: 80
+    targetPort: 8000</code></pre>
+</div>
+
+<h3>回滚操作</h3>
+<div class="card">
+<pre><code># 查看部署历史
+kubectl rollout history deployment/api-deployment
+
+# 回滚到上一个版本
+kubectl rollout undo deployment/api-deployment
+
+# 回滚到指定版本
+kubectl rollout undo deployment/api-deployment --to-revision=2
+
+# 查看回滚状态
+kubectl rollout status deployment/api-deployment</code></pre>
+</div>
+
+<details><summary>面试题：如何实现零停机部署？需要注意什么？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：零停机部署需要多方面配合：① <strong>Rolling Update</strong> + <code>maxUnavailable: 0</code>，保证始终有足够 Pod 服务；② <strong>Readiness Probe</strong>，新 Pod 必须就绪后才接收流量；③ <strong>Graceful Shutdown</strong>，旧 Pod 收到 SIGTERM 后要完成处理中的请求再退出（设置 <code>terminationGracePeriodSeconds</code>）；④ <strong>preStop Hook</strong>，在 Pod 被杀前等一小段时间（如 5s），让 Service 的 Endpoint 更新传播完成，避免流量还打到已关闭的 Pod；⑤ <strong>PodDisruptionBudget</strong>，限制同时被驱逐的 Pod 数量。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 12. K8s 监控运维 ==================== -->
+<section id="ch12" class="animate-in">
+<h2>12. 监控与运维</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：K8s 的运维核心是「让集群自己照顾自己」——通过 Probe、HPA、日志三件套实现自愈和自动伸缩。</div>
+</div>
+
+<h3>三种健康检查</h3>
+<div class="card">
+<table>
+<tr><th>Probe</th><th>作用</th><th>失败后果</th><th>使用场景</th></tr>
+<tr><td><strong>Liveness</strong></td><td>检测容器是否还活着</td><td>kubelet 重启容器</td><td>检测死锁、内存泄漏导致的无响应</td></tr>
+<tr><td><strong>Readiness</strong></td><td>检测容器是否准备好接流量</td><td>从 Service Endpoint 摘除</td><td>启动初始化、依赖未就绪</td></tr>
+<tr><td><strong>Startup</strong></td><td>检测容器是否完成启动</td><td>kubelet 重启容器</td><td>启动慢的应用（如 Java 大型项目）</td></tr>
+</table>
+</div>
+
+<div class="card">
+<pre><code>spec:
+  containers:
+  - name: api
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8000
+      initialDelaySeconds: 15     # 启动后等 15s 再检查
+      periodSeconds: 20            # 每 20s 检查一次
+      failureThreshold: 3         # 连续 3 次失败才重启
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8000
+      periodSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8000
+      failureThreshold: 30
+      periodSeconds: 10            # 最多等 300s 启动</code></pre>
+</div>
+
+<h3>HPA — 自动水平伸缩</h3>
+<div class="card">
+<pre><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-deployment
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70    # CPU 使用率超过 70% 则扩容
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 缩容冷却 5 分钟
+      policies:
+      - type: Percent
+        value: 10                       # 每次最多缩 10%
+        periodSeconds: 60</code></pre>
+</div>
+
+<h3>日常运维命令速查</h3>
+<div class="card">
+<pre><code># 排查 Pod 问题
+kubectl get pods -o wide                    # 查看 Pod 状态和所在 Node
+kubectl describe pod &lt;name&gt;                # 详细信息（事件、条件）
+kubectl logs &lt;pod&gt; -c &lt;container&gt; --tail=100  # 查看日志
+kubectl logs &lt;pod&gt; --previous               # 查看上次崩溃的日志
+
+# 资源监控
+kubectl top nodes                           # Node 资源使用
+kubectl top pods                            # Pod 资源使用
+
+# 调试
+kubectl exec -it &lt;pod&gt; -- /bin/sh          # 进入容器
+kubectl port-forward svc/api-svc 8080:80   # 本地端口转发
+kubectl get events --sort-by='.lastTimestamp'  # 集群事件
+
+# 常见问题排查流程
+# Pod 状态 Pending → kubectl describe pod → 看 Events
+#   → 资源不足？Node 不满足亲和性？镜像拉不下来？
+# Pod 状态 CrashLoopBackOff → kubectl logs --previous
+#   → 应用启动失败？配置错误？依赖不可用？</code></pre>
+</div>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>监控栈推荐</h3>
+<ul>
+<li><strong>Prometheus</strong> — 指标采集</li>
+<li><strong>Grafana</strong> — 可视化仪表盘</li>
+<li><strong>Alertmanager</strong> — 告警通知</li>
+<li><strong>Loki</strong> — 日志聚合</li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>关键监控指标</h3>
+<ul>
+<li>Node：CPU/内存/磁盘使用率</li>
+<li>Pod：重启次数、OOM Kill 次数</li>
+<li>Service：请求延迟 P99、错误率</li>
+<li>集群：Pod 调度延迟、etcd 延迟</li>
+</ul>
+</div>
+</div>
+
+<details><summary>面试题：Liveness 和 Readiness Probe 的区别？配置不当会怎样？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：Liveness 检测「是不是挂了」→ 失败则重启容器；Readiness 检测「能不能干活」→ 失败则从 Service 摘除（不接受流量）。配置不当的典型问题：① Liveness 太敏感（如 <code>failureThreshold: 1</code>）→ 应用偶尔慢一下就被重启，造成雪崩；② Readiness 没配 → 应用启动未完成就接收流量，导致 502；③ Liveness 检查了下游依赖 → 数据库挂了导致所有 Pod 被反复重启（应该只检查自身健康）。最佳实践：Liveness 只检查进程自身，Readiness 检查是否能提供服务（含关键依赖）。</p>
+</div>
+</details>
+
+<details><summary>面试题：HPA 的工作原理？有什么限制？</summary>
+<div class="card">
+<p><strong>参考答案</strong>：HPA Controller 每 15s（默认）从 Metrics Server 获取 Pod 的资源使用数据，计算 <code>期望副本数 = ceil(当前副本数 × 当前指标值 / 目标值)</code>。限制：① 必须设置 <code>resources.requests</code>，否则无法计算使用率；② 默认只支持 CPU/内存，自定义指标需要 Prometheus Adapter；③ 缩容有冷却期（默认 5min），防止频繁抖动；④ 不适合突发流量——扩容有延迟（拉镜像 + 启动），应搭配预热或 KEDA 使用。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 13. 面试高频题总结 ==================== -->
+<section id="ch13" class="animate-in">
+<h2>13. 面试高频题总结</h2>
+
+<div class="callout callout-info">
+  <div class="callout-icon">💡</div>
+  <div><strong>一句话</strong>：面试考的不是背 YAML 模板，而是「为什么这样设计」和「出了问题怎么排查」。</div>
+</div>
+
+<h3>Docker 高频题</h3>
+
+<details><summary>Q1：如何减小 Docker 镜像体积？</summary>
+<div class="card">
+<p><strong>答</strong>：① 多阶段构建（编译和运行分离）；② 用 alpine/distroless 基础镜像；③ 合并 RUN 指令减少层数；④ 使用 .dockerignore 排除无关文件；⑤ 清理包管理器缓存（<code>apt clean</code>、<code>pip --no-cache-dir</code>）。实际效果：Go 应用从 ~800MB 降到 ~15MB，Python 应用从 ~1.2GB 降到 ~150MB。</p>
+</div>
+</details>
+
+<details><summary>Q2：Docker 的 Copy-on-Write 机制是什么？</summary>
+<div class="card">
+<p><strong>答</strong>：Docker 镜像由多个只读层叠加而成，容器在最上面加一个可写层。当容器要修改某个文件时，先从只读层<strong>拷贝一份到可写层</strong>，然后修改可写层的副本——这就是 Copy-on-Write。好处：① 多个容器共享同一镜像的只读层，节省磁盘；② 容器之间互不影响。坏处：首次写入某文件时有额外的拷贝开销，所以数据库等写密集应用应该用 Volume 而不是容器层。</p>
+</div>
+</details>
+
+<details><summary>Q3：Docker 网络 bridge 模式的数据包流转路径？</summary>
+<div class="card">
+<p><strong>答</strong>：外部请求 → 宿主机 eth0 → iptables DNAT（根据 -p 映射的端口规则）→ docker0 虚拟网桥 → veth pair → 目标容器 eth0。容器间通信：容器 A eth0 → veth pair → docker0 → veth pair → 容器 B eth0。容器访问外网：容器 eth0 → veth → docker0 → iptables SNAT/MASQUERADE → 宿主机 eth0 → 外部。</p>
+</div>
+</details>
+
+<h3>Kubernetes 高频题</h3>
+
+<details><summary>Q4：K8s 中 Pod 被驱逐（Eviction）的原因有哪些？</summary>
+<div class="card">
+<p><strong>答</strong>：① <strong>节点资源压力</strong>：内存/磁盘不足时 kubelet 根据 QoS 等级驱逐 Pod（BestEffort → Burstable → Guaranteed）；② <strong>抢占调度</strong>：高优先级 Pod 需要资源，驱逐低优先级 Pod；③ <strong>Taint/Toleration</strong>：Node 被打上 NoExecute taint 且 Pod 没有对应 toleration；④ <strong>手动操作</strong>：<code>kubectl drain</code> 维护节点时驱逐所有 Pod。防止关键服务被驱逐：设置 <code>PodDisruptionBudget</code> + <code>Guaranteed</code> QoS（requests = limits）。</p>
+</div>
+</details>
+
+<details><summary>Q5：如何排查 Pod 一直处于 Pending 状态？</summary>
+<div class="card">
+<p><strong>答</strong>：<code>kubectl describe pod &lt;name&gt;</code> 看 Events 部分。常见原因：① <strong>资源不足</strong>：没有 Node 满足 requests（CPU/内存），解决方案：扩容节点或降低 requests；② <strong>调度约束</strong>：nodeSelector/affinity/toleration 不匹配任何 Node；③ <strong>PVC 未绑定</strong>：PersistentVolumeClaim 找不到匹配的 PV（检查 StorageClass、容量、访问模式）；④ <strong>ResourceQuota 超限</strong>：Namespace 的资源配额用完了。</p>
+</div>
+</details>
+
+<details><summary>Q6：Deployment、StatefulSet、DaemonSet 的区别和应用场景？</summary>
+<div class="card">
+<p><strong>答</strong>：<strong>Deployment</strong>：无状态应用，Pod 可以随意创建/销毁/调度，适合 API 服务、Web 服务器；<strong>StatefulSet</strong>：有状态应用，每个 Pod 有稳定的网络标识（<code>pod-0</code>、<code>pod-1</code>）和独立的持久存储，有序启动/停止，适合数据库、Kafka、ZooKeeper；<strong>DaemonSet</strong>：保证每个（或指定）Node 上运行一个 Pod 副本，适合日志采集（Fluentd）、监控 Agent（Node Exporter）、网络插件（Calico）。</p>
+</div>
+</details>
+
+<details><summary>Q7：Kubernetes 的 Service Mesh（如 Istio）解决什么问题？</summary>
+<div class="card">
+<p><strong>答</strong>：Service Mesh 通过在每个 Pod 旁注入 Sidecar 代理（如 Envoy），把微服务治理能力从应用代码中剥离到基础设施层。解决的问题：① <strong>流量管理</strong>：灰度发布、A/B 测试、故障注入、熔断限流；② <strong>可观测性</strong>：自动收集请求延迟、成功率、调用链（无需改代码）；③ <strong>安全</strong>：服务间 mTLS 加密、细粒度访问控制。代价：每个 Pod 多一个 Sidecar 容器，增加约 50-100MB 内存和 ~1ms 延迟。小规模集群不一定需要。</p>
+</div>
+</details>
+
+<details><summary>Q8：如何设计一个高可用的 K8s 集群？</summary>
+<div class="card">
+<p><strong>答</strong>：① <strong>Control Plane 高可用</strong>：至少 3 个 Master 节点，etcd 3 或 5 节点（奇数，Raft 需多数派）；② <strong>Node 冗余</strong>：跨可用区（AZ）部署 Worker 节点，用 Pod Anti-Affinity 保证副本分散；③ <strong>应用层</strong>：Deployment replicas ≥ 2 + PDB 限制最大不可用数 + Readiness Probe；④ <strong>网络</strong>：Ingress Controller 多副本 + 云 LB；⑤ <strong>存储</strong>：etcd 定期备份（velero）、数据库用跨 AZ 持久存储；⑥ <strong>监控告警</strong>：Prometheus + Grafana + PagerDuty，关键指标告警（节点 NotReady、Pod OOM、etcd 延迟）。</p>
+</div>
+</details>
+
+<h3>综合场景题</h3>
+
+<details><summary>Q9：描述你如何将一个 Python 应用从本地开发部署到 K8s 生产环境？</summary>
+<div class="card">
+<p><strong>答</strong>：完整流水线：</p>
+<ol>
+<li><strong>本地开发</strong>：Docker Compose 起本地环境（API + DB + Redis），代码 Bind Mount 热重载</li>
+<li><strong>编写 Dockerfile</strong>：多阶段构建（slim 基础镜像），非 root 用户，HEALTHCHECK</li>
+<li><strong>CI 流水线</strong>：代码提交 → 运行测试 → 构建镜像 → trivy 安全扫描 → 推送到 ECR/GCR</li>
+<li><strong>K8s 清单</strong>：Deployment（replicas=3，Rolling Update）+ Service（ClusterIP）+ Ingress（TLS）+ ConfigMap/Secret（环境配置）+ HPA（CPU 70%）</li>
+<li><strong>部署</strong>：kubectl apply 或 ArgoCD GitOps（推荐），Canary 灰度 10% → 观察 → 全量</li>
+<li><strong>运维</strong>：Prometheus 监控 + Grafana 仪表盘 + 告警（P99 延迟、错误率、Pod 重启次数）</li>
+</ol>
+</div>
+</details>
+
+<details><summary>Q10：容器化部署中最容易被忽视的安全问题有哪些？</summary>
+<div class="card">
+<p><strong>答</strong>：① <strong>以 root 运行</strong>：容器内默认是 root，一旦容器逃逸就是宿主机 root。解决：Dockerfile 中 USER 非特权用户 + K8s securityContext runAsNonRoot；② <strong>特权容器</strong>：<code>privileged: true</code> 等于关掉所有隔离，除非必须（如 CNI 插件）否则禁用；③ <strong>镜像漏洞</strong>：基础镜像不更新，含已知 CVE。解决：CI 中集成 trivy/snyk 扫描；④ <strong>Secret 明文</strong>：K8s Secret 只是 Base64，RBAC 权限过宽则任何人可读。解决：用 Sealed Secrets 或 Vault；⑤ <strong>网络未隔离</strong>：默认所有 Pod 互通。解决：用 NetworkPolicy 限制 Pod 间通信。</p>
+</div>
+</details>
+
+</section>
+
+</div><!-- /.container -->
+
+      <div id="page-nav"></div>
+    </main>
+  </div>
+  <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="打开导航">☰</button>
+  <script src="/tech-guide-docs/assets/js/shared.js" defer></script>
+</body>
+</html>

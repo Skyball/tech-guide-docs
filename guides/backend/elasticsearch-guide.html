@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Elasticsearch 原理深入指南 — 从倒排索引到分布式架构，用最直白的语言讲清搜索引擎核心原理">
+<link rel="stylesheet" href="/tech-guide-docs/assets/css/shared.css">
+<title>Elasticsearch 原理深入指南</title>
+<style>
+html,body {overflow-x:hidden}
+.container {max-width:860px;margin:0 auto;padding:0 20px}
+.hero {background:linear-gradient(135deg,#1a1a2e 0%,#4527a0 100%);color:#fff;text-align:center;padding:56px 20px;overflow:hidden}
+.hero h1 {font-size:clamp(1.6rem,5vw,2.4rem);font-weight:800;margin-bottom:8px}
+.hero p {opacity:.85;font-size:1.1rem;max-width:600px;margin:0 auto}
+.vs {display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.vs-divider {display:flex;align-items:center;font-size:1.5rem;font-weight:800;color:var(--muted)}
+@media(max-width:600px){.vs{grid-template-columns:1fr}.vs-divider{justify-content:center}}
+.ascii-box {background:var(--bg-secondary,#f8fafc);border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;font-family:'Courier New',monospace;font-size:.85rem;line-height:1.6;white-space:pre}
+[data-theme="dark"] .ascii-box {background:#1e293b}
+</style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">🤖 AI Engineer 知识库</div>
+    </aside>
+    <main class="main-content">
+      <div class="breadcrumb" id="breadcrumb"></div>
+<div class="progress-bar-top" id="progressBar"></div>
+
+<div class="hero">
+  <h1>Elasticsearch 原理深入指南</h1>
+  <p>从倒排索引到分布式架构<br>用最直白的语言讲清搜索引擎的每一个齿轮如何转动</p>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a href="#ch1">ES 是什么</a>
+    <a href="#ch2">倒排索引</a>
+    <a href="#ch3">分词器</a>
+    <a href="#ch4">数据模型</a>
+    <a href="#ch5">分布式架构</a>
+    <a href="#ch6">写入流程</a>
+    <a href="#ch7">查询与评分</a>
+    <a href="#ch8">聚合分析</a>
+    <a href="#ch9">集群管理</a>
+    <a href="#ch10">性能调优</a>
+    <a href="#ch11">选型对比</a>
+    <a href="#ch12">面试高频题</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. ES 是什么 ==================== -->
+<section id="ch1">
+<h2>ES 是什么 — 搜索引擎的本质</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：Elasticsearch 是一个分布式的「倒排索引数据库」——你给它一堆文档，它帮你<strong>快速找到包含某个词的所有文档</strong>，还能告诉你哪个最相关。</div>
+</div>
+
+<div class="card">
+<h3>直觉理解：图书馆的索引卡片</h3>
+<p>想象你走进一个巨大的图书馆，要找所有提到「分布式」的书。</p>
+<ul style="padding-left:18px;line-height:2">
+<li><strong>笨办法（全表扫描）</strong>：一本一本翻，看有没有「分布式」这个词 → 这就是 MySQL 的 <code>LIKE '%分布式%'</code></li>
+<li><strong>聪明办法（倒排索引）</strong>：图书馆有一个索引柜，抽屉标签写着「分布式」，拉开就看到所有包含这个词的书号列表 → 这就是 Elasticsearch</li>
+</ul>
+<p>ES 的核心价值：<strong>把「翻书找词」变成「查字典找书」</strong>。</p>
+</div>
+
+<h3>ES、Lucene、Elastic Stack 的关系</h3>
+<div class="ascii-box">
+┌─────────────────────────────────────────────────────┐
+│                   Elastic Stack                      │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐ │
+│  │ Kibana   │ │ Logstash │ │  Beats   │ │  APM   │ │
+│  │ (可视化) │ │ (采集)   │ │ (轻量采集)│ │ (监控) │ │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └───┬────┘ │
+│       └────────────┼────────────┼────────────┘      │
+│                    ▼            ▼                    │
+│  ┌──────────────────────────────────────────────┐   │
+│  │            Elasticsearch                      │   │
+│  │   ┌──────┐ ┌──────┐ ┌──────┐                │   │
+│  │   │Node 1│ │Node 2│ │Node 3│  ← 分布式集群  │   │
+│  │   └──┬───┘ └──┬───┘ └──┬───┘                │   │
+│  │      └────────┼────────┘                     │   │
+│  │               ▼                              │   │
+│  │     ┌───────────────────┐                    │   │
+│  │     │  Apache Lucene    │ ← 搜索引擎内核     │   │
+│  │     │  (倒排索引 + 评分) │                    │   │
+│  │     └───────────────────┘                    │   │
+│  └──────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘</div>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>Lucene <span class="tag tag-blue">底层引擎</span></h3>
+<p>Java 编写的全文检索库。负责倒排索引的创建、搜索和评分。Lucene 是单机的、嵌入式的——它不知道「集群」「分片」是什么。</p>
+</div>
+<div class="card card-green">
+<h3>Elasticsearch <span class="tag tag-green">分布式包装</span></h3>
+<p>在 Lucene 之上加了分布式层：分片（Shard）、副本（Replica）、集群协调、REST API、聚合引擎。把单机搜索库变成了可水平扩展的搜索服务。</p>
+</div>
+</div>
+
+<div class="card card-orange">
+<h3>ES 擅长什么 / 不擅长什么</h3>
+<div class="grid-2">
+<div>
+<p><strong>擅长</strong></p>
+<ul style="padding-left:18px;line-height:1.8">
+<li>全文搜索（文本匹配 + 相关性排序）</li>
+<li>日志/指标分析（时序数据聚合）</li>
+<li>模糊搜索、拼写纠错、自动补全</li>
+<li>地理位置搜索</li>
+<li>近实时（NRT）数据可见</li>
+</ul>
+</div>
+<div>
+<p><strong>不擅长</strong></p>
+<ul style="padding-left:18px;line-height:1.8">
+<li>事务（无 ACID，非关系数据库）</li>
+<li>频繁更新（每次更新 = 删除+重建索引）</li>
+<li>JOIN 查询（反范式设计，不支持关联）</li>
+<li>做主数据库（数据安全性不如 MySQL/PG）</li>
+<li>小数据量场景（杀鸡用牛刀）</li>
+</ul>
+</div>
+</div>
+</div>
+
+<details><summary>面试题：ES 和 MySQL LIKE 查询有什么本质区别？</summary>
+<div class="card">
+<p><strong>MySQL LIKE '%keyword%'</strong>：遍历每一行，逐行做字符串匹配 → O(N)，N = 总行数。无法利用 B+Tree 索引（左模糊失效）。</p>
+<p class="mt-2"><strong>Elasticsearch</strong>：建立倒排索引，词 → 文档列表的映射已预先计算好 → O(1) 查字典 + O(K) 取结果，K = 匹配文档数。还支持 TF-IDF / BM25 相关性评分，返回「最相关」而非「最早的」。</p>
+<p class="mt-2"><strong>本质区别</strong>：MySQL 是「扫描文档找词」，ES 是「查词找文档」，数据结构不同导致了质的差异。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 2. 倒排索引 ==================== -->
+<section id="ch2">
+<h2>倒排索引 — ES 的核心数据结构</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：倒排索引就是<strong>把「文档→词」的关系反转成「词→文档」</strong>。一本书的目录是正排索引（章节→内容），而书末尾的关键词索引是倒排索引（关键词→页码）。</div>
+</div>
+
+<div class="card">
+<h3>直觉理解：从正排到倒排</h3>
+<p>假设我们有 3 个文档：</p>
+<table>
+<tr><th>文档 ID</th><th>内容</th></tr>
+<tr><td>doc_1</td><td>Elasticsearch is a search engine</td></tr>
+<tr><td>doc_2</td><td>Elasticsearch is distributed</td></tr>
+<tr><td>doc_3</td><td>Lucene is a search library</td></tr>
+</table>
+<p class="mt-2"><strong>正排索引</strong>（Forward Index）—— 文档 → 词：</p>
+<pre><code>doc_1 → [elasticsearch, is, a, search, engine]
+doc_2 → [elasticsearch, is, distributed]
+doc_3 → [lucene, is, a, search, library]</code></pre>
+<p class="mt-2"><strong>倒排索引</strong>（Inverted Index）—— 词 → 文档：</p>
+<pre><code>elasticsearch → [doc_1, doc_2]
+is            → [doc_1, doc_2, doc_3]
+a             → [doc_1, doc_3]
+search        → [doc_1, doc_3]
+engine        → [doc_1]
+distributed   → [doc_2]
+lucene        → [doc_3]
+library       → [doc_3]</code></pre>
+<p class="mt-2">搜索 "search" → 直接拿到 [doc_1, doc_3]，不需要扫描任何文档内容。</p>
+</div>
+
+<h3>倒排索引的三层结构</h3>
+<div class="ascii-box">
+倒排索引内部结构：
+
+┌─────────────────────────────────────────────────┐
+│             Term Dictionary（词典）               │
+│  排序的词表，支持快速查找                          │
+│  ┌──────────┬──────────┬──────────┬────────────┐ │
+│  │ a        │ dist...  │ elastic..│ engine ... │ │
+│  └────┬─────┴────┬─────┴────┬─────┴────┬───────┘ │
+│       ▼          ▼          ▼          ▼         │
+│  ┌─────────────────────────────────────────────┐ │
+│  │          Posting List（倒排列表）             │ │
+│  │  每个词对应的文档列表 + 位置信息               │ │
+│  │                                             │ │
+│  │  "search" → [(doc_1, pos:4), (doc_3, pos:4)]│ │
+│  │  "engine" → [(doc_1, pos:5)]                │ │
+│  └─────────────────────────────────────────────┘ │
+│                                                  │
+│  ┌─────────────────────────────────────────────┐ │
+│  │      Term Index（词典索引 / FST）             │ │
+│  │  前缀树结构，加速 Term Dictionary 查找        │ │
+│  │  常驻内存，实现 O(len) 快速定位               │ │
+│  └─────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────┘</div>
+
+<div class="grid-3">
+<div class="card card-accent">
+<h3>Term Index</h3>
+<p>内存中的 FST（Finite State Transducer）前缀树。存储词的前缀，快速定位到 Term Dictionary 的磁盘位置。类似书本目录中的字母索引。</p>
+</div>
+<div class="card card-green">
+<h3>Term Dictionary</h3>
+<p>磁盘上的有序词表。按字典序排列所有 term，通过二分查找定位具体词。类似新华字典的正文部分。</p>
+</div>
+<div class="card card-orange">
+<h3>Posting List</h3>
+<p>每个 term 对应的文档 ID 列表 + 词频（TF）+ 位置（Position）+ 偏移（Offset）。用于计算相关性评分和高亮显示。</p>
+</div>
+</div>
+
+<h3>Posting List 的压缩优化</h3>
+<div class="card">
+<p>如果一个词出现在 100 万个文档中，Posting List 就会存 100 万个 doc_id。ES 使用两个关键优化：</p>
+<table>
+<tr><th>技术</th><th>原理</th><th>效果</th></tr>
+<tr><td><strong>FOR 编码</strong><br>(Frame of Reference)</td><td>存差值而非绝对值。[73, 300, 302, 332] → 存为 [73, 227, 2, 30]，差值更小用更少 bit</td><td>压缩率 70-90%</td></tr>
+<tr><td><strong>Roaring Bitmaps</strong></td><td>对 65536 大小的块：稀疏用 Array，密集用 Bitmap。求交集/并集直接位运算</td><td>布尔查询飞快</td></tr>
+</table>
+</div>
+
+<div class="tip">⚠️ 倒排索引一旦写入就是<strong>不可变的</strong>（immutable）。这是 Lucene 的核心设计决策——不可变带来了简单的并发读取和系统文件缓存友好，但也意味着更新文档 = 标记删除旧文档 + 写入新文档。</div>
+
+<details><summary>面试题：为什么倒排索引是不可变的？不可变有什么好处和代价？</summary>
+<div class="card">
+<p><strong>好处</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li><strong>无锁并发读</strong>：不可变数据天然线程安全，多线程搜索无需加锁</li>
+<li><strong>OS 缓存友好</strong>：不变的文件可以长期驻留在操作系统页缓存（page cache）中</li>
+<li><strong>压缩效率高</strong>：数据不变，可以做更激进的压缩（FOR、Roaring Bitmap）</li>
+</ul>
+<p class="mt-2"><strong>代价</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li><strong>更新代价大</strong>：修改一个文档 = 旧文档标记删除 + 新写一个 Segment</li>
+<li><strong>需要 Merge</strong>：随着写入产生大量小 Segment，需要后台合并（Merge）来清理已删除文档并优化查询</li>
+<li><strong>近实时而非实时</strong>：新写入的文档需要 refresh（默认 1s）后才可搜索</li>
+</ul>
+</div>
+</details>
+
+<details><summary>面试题：ES 的 Term Index 为什么用 FST 而不是 HashMap？</summary>
+<div class="card">
+<p><strong>HashMap</strong>：精确查找 O(1) 很快，但必须把所有 key 完整存在内存中 → 内存占用巨大。百万级 term 时内存可能几个 GB。</p>
+<p class="mt-2"><strong>FST（Finite State Transducer）</strong>：一种压缩的前缀树，共享公共前缀 → 内存占用极小（通常只有 HashMap 的 1/10）。支持前缀查询和范围查询（HashMap 做不到）。代价是查询 O(len) 略慢于 HashMap 的 O(1)，但对 Term 查找来说可以接受。</p>
+<p class="mt-2"><strong>核心权衡</strong>：用少量 CPU 时间换大量内存空间，让 Term Index 能常驻内存。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 3. 分词与分析器 ==================== -->
+<section id="ch3">
+<h2>分词与分析器 — 文本处理 Pipeline</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：分析器（Analyzer）是 ES 的「文本预处理流水线」——把原始文本拆成一个个标准化的词（Token），然后才能建倒排索引。好比把一篇文章拆成关键词卡片放进索引柜。</div>
+</div>
+
+<h3>分析器三阶段流水线</h3>
+<div class="ascii-box">
+输入: "The Quick-Brown FOX jumped!!"
+         │
+         ▼
+┌─────────────────────────┐
+│  Character Filter        │  字符级预处理
+│  去除 HTML 标签、替换字符  │  "&amp;" → "and"
+│  "The Quick-Brown FOX    │
+│   jumped!!"              │
+└────────┬────────────────┘
+         ▼
+┌─────────────────────────┐
+│  Tokenizer              │  切词（核心步骤）
+│  按规则拆分成 Token       │  按空格/标点拆分
+│  ["The","Quick","Brown", │
+│   "FOX","jumped"]        │
+└────────┬────────────────┘
+         ▼
+┌─────────────────────────┐
+│  Token Filter            │  Token 级后处理
+│  小写化、去停用词、词干提取 │
+│  ["quick","brown",       │
+│   "fox","jump"]          │
+└─────────────────────────┘</div>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>内置分析器</h3>
+<table>
+<tr><th>分析器</th><th>行为</th><th>适用</th></tr>
+<tr><td><code>standard</code></td><td>Unicode 分词 + 小写</td><td>英文默认，通用</td></tr>
+<tr><td><code>simple</code></td><td>非字母字符分割 + 小写</td><td>简单英文</td></tr>
+<tr><td><code>whitespace</code></td><td>仅按空格分割</td><td>日志、ID</td></tr>
+<tr><td><code>keyword</code></td><td>不分词，整体作为一个 Token</td><td>精确匹配字段</td></tr>
+<tr><td><code>ik_max_word</code></td><td>中文最细粒度分词</td><td>中文全文搜索</td></tr>
+<tr><td><code>ik_smart</code></td><td>中文智能分词</td><td>中文精确匹配</td></tr>
+</table>
+</div>
+<div class="card card-green">
+<h3>中文分词的挑战</h3>
+<p>英文天然用空格分词，但中文没有分隔符。「中华人民共和国」怎么切？</p>
+<ul style="padding-left:18px;line-height:2">
+<li><code>ik_max_word</code>：中华/人民/共和/国/中华人民共和国 → 召回率高</li>
+<li><code>ik_smart</code>：中华人民共和国 → 精确度高</li>
+</ul>
+<p class="mt-2"><strong>最佳实践</strong>：写入时用 <code>ik_max_word</code>（多切词，更容易被搜到），搜索时用 <code>ik_smart</code>（少切词，更精确）。</p>
+</div>
+</div>
+
+<h3>自定义分析器示例</h3>
+<div class="card">
+<pre><code>PUT /my_index
+{
+  "settings": {
+    "analysis": {
+      "char_filter": {
+        "ampersand_filter": {
+          "type": "mapping",
+          "mappings": ["&amp; =&gt; and"]
+        }
+      },
+      "tokenizer": {
+        "my_tokenizer": {
+          "type": "pattern",
+          "pattern": "[\\W_]+"
+        }
+      },
+      "filter": {
+        "my_stopwords": {
+          "type": "stop",
+          "stopwords": ["the", "a", "is"]
+        }
+      },
+      "analyzer": {
+        "my_custom_analyzer": {
+          "type": "custom",
+          "char_filter": ["ampersand_filter"],
+          "tokenizer": "my_tokenizer",
+          "filter": ["lowercase", "my_stopwords"]
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+
+<h3>用 _analyze API 调试分词</h3>
+<div class="card">
+<pre><code># 测试 standard 分析器如何处理文本
+POST /_analyze
+{
+  "analyzer": "standard",
+  "text": "The Quick-Brown FOX jumped!!"
+}
+
+# 响应：
+{
+  "tokens": [
+    {"token": "the",    "position": 0},
+    {"token": "quick",  "position": 1},
+    {"token": "brown",  "position": 2},
+    {"token": "fox",    "position": 3},
+    {"token": "jumped", "position": 4}
+  ]
+}
+
+# 测试中文分词 (需安装 IK 插件)
+POST /_analyze
+{
+  "analyzer": "ik_max_word",
+  "text": "Elasticsearch是分布式搜索引擎"
+}
+# → [elasticsearch, 是, 分布式, 分布, 搜索引擎, 搜索, 引擎]</code></pre>
+</div>
+
+<div class="tip">⚠️ 索引时和搜索时必须使用<strong>相同（或兼容）的分析器</strong>，否则搜不到。最常见的坑：索引时用了中文分词器，搜索时忘了指定 → 用了默认 standard → 分词不一致 → 搜不到结果。</div>
+</section>
+
+<!-- ==================== 4. 文档/索引/映射 ==================== -->
+<section id="ch4">
+<h2>文档、索引与映射 — 数据模型三要素</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 的数据模型类比关系数据库——Index ≈ 表，Document ≈ 行，Field ≈ 列，Mapping ≈ 表结构定义。但 ES 存的是 JSON 文档，天然支持嵌套和动态字段。</div>
+</div>
+
+<div class="card">
+<h3>概念映射</h3>
+<table>
+<tr><th>MySQL</th><th>Elasticsearch</th><th>说明</th></tr>
+<tr><td>Database</td><td>—（集群级别）</td><td>ES 7.x+ 已移除 Type，一个 Index 一种文档</td></tr>
+<tr><td>Table</td><td>Index</td><td>逻辑上的文档集合，如 <code>logs-2024-09</code></td></tr>
+<tr><td>Row</td><td>Document</td><td>一个 JSON 文档</td></tr>
+<tr><td>Column</td><td>Field</td><td>文档中的字段</td></tr>
+<tr><td>Schema</td><td>Mapping</td><td>字段类型定义</td></tr>
+<tr><td>SQL</td><td>Query DSL</td><td>ES 的 JSON 查询语言</td></tr>
+</table>
+</div>
+
+<h3>Document（文档）</h3>
+<div class="card">
+<pre><code># 写入一个文档
+PUT /products/_doc/1
+{
+  "name": "Elasticsearch 权威指南",
+  "category": "book",
+  "price": 79.9,
+  "tags": ["搜索", "大数据", "分布式"],
+  "publish_date": "2024-01-15",
+  "author": {
+    "name": "张三",
+    "email": "zhangsan@example.com"
+  }
+}
+
+# ES 自动返回：
+{
+  "_index": "products",
+  "_id": "1",
+  "_version": 1,
+  "result": "created"
+}</code></pre>
+<p class="mt-2">每个文档有三个元字段：<code>_index</code>（所属索引）、<code>_id</code>（唯一标识）、<code>_source</code>（原始 JSON）。</p>
+</div>
+
+<h3>Mapping（映射）— 字段类型定义</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>核心字段类型</h3>
+<table>
+<tr><th>类型</th><th>说明</th><th>用途</th></tr>
+<tr><td><code>text</code></td><td>会被分词</td><td>全文搜索</td></tr>
+<tr><td><code>keyword</code></td><td>不分词，精确匹配</td><td>状态、标签、ID</td></tr>
+<tr><td><code>integer/long</code></td><td>整数</td><td>数量、计数</td></tr>
+<tr><td><code>float/double</code></td><td>浮点数</td><td>价格、评分</td></tr>
+<tr><td><code>boolean</code></td><td>布尔</td><td>开关、标记</td></tr>
+<tr><td><code>date</code></td><td>日期时间</td><td>时间戳</td></tr>
+<tr><td><code>object</code></td><td>嵌套 JSON</td><td>扁平化存储</td></tr>
+<tr><td><code>nested</code></td><td>独立子文档</td><td>对象数组精确查询</td></tr>
+</table>
+</div>
+<div class="card card-green">
+<h3>显式 Mapping 定义</h3>
+<pre><code>PUT /products
+{
+  "mappings": {
+    "properties": {
+      "name": {
+        "type": "text",
+        "analyzer": "ik_max_word",
+        "search_analyzer": "ik_smart"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "price": {
+        "type": "float"
+      },
+      "tags": {
+        "type": "keyword"
+      },
+      "publish_date": {
+        "type": "date",
+        "format": "yyyy-MM-dd"
+      },
+      "author": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "keyword"},
+          "email": {"type": "keyword"}
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+
+<h3>text vs keyword — 最容易踩的坑</h3>
+<div class="vs">
+<div class="card card-accent">
+<h3>text</h3>
+<ul style="padding-left:18px;line-height:2">
+<li>写入时经过分析器分词</li>
+<li>支持全文搜索（match）</li>
+<li><strong>不支持</strong>排序和聚合</li>
+<li>适合：文章标题、正文</li>
+</ul>
+</div>
+<div class="vs-divider">VS</div>
+<div class="card card-orange">
+<h3>keyword</h3>
+<ul style="padding-left:18px;line-height:2">
+<li>不分词，作为整体存储</li>
+<li>支持精确匹配（term）</li>
+<li><strong>支持</strong>排序和聚合</li>
+<li>适合：状态码、标签、邮箱</li>
+</ul>
+</div>
+</div>
+
+<div class="tip">⚠️ 常见坑：用 <code>term</code> 查询 <code>text</code> 字段搜不到。因为存储时 "Hello World" 被分词为 ["hello", "world"]，而 <code>term</code> 精确匹配 "Hello World" 找不到。解决方案：给字段同时加 <code>.keyword</code> 子字段，或用 <code>match</code> 查询。</div>
+
+<h3>Dynamic Mapping（动态映射）</h3>
+<div class="card">
+<p>不定义 Mapping 直接写文档，ES 会自动推断类型。方便但<strong>容易出问题</strong>：</p>
+<table>
+<tr><th>JSON 值</th><th>自动推断为</th><th>常见问题</th></tr>
+<tr><td><code>"hello"</code></td><td>text + keyword</td><td>字符串默认双类型，浪费空间</td></tr>
+<tr><td><code>123</code></td><td>long</td><td>可能只需要 integer</td></tr>
+<tr><td><code>"2024-01-15"</code></td><td>date</td><td>不一定是日期的字符串被误判</td></tr>
+<tr><td><code>3.14</code></td><td>float</td><td>精度问题</td></tr>
+</table>
+<p class="mt-2"><strong>最佳实践</strong>：生产环境一定要<strong>显式定义 Mapping</strong>，关闭或限制动态映射。</p>
+<pre><code>PUT /my_index
+{
+  "mappings": {
+    "dynamic": "strict",
+    "properties": { ... }
+  }
+}</code></pre>
+</div>
+</section>
+
+<!-- ==================== 5. 分布式架构 ==================== -->
+<section id="ch5">
+<h2>分布式架构 — 分片、副本与集群拓扑</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 把一个大索引<strong>切成多块（分片）</strong>分散在不同机器上，每块再复制几份（副本）放到其他机器上。分片解决容量，副本解决可用性——就像把一本百科全书拆成多卷，每卷复印几份放在不同图书馆。</div>
+</div>
+
+<h3>分片（Shard）与副本（Replica）</h3>
+<div class="ascii-box">
+Index: "products" — 3 Primary Shards, 1 Replica
+
+       Node 1              Node 2              Node 3
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │  P0 (主分片) │     │  P1 (主分片) │     │  P2 (主分片) │
+  │  R1 (副本)   │     │  R2 (副本)   │     │  R0 (副本)   │
+  └─────────────┘     └─────────────┘     └─────────────┘
+
+  P0 的数据 = R0 的数据（副本是主分片的精确拷贝）
+  写入 → 先到主分片 → 同步到对应副本
+  查询 → 主分片或副本都可以响应（负载均衡）</div>
+
+<div class="grid-2">
+<div class="card card-accent">
+<h3>主分片（Primary Shard）</h3>
+<ul style="padding-left:18px;line-height:2">
+<li>每个分片是一个独立的 Lucene 实例</li>
+<li>索引创建后<strong>主分片数不可更改</strong></li>
+<li>文档通过路由公式分配到分片：<code>shard = hash(_routing) % num_primary_shards</code></li>
+<li>默认 <code>_routing = _id</code></li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>副本分片（Replica Shard）</h3>
+<ul style="padding-left:18px;line-height:2">
+<li>主分片的完整拷贝，提供冗余</li>
+<li>副本数可以<strong>随时动态调整</strong></li>
+<li>读请求可以由副本响应 → 提升读吞吐</li>
+<li>主分片所在节点挂了 → 副本自动提升为主分片</li>
+</ul>
+</div>
+</div>
+
+<h3>集群节点角色</h3>
+<div class="card">
+<table>
+<tr><th>角色</th><th>职责</th><th>配置</th></tr>
+<tr><td><strong>Master Node</strong></td><td>管理集群元数据、索引创建/删除、分片分配决策</td><td><code>node.roles: [master]</code></td></tr>
+<tr><td><strong>Data Node</strong></td><td>存储分片数据、执行搜索和聚合</td><td><code>node.roles: [data]</code></td></tr>
+<tr><td><strong>Coordinating Node</strong></td><td>接收客户端请求、分发到数据节点、合并结果返回</td><td><code>node.roles: []</code>（空）</td></tr>
+<tr><td><strong>Ingest Node</strong></td><td>写入前的数据预处理（Pipeline）</td><td><code>node.roles: [ingest]</code></td></tr>
+</table>
+</div>
+
+<h3>分片分配与路由</h3>
+<div class="card">
+<pre><code># 文档路由公式
+shard_num = hash(_routing) % number_of_primary_shards
+
+# 默认 _routing = 文档 _id
+# 可以自定义路由（让同一用户的数据落在同一分片）：
+PUT /orders/_doc/order_123?routing=user_456
+{
+  "user_id": "user_456",
+  "amount": 99.9
+}</code></pre>
+<div class="tip">⚠️ 这就是为什么<strong>主分片数创建后不能改</strong>——改了 hash 取模结果就变了，已有文档的路由全部错乱。需要改分片数只能 Reindex。</div>
+</div>
+
+<h3>分片数量规划</h3>
+<div class="card card-orange">
+<ul style="padding-left:18px;line-height:2">
+<li><strong>单个分片推荐大小</strong>：10GB–50GB（官方建议）</li>
+<li><strong>分片过少</strong>：无法水平扩展，单分片过大影响恢复速度</li>
+<li><strong>分片过多</strong>：每个分片占用内存和文件句柄，Master 节点压力大（需要管理所有分片的元数据）</li>
+<li><strong>经验公式</strong>：<code>分片数 = 预估数据量 / 单分片目标大小</code></li>
+<li><strong>日志场景</strong>：按时间滚动索引（<code>logs-2024-09-01</code>），配合 ILM 自动管理生命周期</li>
+</ul>
+</div>
+
+<details><summary>面试题：ES 的主分片数为什么创建后不能修改？</summary>
+<div class="card">
+<p>因为文档的分片路由使用公式 <code>shard = hash(_routing) % num_primary_shards</code>。如果修改了主分片数，取模的结果就变了，已写入文档的分片位置与新路由不一致 → 搜索时去错误的分片查找 → 找不到文档。</p>
+<p class="mt-2">如果确实需要改，唯一的办法是创建新索引（新分片数）并 Reindex（重新导入所有文档），或使用 <code>_split</code>/<code>_shrink</code> API（但有严格的限制条件）。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 6. 写入流程 ==================== -->
+<section id="ch6">
+<h2>写入流程 — 近实时搜索的实现原理</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 的写入不是直接写磁盘，而是先写内存 Buffer → 定期 Refresh 生成可搜索的 Segment → 最终 Flush 到磁盘。中间靠 Translog 防丢数据。这就是为什么 ES 是「近实时」而非「实时」——默认有 1 秒延迟。</div>
+</div>
+
+<h3>写入全流程</h3>
+<div class="ascii-box">
+客户端写入文档
+     │
+     ▼
+┌─────────────────────────────────────────┐
+│  1. Coordinating Node 接收请求           │
+│     路由：shard = hash(_id) % N          │
+│     转发到目标 Primary Shard 所在节点     │
+└────────────────┬────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────┐
+│  2. Primary Shard 处理                   │
+│     ① 写入 Translog（追加写，顺序IO）    │
+│     ② 写入 In-Memory Buffer             │
+│     ③ 返回 ACK 给 Coordinating Node     │
+└────────────────┬────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────┐
+│  3. 同步到 Replica Shard                 │
+│     并行写入所有副本                      │
+│     所有副本 ACK 后 → 客户端收到成功响应  │
+└────────────────┬────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────┐
+│  4. Refresh（默认每 1 秒）               │
+│     Buffer → 新的 Segment（in OS cache） │
+│     文档变为可搜索！                      │
+└────────────────┬────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────┐
+│  5. Flush（默认 30 分钟或 Translog 满）  │
+│     Segment fsync 到磁盘                 │
+│     清空 Translog                        │
+└────────────────┬────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────┐
+│  6. Merge（后台持续进行）                │
+│     合并多个小 Segment 为大 Segment      │
+│     物理删除标记为删除的文档              │
+└─────────────────────────────────────────┘</div>
+
+<h3>核心概念详解</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>Translog（事务日志）</h3>
+<p>类似 MySQL 的 redo log。每次写入先追加到 Translog（顺序写，极快）。如果节点崩溃，重启后从 Translog 回放恢复未 Flush 的数据。</p>
+<pre><code># Translog 配置
+PUT /my_index/_settings
+{
+  "index.translog.durability": "request",
+  "index.translog.flush_threshold_size": "512mb"
+}
+
+# durability: "request" → 每次请求 fsync（安全）
+# durability: "async"  → 定期 fsync（快但可能丢少量数据）</code></pre>
+</div>
+<div class="card card-green">
+<h3>Refresh（刷新）</h3>
+<p>把 In-Memory Buffer 中的文档写成一个新的 Lucene Segment（在 OS 文件缓存中，尚未 fsync 到磁盘）。Refresh 后文档就能被搜索到。</p>
+<pre><code># 手动 refresh
+POST /my_index/_refresh
+
+# 修改 refresh 间隔
+PUT /my_index/_settings
+{
+  "index.refresh_interval": "5s"
+}
+
+# 批量导入时关闭 refresh 提升写入速度
+PUT /my_index/_settings
+{
+  "index.refresh_interval": "-1"
+}</code></pre>
+</div>
+</div>
+
+<h3>Segment 与 Merge</h3>
+<div class="card">
+<p>每次 Refresh 都会产生一个新的 Segment 文件。大量写入会导致 Segment 数量爆炸。后台 Merge 进程会持续合并小 Segment：</p>
+<div class="ascii-box">
+时间线：
+t=0  [Seg_0]
+t=1  [Seg_0] [Seg_1]
+t=2  [Seg_0] [Seg_1] [Seg_2]
+       ↓ Merge
+t=3  [Seg_0_1_2]                  ← 合并为一个大 Segment
+t=4  [Seg_0_1_2] [Seg_3]
+t=5  [Seg_0_1_2] [Seg_3] [Seg_4]
+
+Merge 时做的事情：
+1. 多个小 Segment → 一个大 Segment
+2. 被标记为 "deleted" 的文档在此时被真正物理删除
+3. 合并后的 Segment 被 fsync 到磁盘
+4. 删除旧的小 Segment 文件</div>
+</div>
+
+<h3>更新和删除的真相</h3>
+<div class="card card-orange">
+<p>因为 Segment 不可变：</p>
+<ul style="padding-left:18px;line-height:2">
+<li><strong>删除</strong>：不是真删，而是在 <code>.del</code> 文件中标记该文档已删除。搜索时过滤掉。真正物理删除在 Merge 时发生</li>
+<li><strong>更新</strong>：= 标记删除旧文档 + 写入新文档。所以 ES 的更新代价比 MySQL 大得多</li>
+<li><strong>版本控制</strong>：<code>_version</code> 字段实现乐观并发控制，防止并发更新覆盖</li>
+</ul>
+</div>
+
+<details><summary>面试题：ES 为什么是「近实时」而不是「实时」？如何实现实时可搜索？</summary>
+<div class="card">
+<p><strong>近实时原因</strong>：文档写入后先进入 In-Memory Buffer，需要等 Refresh（默认 1s）生成 Segment 后才可搜索。这 1 秒的窗口就是「近实时」的含义。</p>
+<p class="mt-2"><strong>实现实时</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li>方法 1：写入后手动调用 <code>POST /index/_refresh</code>（牺牲性能）</li>
+<li>方法 2：设置 <code>refresh_interval: "1ms"</code>（几乎实时但 CPU 开销大）</li>
+<li>方法 3：使用 <code>GET /index/_doc/id</code> 按 ID 查询（直接读 Translog，不依赖 Refresh）</li>
+</ul>
+<p class="mt-2"><strong>实际权衡</strong>：绝大多数场景 1s 延迟可接受。过于频繁的 Refresh 会产生大量小 Segment，反而降低搜索性能。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 7. 查询与评分 ==================== -->
+<section id="ch7">
+<h2>读取与查询 — DSL 查询与相关性评分</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 查询分两大类——<strong>精确查询</strong>（是或不是）和<strong>全文查询</strong>（有多相关）。全文查询的灵魂是 BM25 评分算法：词频越高、文档越短、越稀有的词匹配上了，分数就越高。</div>
+</div>
+
+<h3>查询的分布式执行流程</h3>
+<div class="ascii-box">
+客户端: GET /products/_search { "query": ... }
+     │
+     ▼
+Coordinating Node
+     │
+     ├─── Query Phase ────────────────────────┐
+     │    广播查询到所有相关分片                  │
+     │    ┌──────┐  ┌──────┐  ┌──────┐        │
+     │    │Shard0│  │Shard1│  │Shard2│        │
+     │    │top 10│  │top 10│  │top 10│        │
+     │    └──┬───┘  └──┬───┘  └──┬───┘        │
+     │       └─────────┼─────────┘             │
+     │                 ▼                       │
+     │    Coordinating Node 汇总排序 → 全局 top 10
+     │                                         │
+     ├─── Fetch Phase ────────────────────────┤
+     │    只去存有 top 10 文档的分片取完整内容    │
+     │                                         │
+     ▼                                         │
+  返回结果给客户端                               │
+  └────────────────────────────────────────────┘</div>
+
+<h3>两大查询类型</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>Term Level 查询 <span class="tag tag-blue">精确匹配</span></h3>
+<p>不分词，直接在倒排索引中精确查找。</p>
+<pre><code># term：精确匹配单个值
+{"term": {"status": "active"}}
+
+# terms：匹配多个值（OR）
+{"terms": {"status": ["active", "pending"]}}
+
+# range：范围查询
+{"range": {"price": {"gte": 10, "lte": 100}}}
+
+# exists：字段是否存在
+{"exists": {"field": "email"}}
+
+# wildcard：通配符（慎用，性能差）
+{"wildcard": {"name": "elas*"}}</code></pre>
+</div>
+<div class="card card-green">
+<h3>Full Text 查询 <span class="tag tag-green">全文搜索</span></h3>
+<p>先分词，再在倒排索引中匹配，计算相关性分数。</p>
+<pre><code># match：分词后 OR 匹配
+{"match": {"title": "分布式 搜索引擎"}}
+# → "分布式" OR "搜索引擎"
+
+# match_phrase：短语匹配（顺序+相邻）
+{"match_phrase": {"title": "分布式搜索"}}
+
+# multi_match：多字段搜索
+{"multi_match": {
+  "query": "elasticsearch",
+  "fields": ["title^3", "content"]
+}}
+# title 权重 ×3
+
+# match + operator
+{"match": {
+  "title": {
+    "query": "分布式 搜索引擎",
+    "operator": "and"
+  }
+}}</code></pre>
+</div>
+</div>
+
+<h3>布尔查询（Bool Query）— 最常用的组合查询</h3>
+<div class="card">
+<pre><code>GET /products/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"match": {"title": "Elasticsearch"}}
+      ],
+      "filter": [
+        {"term": {"status": "published"}},
+        {"range": {"price": {"lte": 100}}}
+      ],
+      "should": [
+        {"match": {"tags": "搜索引擎"}}
+      ],
+      "must_not": [
+        {"term": {"category": "deprecated"}}
+      ]
+    }
+  }
+}</code></pre>
+<table>
+<tr><th>子句</th><th>影响评分？</th><th>语义</th></tr>
+<tr><td><code>must</code></td><td>是</td><td>必须匹配，参与评分</td></tr>
+<tr><td><code>filter</code></td><td><strong>否</strong></td><td>必须匹配，不评分（可缓存，性能更好）</td></tr>
+<tr><td><code>should</code></td><td>是</td><td>加分项，匹配则分数更高</td></tr>
+<tr><td><code>must_not</code></td><td>否</td><td>必须不匹配，不评分</td></tr>
+</table>
+<div class="tip">⚠️ 性能关键：<strong>不需要评分的条件放 filter</strong>。filter 结果可以被 ES 缓存（bitset cache），重复查询几乎零开销。典型的 filter 场景：状态过滤、时间范围、权限控制。</div>
+</div>
+
+<h3>BM25 评分算法</h3>
+<div class="card card-accent">
+<p>ES 默认使用 BM25（Best Matching 25）计算相关性分数。核心思想：</p>
+<div class="ascii-box">
+BM25(q, d) = Σ IDF(qi) × (tf(qi, d) × (k1 + 1)) / (tf(qi, d) + k1 × (1 - b + b × |d| / avgdl))
+
+三个核心因子：
+┌─────────────────────────────────────────────────┐
+│ 1. TF（词频）                                    │
+│    这个词在这篇文档中出现几次？                    │
+│    出现越多 → 分数越高（但有上限，避免灌水）        │
+│                                                  │
+│ 2. IDF（逆文档频率）                              │
+│    这个词在所有文档中有多常见？                     │
+│    越稀有的词 → 权重越大                           │
+│    "的" 出现在 90% 文档中 → IDF 很低               │
+│    "Elasticsearch" 出现在 1% 文档中 → IDF 很高     │
+│                                                  │
+│ 3. 字段长度归一化                                  │
+│    短文档匹配 → 更相关（100字的摘要提到一次          │
+│    比 10000字的文章提到一次更可能是核心主题）        │
+└─────────────────────────────────────────────────┘</div>
+</div>
+
+<h3>用 explain 理解评分</h3>
+<div class="card">
+<pre><code># 查看评分细节
+GET /products/_search
+{
+  "explain": true,
+  "query": {
+    "match": {"title": "Elasticsearch 指南"}
+  }
+}
+
+# 响应中会包含评分分解：
+# "explanation": {
+#   "value": 3.14,
+#   "description": "sum of:",
+#   "details": [
+#     { "value": 2.1, "description": "idf × tf for 'elasticsearch'" },
+#     { "value": 1.04, "description": "idf × tf for '指南'" }
+#   ]
+# }</code></pre>
+</div>
+
+<details><summary>面试题：filter 和 must 有什么区别？为什么 filter 更快？</summary>
+<div class="card">
+<p><strong>must</strong>：文档必须匹配，且匹配程度参与 <code>_score</code> 计算。每次查询都要计算 BM25 评分。</p>
+<p class="mt-2"><strong>filter</strong>：文档必须匹配，但<strong>不计算评分</strong>（_score = 0）。好处：</p>
+<ul style="padding-left:18px;line-height:2">
+<li><strong>跳过评分计算</strong>：省掉 TF-IDF/BM25 的浮点运算</li>
+<li><strong>结果可缓存</strong>：filter 的结果是确定的（是/否），ES 会用 bitset 缓存。相同的 filter 条件第二次查询直接命中缓存</li>
+<li><strong>典型场景</strong>：<code>"status": "active"</code>、<code>"date": {"gte": "2024-01-01"}</code> 这类不需要排名的过滤条件</li>
+</ul>
+<p class="mt-2"><strong>总结</strong>：需要排名 → must/should；只需要过滤 → filter/must_not。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 8. 聚合分析 ==================== -->
+<section id="ch8">
+<h2>聚合分析 — ES 作为分析引擎</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：聚合（Aggregation）是 ES 的「GROUP BY + 统计函数」——在搜索结果上做分组、计数、求和、平均值、百分位等统计分析。ES 的聚合比 SQL 更灵活，支持多层嵌套和近似算法。</div>
+</div>
+
+<h3>三大聚合类型</h3>
+<div class="grid-3">
+<div class="card card-accent">
+<h3>Bucket 聚合 <span class="tag tag-blue">分桶</span></h3>
+<p>按条件分组，类似 GROUP BY。每个桶里的文档可以继续做子聚合。</p>
+<ul style="padding-left:18px;line-height:1.8">
+<li><code>terms</code>：按字段值分组</li>
+<li><code>range</code>：按范围分组</li>
+<li><code>date_histogram</code>：按时间间隔分组</li>
+<li><code>histogram</code>：按数值间隔分组</li>
+<li><code>filters</code>：按多个查询条件分组</li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>Metric 聚合 <span class="tag tag-green">指标</span></h3>
+<p>对桶内文档计算统计值，类似 SUM/AVG/COUNT。</p>
+<ul style="padding-left:18px;line-height:1.8">
+<li><code>avg</code>：平均值</li>
+<li><code>sum</code>：求和</li>
+<li><code>min</code> / <code>max</code></li>
+<li><code>cardinality</code>：去重计数（HLL）</li>
+<li><code>percentiles</code>：百分位</li>
+<li><code>stats</code>：一次返回 count/min/max/avg/sum</li>
+</ul>
+</div>
+<div class="card card-orange">
+<h3>Pipeline 聚合 <span class="tag tag-orange">管道</span></h3>
+<p>对其他聚合的结果做二次计算，类似子查询。</p>
+<ul style="padding-left:18px;line-height:1.8">
+<li><code>avg_bucket</code>：桶平均值</li>
+<li><code>max_bucket</code>：最大桶</li>
+<li><code>derivative</code>：求导（环比）</li>
+<li><code>cumulative_sum</code>：累计求和</li>
+<li><code>moving_avg</code>：移动平均</li>
+</ul>
+</div>
+</div>
+
+<h3>实战示例：电商数据分析</h3>
+<div class="card">
+<pre><code># 按类目分组 → 每组算平均价格 + 销量总和
+GET /products/_search
+{
+  "size": 0,
+  "aggs": {
+    "by_category": {
+      "terms": {"field": "category", "size": 10},
+      "aggs": {
+        "avg_price": {"avg": {"field": "price"}},
+        "total_sales": {"sum": {"field": "sales_count"}},
+        "price_ranges": {
+          "range": {
+            "field": "price",
+            "ranges": [
+              {"to": 50, "key": "cheap"},
+              {"from": 50, "to": 200, "key": "medium"},
+              {"from": 200, "key": "expensive"}
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+# 按天统计日志量（时序分析）
+GET /logs-*/_search
+{
+  "size": 0,
+  "aggs": {
+    "logs_per_day": {
+      "date_histogram": {
+        "field": "@timestamp",
+        "calendar_interval": "day"
+      },
+      "aggs": {
+        "error_count": {
+          "filter": {"term": {"level": "ERROR"}},
+          "aggs": {
+            "count": {"value_count": {"field": "_id"}}
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+
+<h3>cardinality 聚合与 HyperLogLog</h3>
+<div class="card card-accent">
+<p><code>cardinality</code> 用于去重计数（如：今天有多少独立用户访问？）。底层使用 <strong>HyperLogLog++</strong> 算法——一种概率数据结构，用极小的内存（几 KB）就能估算上亿级别的基数。</p>
+<pre><code># 统计独立用户数
+GET /access_logs/_search
+{
+  "size": 0,
+  "aggs": {
+    "unique_users": {
+      "cardinality": {
+        "field": "user_id",
+        "precision_threshold": 3000
+      }
+    }
+  }
+}
+# precision_threshold 越大越精确（但内存越多）
+# 默认 3000：基数 < 3000 时几乎精确，超过后误差约 1-6%</code></pre>
+<div class="tip">⚠️ cardinality 是近似值！如果需要精确去重计数，要么数据量小直接用 terms 聚合，要么在应用层用精确算法。</div>
+</div>
+
+<details><summary>面试题：ES 的 terms 聚合在分布式环境下结果是精确的吗？</summary>
+<div class="card">
+<p><strong>不一定精确</strong>。在分布式环境中，terms 聚合的执行过程：</p>
+<ol style="padding-left:20px;line-height:2">
+<li>每个分片独立计算本地 top N 的桶</li>
+<li>Coordinating Node 合并各分片结果</li>
+</ol>
+<p class="mt-2">问题：如果某个词在每个分片上都排不进 top N，但全局加起来其实排得进 → <strong>被遗漏</strong>。</p>
+<p class="mt-2"><strong>解决方案</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li>增大 <code>shard_size</code>（默认 = size * 1.5 + 10）：让每个分片返回更多候选</li>
+<li>如果数据按某个字段路由（如 user_id），同一用户的数据在同一分片，则该字段的 terms 聚合是精确的</li>
+<li>对精度要求极高的场景，用 <code>composite</code> 聚合做分页遍历</li>
+</ul>
+</div>
+</details>
+</section>
+
+<!-- ==================== 9. 集群管理 ==================== -->
+<section id="ch9">
+<h2>集群管理 — 节点角色、故障恢复与脑裂</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 集群通过 Master 选举管理分片分配，通过副本实现高可用。最怕的问题是「脑裂」——集群分成两半，两边都认为自己是合法的，导致数据不一致。ES 7.x 用新的选举机制基本解决了这个问题。</div>
+</div>
+
+<h3>集群健康状态</h3>
+<div class="card">
+<pre><code>GET /_cluster/health
+
+# 三种颜色：
+# 🟢 green  — 所有主分片和副本都已分配，集群完全健康
+# 🟡 yellow — 所有主分片已分配，部分副本未分配（单节点集群常见）
+# 🔴 red    — 有主分片未分配，部分数据不可用</code></pre>
+<table>
+<tr><th>状态</th><th>主分片</th><th>副本分片</th><th>数据可用性</th><th>常见原因</th></tr>
+<tr><td style="color:green"><strong>Green</strong></td><td>全部 ✅</td><td>全部 ✅</td><td>100%</td><td>正常状态</td></tr>
+<tr><td style="color:#b8860b"><strong>Yellow</strong></td><td>全部 ✅</td><td>部分 ❌</td><td>100%（但无冗余）</td><td>节点不够 / 刚重启</td></tr>
+<tr><td style="color:red"><strong>Red</strong></td><td>部分 ❌</td><td>—</td><td>&lt;100%</td><td>节点宕机且无副本</td></tr>
+</table>
+</div>
+
+<h3>Master 选举与脑裂</h3>
+<div class="card card-accent">
+<h3>什么是脑裂（Split Brain）？</h3>
+<div class="ascii-box">
+正常状态：                     脑裂状态：
+┌──────────────┐              ┌──────┐    ┌──────┐
+│  Master      │              │Master│    │Master│ ← 两个 Master！
+│  Node1 Node2 │   网络分区→   │Node1 │    │Node2 │
+│  Node3       │              │Node3 │    │      │
+└──────────────┘              └──────┘    └──────┘
+                              两边各自接收写入 → 数据不一致</div>
+</div>
+
+<div class="grid-2">
+<div class="card card-orange">
+<h3>ES 6.x 及之前</h3>
+<p>使用 <code>discovery.zen.minimum_master_nodes</code>：设为 <code>(N/2)+1</code>（N = 候选 Master 节点数）。配置错误是脑裂的主因。</p>
+</div>
+<div class="card card-green">
+<h3>ES 7.x 及之后</h3>
+<p>使用新的 <strong>Voting Configuration</strong> 机制，自动管理。只需配置初始种子节点：</p>
+<pre><code># elasticsearch.yml
+cluster.initial_master_nodes:
+  - node-1
+  - node-2
+  - node-3
+discovery.seed_hosts:
+  - 192.168.1.1
+  - 192.168.1.2
+  - 192.168.1.3</code></pre>
+<p>集群自动维护投票配置，大大降低脑裂风险。</p>
+</div>
+</div>
+
+<h3>分片分配与恢复</h3>
+<div class="card">
+<p>当节点加入或离开集群时，Master 会重新平衡分片：</p>
+<pre><code># 查看分片分配状态
+GET /_cat/shards?v
+
+# 查看为什么某个分片未分配
+GET /_cluster/allocation/explain
+
+# 常见未分配原因：
+# - 磁盘空间不足（watermark.high 默认 90%）
+# - 同一主副分片不能在同一节点
+# - 节点 filter 排除了目标节点
+
+# 手动移动分片（谨慎使用）
+POST /_cluster/reroute
+{
+  "commands": [{
+    "move": {
+      "index": "products",
+      "shard": 0,
+      "from_node": "node-1",
+      "to_node": "node-2"
+    }
+  }]
+}</code></pre>
+</div>
+
+<h3>生产集群拓扑推荐</h3>
+<div class="card card-accent">
+<div class="ascii-box">
+最小生产集群（推荐）：
+
+┌──────────────────────────────────────────────┐
+│  Master Nodes × 3（专用，不存数据）            │
+│  - 低配即可（2C4G）                           │
+│  - 只负责集群管理和选举                        │
+│  - 奇数个防止脑裂票数相同                      │
+├──────────────────────────────────────────────┤
+│  Data Nodes × N（存储和计算主力）              │
+│  - 高配（16C64G + SSD）                       │
+│  - JVM 堆 ≤ 30GB（留空间给 OS 文件缓存）      │
+│  - 分热/温/冷节点分层存储                      │
+├──────────────────────────────────────────────┤
+│  Coordinating Nodes × 2+（可选）              │
+│  - 接收请求、合并结果                          │
+│  - 重查询场景下分担 Data Node 压力             │
+└──────────────────────────────────────────────┘</div>
+</div>
+
+<details><summary>面试题：ES 集群出现 Red 状态怎么排查？</summary>
+<div class="card">
+<p>Red = 有主分片未分配。排查步骤：</p>
+<ol style="padding-left:20px;line-height:2">
+<li><code>GET /_cluster/health?level=indices</code> → 找到哪个索引是 Red</li>
+<li><code>GET /_cat/shards/index_name?v</code> → 找到哪个分片 UNASSIGNED</li>
+<li><code>GET /_cluster/allocation/explain</code> → 查看未分配原因</li>
+<li>常见原因和对策：
+  <ul style="padding-left:18px">
+    <li>节点宕机且无副本 → 等节点恢复或从备份恢复</li>
+    <li>磁盘满 → 清理磁盘或增加节点</li>
+    <li>分片数据损坏 → <code>POST /_cluster/reroute?retry_failed=true</code> 或接受数据丢失 <code>allocate_empty_primary</code></li>
+  </ul>
+</li>
+</ol>
+</div>
+</details>
+</section>
+
+<!-- ==================== 10. 性能调优 ==================== -->
+<section id="ch10">
+<h2>性能调优 — 索引设计与查询优化</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 调优的核心三件事——<strong>合理的 Mapping</strong>（减少无用索引）、<strong>善用 filter 缓存</strong>（避免重复计算）、<strong>控制分片大小和数量</strong>（平衡读写性能）。</div>
+</div>
+
+<h3>写入优化</h3>
+<div class="card">
+<table>
+<tr><th>优化手段</th><th>原理</th><th>适用场景</th></tr>
+<tr><td>增大 <code>refresh_interval</code></td><td>减少 Segment 生成频率，降低 IO</td><td>批量导入、日志写入</td></tr>
+<tr><td>关闭副本后批量写入</td><td>跳过副本同步，写完后重新开启</td><td>初始数据导入</td></tr>
+<tr><td>使用 Bulk API</td><td>批量提交减少网络往返</td><td>任何批量写入场景</td></tr>
+<tr><td>合理的分片数</td><td>并行写入多个分片</td><td>高写入吞吐场景</td></tr>
+<tr><td>关闭不需要的字段索引</td><td><code>"index": false</code></td><td>只存储不搜索的字段</td></tr>
+</table>
+<pre><code># 批量导入最佳实践
+# 1. 关闭 refresh
+PUT /my_index/_settings
+{"index.refresh_interval": "-1", "index.number_of_replicas": 0}
+
+# 2. 使用 Bulk API（推荐每批 5-15MB）
+POST /_bulk
+{"index":{"_index":"products","_id":"1"}}
+{"name":"ES指南","price":79.9}
+{"index":{"_index":"products","_id":"2"}}
+{"name":"Go实战","price":59.9}
+
+# 3. 导入完成后恢复
+PUT /my_index/_settings
+{"index.refresh_interval": "1s", "index.number_of_replicas": 1}
+
+# 4. 强制合并
+POST /my_index/_forcemerge?max_num_segments=1</code></pre>
+</div>
+
+<h3>查询优化</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>Mapping 层面</h3>
+<ul style="padding-left:18px;line-height:2">
+<li>不搜索的字段设 <code>"index": false</code></li>
+<li>不需要聚合的 text 字段关闭 <code>fielddata</code></li>
+<li>不需要评分的字段关闭 <code>"norms": false</code></li>
+<li>用 <code>keyword</code> 而非 <code>text</code> 做精确过滤</li>
+<li>避免 Dynamic Mapping 产生多余字段</li>
+</ul>
+</div>
+<div class="card card-green">
+<h3>查询层面</h3>
+<ul style="padding-left:18px;line-height:2">
+<li>过滤条件放 <code>filter</code> 而非 <code>must</code></li>
+<li>避免 <code>wildcard</code> 前缀通配（<code>*foo</code>）</li>
+<li>用 <code>_source</code> 过滤只返回需要的字段</li>
+<li>深度分页用 <code>search_after</code> 代替 <code>from+size</code></li>
+<li>聚合大数据量用 <code>composite</code> 分页</li>
+</ul>
+</div>
+</div>
+
+<h3>深度分页问题</h3>
+<div class="card card-orange">
+<p>ES 默认最多 <code>from + size ≤ 10000</code>。为什么？</p>
+<div class="ascii-box">
+查询: from=9990, size=10（取第 9991-10000 条）
+
+每个分片需要返回 top 10000 给 Coordinating Node
+如果有 5 个分片 → 协调节点要处理 50000 条文档
+from 越大 → 每个分片返回越多 → 内存和网络开销爆炸</div>
+<p class="mt-2"><strong>解决方案对比</strong>：</p>
+<table>
+<tr><th>方案</th><th>原理</th><th>适用</th></tr>
+<tr><td><code>from + size</code></td><td>跳过 from 条取 size 条</td><td>浅分页（&lt; 1000 页）</td></tr>
+<tr><td><code>search_after</code></td><td>用上一页最后一条的排序值做游标</td><td>无限向下翻页</td></tr>
+<tr><td><code>scroll</code></td><td>创建快照，用游标遍历</td><td>导出全部数据（已不推荐，用 PIT）</td></tr>
+<tr><td><code>PIT + search_after</code></td><td>Point In Time 快照 + 游标</td><td>大数据量稳定遍历（推荐）</td></tr>
+</table>
+<pre><code># search_after 示例
+GET /products/_search
+{
+  "size": 10,
+  "sort": [{"price": "desc"}, {"_id": "asc"}],
+  "search_after": [79.9, "product_abc"]
+}</code></pre>
+</div>
+
+<h3>JVM 与系统调优</h3>
+<div class="card">
+<table>
+<tr><th>参数</th><th>建议</th><th>原因</th></tr>
+<tr><td>JVM 堆大小</td><td><strong>≤ 30GB</strong>，物理内存的 50%</td><td>&gt;30GB 时 JVM 指针压缩失效（Compressed Oops），GC 压力骤增。剩余内存留给 OS page cache 缓存 Lucene 文件</td></tr>
+<tr><td>文件描述符</td><td><code>ulimit -n 65535+</code></td><td>每个 Segment 都是文件，分片多了文件句柄需求大</td></tr>
+<tr><td>虚拟内存</td><td><code>vm.max_map_count = 262144</code></td><td>Lucene 使用 mmap 映射 Segment 文件</td></tr>
+<tr><td>Swap</td><td>关闭或 <code>bootstrap.memory_lock: true</code></td><td>Swap 导致 GC 停顿时间从 ms 变成 s</td></tr>
+<tr><td>磁盘</td><td>SSD 强烈推荐</td><td>Merge、搜索都是 IO 密集</td></tr>
+</table>
+</div>
+
+<details><summary>面试题：ES 的 JVM 堆为什么建议不超过 30GB？</summary>
+<div class="card">
+<p>Java 在堆 ≤ 约 32GB 时启用<strong>压缩对象指针</strong>（Compressed Ordinary Object Pointers）：用 4 字节指针代替 8 字节。一旦堆超过 ~32GB，指针膨胀为 8 字节，实际可用内存反而更少。</p>
+<p class="mt-2">同时，ES 严重依赖 OS 的 <strong>page cache</strong> 缓存 Lucene Segment 文件。留给 OS 的内存越多，搜索时命中缓存的概率越高 → 避免磁盘 IO。</p>
+<p class="mt-2"><strong>最佳实践</strong>：堆设为物理内存的 50%，最大 30-31GB。64GB 机器 → 堆 30GB + OS cache 34GB。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 11. ES vs 其他 ==================== -->
+<section id="ch11">
+<h2>ES vs 其他存储 — 选型对比</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 不是万能的。全文搜索选 ES，事务和关联选 MySQL/PostgreSQL，KV 缓存选 Redis，海量日志可以考虑 ClickHouse，向量搜索看 Milvus。关键是理解每种存储的核心数据结构决定了它擅长什么。</div>
+</div>
+
+<div class="card">
+<table>
+<tr><th>维度</th><th>Elasticsearch</th><th>MySQL/PostgreSQL</th><th>Redis</th><th>ClickHouse</th></tr>
+<tr><td><strong>核心数据结构</strong></td><td>倒排索引</td><td>B+Tree</td><td>哈希表/跳表</td><td>列式存储</td></tr>
+<tr><td><strong>最擅长</strong></td><td>全文搜索、日志分析</td><td>事务、关联查询</td><td>缓存、实时计数</td><td>OLAP、聚合分析</td></tr>
+<tr><td><strong>写入模式</strong></td><td>近实时（1s 延迟）</td><td>实时（ACID）</td><td>实时（内存）</td><td>批量写入</td></tr>
+<tr><td><strong>更新代价</strong></td><td>高（删除+重写）</td><td>低（原地更新）</td><td>低（原地更新）</td><td>高（MergeTree）</td></tr>
+<tr><td><strong>JOIN</strong></td><td>不支持（反范式）</td><td>强项</td><td>不支持</td><td>有限支持</td></tr>
+<tr><td><strong>事务</strong></td><td>无 ACID</td><td>完整 ACID</td><td>单命令原子</td><td>无（最终一致）</td></tr>
+<tr><td><strong>扩展方式</strong></td><td>水平分片</td><td>主从+分库分表</td><td>集群+分片</td><td>分片+副本</td></tr>
+</table>
+</div>
+
+<h3>典型架构组合</h3>
+<div class="grid-2">
+<div class="card card-accent">
+<h3>MySQL + ES 双写</h3>
+<p>MySQL 做主库（事务 + 关联），ES 做搜索副本。数据通过 Canal/Debezium 同步。</p>
+<div class="ascii-box">
+写入 → MySQL（主库）
+         │ binlog
+         ▼
+       Canal/Debezium
+         │
+         ▼
+      Elasticsearch（搜索）
+         │
+搜索 → ES → 返回 ID
+详情 → MySQL → 返回完整数据</div>
+</div>
+<div class="card card-green">
+<h3>ELK/EFK 日志栈</h3>
+<p>Beats/Fluentd 采集 → Logstash/Fluentd 处理 → ES 存储+搜索 → Kibana 可视化。</p>
+<div class="ascii-box">
+应用日志 → Filebeat/Fluentd
+              │
+              ▼
+          Logstash（解析、过滤、富化）
+              │
+              ▼
+          Elasticsearch（存储+搜索）
+              │
+              ▼
+          Kibana（可视化 + 告警）</div>
+</div>
+</div>
+
+<h3>ES 与向量搜索</h3>
+<div class="card card-orange">
+<p>ES 8.x 引入了 <strong>kNN（k-Nearest Neighbors）向量搜索</strong>，支持 <code>dense_vector</code> 字段类型，可以做语义搜索。</p>
+<pre><code># 定义向量字段
+PUT /articles
+{
+  "mappings": {
+    "properties": {
+      "title_vector": {
+        "type": "dense_vector",
+        "dims": 768,
+        "index": true,
+        "similarity": "cosine"
+      }
+    }
+  }
+}
+
+# kNN 搜索
+GET /articles/_search
+{
+  "knn": {
+    "field": "title_vector",
+    "query_vector": [0.1, 0.2, ...],
+    "k": 10,
+    "num_candidates": 100
+  }
+}</code></pre>
+<p class="mt-2"><strong>ES vs 专用向量数据库（Milvus/Pinecone）</strong>：ES 的向量搜索适合「关键词 + 语义」混合检索场景。纯向量搜索（十亿级别）用专用引擎性能更好。</p>
+</div>
+
+<details><summary>面试题：什么场景下应该用 ES 而不是 MySQL？反过来呢？</summary>
+<div class="card">
+<p><strong>选 ES</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li>需要全文搜索、模糊匹配、相关性排序（商品搜索、内容搜索）</li>
+<li>日志/指标的海量写入 + 时序聚合分析</li>
+<li>需要自动补全、拼写纠错等搜索体验</li>
+<li>数据量大且查询模式偏分析型</li>
+</ul>
+<p class="mt-2"><strong>选 MySQL/PG</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li>需要事务保证（订单、支付、库存）</li>
+<li>复杂的 JOIN 和关联查询</li>
+<li>频繁的单行更新操作</li>
+<li>强一致性要求（金融场景）</li>
+</ul>
+<p class="mt-2"><strong>最佳实践</strong>：MySQL 做 Source of Truth（写入），ES 做搜索加速（只读副本），通过 CDC 工具同步。</p>
+</div>
+</details>
+</section>
+
+<!-- ==================== 12. 面试高频题 ==================== -->
+<section id="ch12">
+<h2>面试高频题汇总</h2>
+
+<div class="callout callout-info">
+<div class="callout-icon">💡</div>
+<div><strong>一句话</strong>：ES 面试的核心考点就三个——<strong>倒排索引的原理</strong>（数据结构）、<strong>写入/查询的分布式流程</strong>（系统设计）、<strong>性能优化的实战经验</strong>（工程能力）。下面是高频题精选。</div>
+</div>
+
+<details class="card">
+<summary>ES 的写入流程是怎样的？为什么是近实时的？</summary>
+<div class="mt-2">
+<p>完整写入流程：客户端 → Coordinating Node 路由 → Primary Shard 写入 Translog + Memory Buffer → 同步 Replica → ACK 客户端。</p>
+<p class="mt-2">Buffer 中的数据需要 <strong>Refresh</strong>（默认 1 秒）后才生成 Segment 并可搜索 → 这就是「近实时」的原因。Translog 保证即使 Refresh 前宕机数据也不丢。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>倒排索引和 B+Tree 索引有什么区别？各自适合什么场景？</summary>
+<div class="mt-2">
+<table>
+<tr><th>维度</th><th>倒排索引</th><th>B+Tree</th></tr>
+<tr><td>核心操作</td><td>全文搜索（词 → 文档）</td><td>精确/范围查找（值 → 行）</td></tr>
+<tr><td>写入模式</td><td>批量构建，不可变</td><td>增量插入，可原地更新</td></tr>
+<tr><td>更新代价</td><td>高（重建 Segment）</td><td>低（树节点分裂）</td></tr>
+<tr><td>适合场景</td><td>搜索、日志、文本分析</td><td>OLTP、事务、精确查询</td></tr>
+<tr><td>存储产品</td><td>ES、Solr、Lucene</td><td>MySQL、PostgreSQL</td></tr>
+</table>
+</div>
+</details>
+
+<details class="card">
+<summary>ES 如何实现高可用？节点宕机了会怎样？</summary>
+<div class="mt-2">
+<p>通过<strong>副本分片</strong>实现高可用：</p>
+<ol style="padding-left:20px;line-height:2">
+<li>每个主分片有 N 个副本，分布在不同节点</li>
+<li>节点宕机 → Master 检测到节点离开</li>
+<li>如果宕机节点有主分片 → 对应副本自动提升为新主分片</li>
+<li>Master 在其他存活节点上创建新的副本，恢复冗余级别</li>
+<li>写入重定向到新的主分片，读取由剩余分片/副本承担</li>
+</ol>
+<p class="mt-2"><strong>关键配置</strong>：Master 节点数为奇数（3 或 5），避免选举平票。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>ES 查询很慢怎么排查优化？</summary>
+<div class="mt-2">
+<p><strong>排查步骤</strong>：</p>
+<ol style="padding-left:20px;line-height:2">
+<li><code>GET /_cat/indices?v&amp;s=docs.count:desc</code> — 检查索引大小和分片数</li>
+<li><code>GET /index/_search</code> + <code>"profile": true</code> — 查看每个分片的查询耗时分解</li>
+<li>检查是否用了 <code>wildcard</code>/<code>regexp</code>（前缀通配符是性能杀手）</li>
+<li>检查是否把过滤条件放在了 <code>must</code> 而非 <code>filter</code></li>
+<li>检查 JVM 堆使用和 GC 情况：<code>GET /_nodes/stats/jvm</code></li>
+</ol>
+<p class="mt-2"><strong>常见优化</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li>过滤条件 → filter（利用缓存）</li>
+<li>只返回需要的字段 → <code>"_source": ["field1", "field2"]</code></li>
+<li>深度分页 → search_after</li>
+<li>大结果集聚合 → composite 聚合</li>
+<li>Mapping 优化 → 关闭不需要的 <code>index</code>/<code>norms</code>/<code>doc_values</code></li>
+</ul>
+</div>
+</details>
+
+<details class="card">
+<summary>ES 和 MySQL 数据不一致怎么办？</summary>
+<div class="mt-2">
+<p>在 MySQL + ES 双写架构中，数据不一致是常见问题：</p>
+<p class="mt-2"><strong>原因</strong>：应用双写（先写 MySQL 再写 ES）→ ES 写入失败但 MySQL 已提交，或顺序不一致。</p>
+<p class="mt-2"><strong>解决方案</strong>（按推荐顺序）：</p>
+<ol style="padding-left:20px;line-height:2">
+<li><strong>CDC 同步（推荐）</strong>：Canal/Debezium 监听 MySQL binlog → 投递到 Kafka → 消费写入 ES。单一数据流，天然保序</li>
+<li><strong>消息队列解耦</strong>：写 MySQL 后发消息到 MQ → 消费者写 ES。失败可重试</li>
+<li><strong>定时全量校对</strong>：定期比对 MySQL 和 ES 数据差异，修复不一致</li>
+<li><strong>版本号兜底</strong>：写入 ES 时带版本号，旧版本不覆盖新版本</li>
+</ol>
+</div>
+</details>
+
+<details class="card">
+<summary>如何设计一个商品搜索系统？</summary>
+<div class="mt-2">
+<p><strong>整体架构</strong>：</p>
+<div class="ascii-box">
+用户搜索 → API Gateway → Search Service → ES
+                                          ↑
+商品管理 → MySQL → Canal → Kafka → ES Writer</div>
+<p class="mt-2"><strong>Mapping 设计</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li><code>name</code>: text（ik_max_word）— 全文搜索</li>
+<li><code>category</code>: keyword — 精确过滤</li>
+<li><code>price</code>: float — 范围过滤和排序</li>
+<li><code>tags</code>: keyword — 标签过滤</li>
+<li><code>sales</code>: integer — 排序因子</li>
+<li><code>create_time</code>: date — 时间范围</li>
+</ul>
+<p class="mt-2"><strong>查询策略</strong>：用户输入关键词 → bool 查询：must(match name) + filter(category, price range) + should(boost by sales)。支持 suggest/completion 做自动补全。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>Segment Merge 是什么？为什么需要？有什么风险？</summary>
+<div class="mt-2">
+<p><strong>是什么</strong>：后台进程将多个小 Segment 合并为少量大 Segment 的过程。</p>
+<p class="mt-2"><strong>为什么需要</strong>：</p>
+<ul style="padding-left:18px;line-height:2">
+<li>每次 Refresh 产生一个新 Segment → 数量持续增长</li>
+<li>Segment 越多，搜索时要查询的文件越多 → 性能下降</li>
+<li>被标记删除的文档只有在 Merge 时才被物理清理 → 释放磁盘空间</li>
+</ul>
+<p class="mt-2"><strong>风险</strong>：Merge 是 IO 密集操作。大 Segment 合并时可能占满磁盘 IO → 影响搜索延迟。需要合理配置 <code>index.merge.policy</code> 和 <code>indices.store.throttle</code> 控制 Merge 速率。</p>
+</div>
+</details>
+
+<details class="card">
+<summary>ES 的 Nested 类型和 Object 类型有什么区别？</summary>
+<div class="mt-2">
+<p><strong>Object 类型</strong>：嵌套对象被扁平化存储。数组场景会丢失对象边界。</p>
+<pre><code># 文档：{"users": [{"name":"Alice","age":30}, {"name":"Bob","age":25}]}
+# 扁平化后：users.name = ["Alice","Bob"], users.age = [30, 25]
+# 查询 name=Alice AND age=25 → 错误匹配！（Alice 是 30 岁）</code></pre>
+<p class="mt-2"><strong>Nested 类型</strong>：每个嵌套对象作为独立的内部文档存储，保持对象边界。查询时使用 <code>nested</code> 查询确保条件在同一个对象内匹配。代价是更多的存储空间和更复杂的查询语法。</p>
+</div>
+</details>
+
+<div class="callout callout-ok">
+<div class="callout-icon">🎯</div>
+<div><strong>学习路径建议</strong>：先理解倒排索引和分词（核心数据结构）→ 掌握 Mapping 和 DSL 查询（日常使用）→ 理解写入/查询的分布式流程（系统设计面试）→ 掌握性能调优（工程实战）→ 了解 ES 在架构中的定位（选型能力）。每一步用 Kibana Dev Tools 实际操作验证。</div>
+</div>
+</section>
+
+</div>
+
+      <div class="page-nav" id="page-nav"></div>
+    </main>
+  </div>
+  <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="打开导航">☰</button>
+  <script src="/tech-guide-docs/assets/js/shared.js" defer></script>
+
+<script>
+(function(){
+  var sections = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9','ch10','ch11','ch12'];
+  window.addEventListener('scroll', function(){
+    var navLinks = document.querySelectorAll('.nav a');
+    var current = '';
+    sections.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && el.getBoundingClientRect().top <= 120) current = id;
+    });
+    navLinks.forEach(function(a){
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+  var els = document.querySelectorAll('.card,.callout,.tip');
+  els.forEach(function(el){ el.classList.add('animate-in'); });
+})();
+</script>
+</body>
+</html>
