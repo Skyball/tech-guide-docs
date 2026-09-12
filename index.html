@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Agent Engineer 学习门户 — 面向 AI Agent / 后端工程师的完整技术知识库">
+  <title>AI Engineer 知识库</title>
+  <link rel="stylesheet" href="/tech-guide-docs/assets/css/shared.css">
+  <style>
+    .home-header {
+      padding: 40px 32px 24px;
+    }
+    .home-header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .home-header p {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .home-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 16px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    .home-stats span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .home-stats strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+    .home-content {
+      padding: 0 32px 48px;
+      max-width: 900px;
+    }
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 32px 0 4px;
+      padding-bottom: 6px;
+      border-bottom: 3px solid var(--accent);
+      display: inline-block;
+    }
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0 24px;
+    }
+    @media (max-width: 700px) {
+      .category-grid { grid-template-columns: 1fr; }
+      .home-header, .home-content { padding-left: 20px; padding-right: 20px; }
+    }
+    .category-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+      transition: all 0.25s;
+      position: relative;
+    }
+    .category-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      border-color: var(--accent);
+    }
+    .category-card .icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .category-card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+    .category-card .desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .category-card .meta {
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .category-card .arrow {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: var(--accent);
+      font-size: 1.2rem;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .category-card:hover .arrow {
+      opacity: 1;
+    }
+    .progress-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin: 24px 0;
+    }
+    .progress-section h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .progress-bar {
+      height: 8px;
+      background: var(--code-bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: right;
+    }
+    .home-footer {
+      text-align: center;
+      padding: 24px 32px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">🤖 AI Engineer 知识库</div>
+    </aside>
+    <main class="main-content">
+      <div class="home-header animate-in">
+        <h1>AI Agent Engineer 学习门户</h1>
+        <p>面向 AI Agent / 后端工程师的完整技术知识库</p>
+        <div class="home-stats" id="homeStats">
+          <span><strong id="statDocs">—</strong> 篇文档</span>
+          <span><strong id="statCategories">—</strong> 个分类</span>
+          <span><strong>5</strong> 周学习计划</span>
+        </div>
+      </div>
+
+      <div class="home-content">
+        <h2 class="section-title animate-in">分类索引</h2>
+        <div class="category-grid" id="categoryGrid"></div>
+
+        <div class="progress-section animate-in" id="progressSection">
+          <h3>总体学习进度</h3>
+          <div class="progress-bar"><div class="progress-fill" id="totalProgress" style="width:0%"></div></div>
+          <div class="progress-text" id="progressText">计算中...</div>
+        </div>
+
+        <div class="callout callout-info animate-in">
+          <div class="callout-icon">💡</div>
+          <div><strong>建议学习路径</strong>：按 Week 1-5 顺序推进。所有文档共享暗色模式设置，进度数据保存在浏览器 localStorage 中。</div>
+        </div>
+      </div>
+
+      <footer class="home-footer" id="homeFooter">AI Engineer 知识库</footer>
+    </main>
+  </div>
+  <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="打开导航">☰</button>
+  <script src="/tech-guide-docs/assets/js/shared.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var descriptions = {
+        ai: 'Agent 架构、LLM 原理、评估优化、源码阅读',
+        lang: 'Python 工程实战、Go 语言工程',
+        backend: '数据库、消息队列、gRPC',
+        plan: '5 周完整学习路径'
+      };
+
+      var totalDocs = 0;
+      SITE.categories.forEach(function (c) { totalDocs += c.docs.length; });
+
+      document.getElementById('statDocs').textContent = totalDocs;
+      document.getElementById('statCategories').textContent = SITE.categories.length;
+      document.getElementById('homeFooter').textContent =
+        'AI Engineer 知识库 · ' + totalDocs + ' 篇交互式文档';
+
+      var grid = document.getElementById('categoryGrid');
+      var html = '';
+      SITE.categories.forEach(function (cat) {
+        var firstDoc = cat.docs[0];
+        var url = getDocUrl(cat.id, firstDoc.slug);
+        html += '<a class="category-card animate-in" href="' + url + '">';
+        html += '<span class="icon">' + cat.icon + '</span>';
+        html += '<span class="arrow">→</span>';
+        html += '<h3>' + cat.label + '</h3>';
+        html += '<p class="desc">' + (descriptions[cat.id] || '') + '</p>';
+        html += '<span class="meta">' + cat.docs.length + ' 篇文档</span>';
+        html += '</a>';
+      });
+      grid.innerHTML = html;
+
+      var keys = ['w1-progress', 'w2-progress', 'w3-progress', 'w4-progress', 'w5-progress'];
+      var totals = [28, 24, 22, 23, 25];
+      var done = 0, total = 0;
+      keys.forEach(function (k, i) {
+        total += totals[i];
+        try {
+          var data = JSON.parse(localStorage.getItem(k) || '{}');
+          for (var key in data) { if (data[key]) done++; }
+        } catch (e) {}
+      });
+      var pct = total > 0 ? Math.round(done / total * 100) : 0;
+      document.getElementById('totalProgress').style.width = pct + '%';
+      document.getElementById('progressText').textContent =
+        done + ' / ' + total + ' 任务完成（' + pct + '%）';
+
+      var els = document.querySelectorAll('.animate-in');
+      if (window.IntersectionObserver) {
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              e.target.classList.add('visible');
+              obs.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+        els.forEach(function (el) { obs.observe(el); });
+      } else {
+        els.forEach(function (el) { el.classList.add('visible'); });
+      }
+    });
+  </script>
+</body>
+</html>
